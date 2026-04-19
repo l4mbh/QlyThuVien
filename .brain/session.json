@@ -1,59 +1,70 @@
 {
-  "updated_at": "2026-04-19T01:31:00Z",
+  "updated_at": "2026-04-19T11:04:00Z",
   "working_on": {
-    "feature": "Project Setup",
-    "task": "Khởi tạo LibMgnt Base Project",
+    "feature": "Authentication Integration",
+    "task": "Gắn Auth vào Frontend và tối ưu UI",
     "status": "completed",
-    "files": [],
+    "files": [
+      "src/features/auth/*",
+      "src/services/api.ts",
+      "src/routes/AppRouter.tsx",
+      "src/components/ui/protected-route/*"
+    ],
     "blockers": [],
-    "notes": "Hoàn tất việc set up cơ sở hạ tầng frontend"
+    "notes": "Đã hoàn thành tích hợp Auth, xử lý xong các lỗi kết nối DB và lỗi TS Enum."
   },
   "pending_tasks": [
     {
-      "task": "Tích hợp Database & Backend API",
+      "task": "Triển khai quản lý Sách (Books)",
       "priority": "high",
-      "notes": "Thay thế mock data bằng call API thật"
+      "notes": "CRUD sách, lọc và tìm kiếm"
     },
     {
-      "task": "Hoàn thiện UI cho trang Books và Readers",
+      "task": "Triển khai quản lý Độc giả (Readers)",
       "priority": "medium",
-      "notes": "Hiển thị bảng danh sách sách và người dùng"
+      "notes": "Quản lý thông tin người dùng"
     }
   ],
   "recent_changes": [
     {
-      "timestamp": "2026-04-19T01:30:00Z",
-      "type": "feature",
-      "description": "Thêm loading state vào Dashboard và tích hợp Toaster (shadcn/sonner) vào App.tsx",
-      "files": ["src/pages/Dashboard.tsx", "src/App.tsx"]
+      "timestamp": "2026-04-19T11:00:00Z",
+      "type": "ui",
+      "description": "Thêm hình nền Library-main.png vào trang Login/Register với hiệu ứng Glassmorphism",
+      "files": ["src/features/auth/LoginPage/LoginPage.tsx", "src/features/auth/RegisterPage/RegisterPage.tsx"]
     },
     {
-      "timestamp": "2026-04-19T01:25:00Z",
-      "type": "setup",
-      "description": "Khởi tạo Vite React TS, cài đặt Tailwind CSS v3, cấu hình shadcn/ui, thiết lập Alias paths",
-      "files": ["package.json", "tailwind.config.js", "tsconfig.json"]
+      "timestamp": "2026-04-19T10:45:00Z",
+      "type": "fix",
+      "description": "Sửa lỗi P1000 Prisma (tên DB sai) và lỗi TS 'erasableSyntaxOnly' (chuyển Enum sang Const Object)",
+      "files": ["backend/.env", "src/types/auth/user.entity.ts"]
+    },
+    {
+      "timestamp": "2026-04-19T10:35:00Z",
+      "type": "feature",
+      "description": "Tích hợp Auth flow (Login, Register, JWT handling, Protected Routes)",
+      "files": ["src/features/auth/", "src/services/api.ts", "App.tsx"]
     }
   ],
   "errors_encountered": [
     {
-      "error": "Lỗi TS5101: Option 'baseUrl' is deprecated (Vite template mới dùng TS 5.5+)",
-      "solution": "Thêm 'ignoreDeprecations': '6.0' vào tsconfig để tránh báo lỗi",
+      "error": "P1000: Authentication failed against database server (lib_mgnt vs libmgnt)",
+      "solution": "Đổi tên database trong .env thành libmgnt và restart backend server",
       "resolved": true
     },
     {
-      "error": "Lỗi Tailwind v4 PostCSS",
-      "solution": "Downgrade Tailwind xuống v3 để tương thích tốt nhất với shadcn mà không cần sửa đổi phức tạp",
+      "error": "TS: This syntax is not allowed when 'erasableSyntaxOnly' is enabled (Enum error)",
+      "solution": "Chuyển Enum sang 'const object + type' để TypeScript có thể xóa bỏ hoàn toàn cú pháp khi compile",
       "resolved": true
     }
   ],
   "decisions_made": [
     {
-      "decision": "Dùng Tailwind CSS v3 thay vì v4",
-      "reason": "Tương thích 100% với cấu trúc class mặc định của shadcn/ui"
+      "decision": "Sử dụng 'const object + as const' thay cho Enum cho UserRole",
+      "reason": "Khắc phục lỗi TS 5.5+ với config 'erasableSyntaxOnly: true' của Vite"
     },
     {
-      "decision": "Sử dụng Enum theo chuẩn cho Error/Status Codes",
-      "reason": "Giữ đúng quy tắc Type-First Development theo yêu cầu Antigravity"
+      "decision": "Dùng URL nền fixed cho Login/Register thay vì split layout",
+      "reason": "Phù hợp với ảnh library ngang và tạo cảm giác premium qua glassmorphism"
     }
   ]
 }

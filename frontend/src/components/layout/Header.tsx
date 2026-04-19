@@ -1,8 +1,11 @@
 import { Bell, Search, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/features/auth/auth.hook";
 
 export const Header = () => {
+  const { user } = useAuth();
+
   return (
     <header className="h-16 border-b border-border bg-card flex items-center justify-between px-6 shrink-0">
       <div className="flex items-center gap-4 flex-1">
@@ -24,7 +27,7 @@ export const Header = () => {
             <User className="h-4 w-4" />
           </div>
           <span className="text-sm font-medium hidden sm:block text-foreground">
-            Admin User
+            {user?.name || "User"}
           </span>
         </div>
       </div>

@@ -33,6 +33,7 @@ model User {
   id                 String          @id @default(uuid())
   name               String
   email              String          @unique
+  password           String
   role               UserRole        @default(STAFF)
   status             UserStatus      @default(ACTIVE)
   borrowLimit        Int             @default(5)

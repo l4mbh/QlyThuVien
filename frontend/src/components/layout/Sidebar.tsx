@@ -1,7 +1,10 @@
-import { Link, useLocation } from "react-router-dom";
-import { BookOpen, Users, BookCopy, LayoutDashboard, Menu } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { BookOpen, Users, BookCopy, LayoutDashboard, Menu, LogOut, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/features/auth/auth.hook";
+import { UserRole } from "@/types/auth/user.entity";
+import { toast } from "sonner";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -13,10 +16,23 @@ const navItems = [
   { icon: BookOpen, label: "Books", href: "/books" },
   { icon: Users, label: "Readers", href: "/readers" },
   { icon: BookCopy, label: "Borrow", href: "/borrow" },
+  { icon: BarChart3, label: "Reports", href: "/reports", roles: [UserRole.ADMIN] },
 ];
 
 export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    toast.success("Đã đăng xuất");
+    navigate("/login");
+  };
+
+  const filteredNavItems = navItems.filter(item => 
+    !item.roles || (user && item.roles.includes(user.role))
+  );
 
   return (
     <aside
@@ -40,7 +56,7 @@ export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
       </div>
 
       <nav className="flex-1 py-6 px-3 space-y-2">
-        {navItems.map((item) => {
+        {filteredNavItems.map((item) => {
           const isActive = location.pathname.startsWith(item.href);
           return (
             <Link
@@ -59,6 +75,20 @@ export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
           );
         })}
       </nav>
+
+      <div className="p-3 border-t border-border">
+        <Button
+          variant="ghost"
+          onClick={handleLogout}
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors justify-start",
+            !isOpen && "justify-center px-0"
+          )}
+        >
+          <LogOut className="h-5 w-5 shrink-0" />
+          {isOpen && <span className="font-medium">Đăng xuất</span>}
+        </Button>
+      </div>
     </aside>
   );
 };
