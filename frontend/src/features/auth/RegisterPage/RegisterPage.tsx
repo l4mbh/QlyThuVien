@@ -51,20 +51,20 @@ export const RegisterPage: React.FC = () => {
           backgroundRepeat: "no-repeat"
         }}
       >
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-slate-950/40" />
       </div>
 
-      <Card className="relative z-10 w-full max-w-md shadow-2xl border-white/10 bg-background/80 backdrop-blur-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Đăng ký</CardTitle>
-          <CardDescription className="text-center">
-            Tạo tài khoản mới để quản lý thư viện của bạn
+      <Card className="relative z-10 w-full max-w-md shadow-xl border-none bg-white dark:bg-slate-900 rounded-none">
+        <CardHeader className="space-y-1 pt-8">
+          <CardTitle className="text-3xl font-bold text-center tracking-tight">Đăng ký</CardTitle>
+          <CardDescription className="text-center text-slate-500">
+            Tạo tài khoản mới để bắt đầu quản lý
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <CardContent className="px-8 pb-8">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 Họ và tên
               </label>
               <Input
@@ -73,11 +73,11 @@ export const RegisterPage: React.FC = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="bg-background/50 border-white/10 transition-all focus:ring-2 focus:ring-primary/20"
+                className="rounded-none border-slate-200 focus:border-primary transition-all h-11"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 Email
               </label>
               <Input
@@ -86,11 +86,11 @@ export const RegisterPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-background/50 border-white/10 transition-all focus:ring-2 focus:ring-primary/20"
+                className="rounded-none border-slate-200 focus:border-primary transition-all h-11"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 Mật khẩu
               </label>
               <Input
@@ -99,11 +99,11 @@ export const RegisterPage: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="bg-background/50 border-white/10 transition-all focus:ring-2 focus:ring-primary/20"
+                className="rounded-none border-slate-200 focus:border-primary transition-all h-11"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 Xác nhận mật khẩu
               </label>
               <Input
@@ -112,22 +112,22 @@ export const RegisterPage: React.FC = () => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="bg-background/50 border-white/10 transition-all focus:ring-2 focus:ring-primary/20"
+                className="rounded-none border-slate-200 focus:border-primary transition-all h-11"
               />
             </div>
             <Button 
               type="submit" 
-              className="w-full font-semibold shadow-lg shadow-primary/20" 
+              className="w-full h-11 rounded-none font-bold uppercase tracking-widest text-xs transition-transform active:scale-[0.98]" 
               disabled={isSubmitting}
             >
               {isSubmitting ? "Đang xử lý..." : "Đăng ký"}
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
-          <div className="text-sm text-center text-muted-foreground">
+        <CardFooter className="flex flex-col space-y-4 pb-8 bg-slate-50 dark:bg-slate-950/50">
+          <div className="text-sm text-center text-slate-500">
             Đã có tài khoản?{" "}
-            <Link to="/login" className="text-primary hover:underline font-medium">
+            <Link to="/login" className="text-primary hover:text-primary/80 font-bold transition-colors">
               Đăng nhập ngay
             </Link>
           </div>
