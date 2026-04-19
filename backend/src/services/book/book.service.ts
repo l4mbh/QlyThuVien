@@ -1,12 +1,16 @@
 import { BookRepository } from "../../repositories/book/book.repository";
 import { CreateBookDTO, UpdateBookDTO, BookEntity } from "../../types/book/book.entity";
 import { ErrorCode } from "../../constants/errors/error.enum";
+import { CategoryService } from "../../modules/category/category.service";
+import { generateCallNumber } from "../../utils/generateCallNumber";
 
 export class BookService {
   private bookRepository: BookRepository;
+  private categoryService: CategoryService;
 
   constructor() {
     this.bookRepository = new BookRepository();
+    this.categoryService = new CategoryService();
   }
 
   async getAllBooks(): Promise<BookEntity[]> {
@@ -30,7 +34,35 @@ export class BookService {
       error.errorCode = ErrorCode.BOOK_ALREADY_EXISTS;
       throw error;
     }
-    return this.bookRepository.create(data);
+
+    // Handle Category
+    let categoryId = data.categoryId;
+    let category;
+    if (!categoryId) {
+      category = await this.categoryService.getOrCreateCategory("Unknown", "000");
+      categoryId = category.id;
+    } else {
+      category = await this.categoryService.getCategoryById(categoryId);
+      if (!category) {
+        const error = new Error("Category not found") as any;
+        error.errorCode = ErrorCode.CATEGORY_NOT_FOUND;
+        throw error;
+      }
+    }
+
+    // Handle Call Number
+    if (!data.callNumber) {
+      data.callNumber = await generateCallNumber(
+        data.author,
+        data.publishedYear || new Date().getFullYear(),
+        category.code || "000"
+      );
+    }
+
+    return this.bookRepository.create({
+      ...data,
+      categoryId
+    });
   }
 
   async updateBook(id: string, data: UpdateBookDTO): Promise<BookEntity> {

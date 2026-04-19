@@ -1,6 +1,6 @@
 generator client {
   provider   = "prisma-client-js"
-  engineType = "client"
+  engineType = "library"
 }
 
 datasource db {
@@ -45,17 +45,30 @@ model User {
   @@map("users")
 }
 
+model Category {
+  id        String   @id @default(uuid())
+  name      String
+  code      String?
+  createdAt DateTime @default(now())
+  books     Book[]
+
+  @@map("categories")
+}
+
 model Book {
-  id                String       @id @default(uuid())
+  id                String     @id @default(uuid())
   title             String
   author            String
-  isbn              String       @unique
+  isbn              String     @unique
   totalQuantity     Int
   availableQuantity Int
-  isArchived        Boolean      @default(false)
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  isArchived        Boolean    @default(false)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
   borrowItems       BorrowItem[]
+  categoryId        String?
+  category          Category?  @relation(fields: [categoryId], references: [id])
+  callNumber        String?
 
   @@map("books")
 }

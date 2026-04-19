@@ -8,6 +8,7 @@ export const ENV = {
   NODE_ENV: process.env.NODE_ENV || "development",
   JWT_SECRET: process.env.JWT_SECRET || "default_secret_key_change_me",
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "1d",
+  GOOGLE_BOOKS_API_KEY: process.env.GOOGLE_BOOKS_API_KEY || "",
 };
 
 if (!ENV.DATABASE_URL) {

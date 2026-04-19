@@ -1,23 +1,28 @@
 {
-  "updated_at": "2026-04-19T11:04:00Z",
+  "updated_at": "2026-04-20T00:33:00Z",
   "working_on": {
-    "feature": "Authentication Integration",
-    "task": "Gắn Auth vào Frontend và tối ưu UI",
+    "feature": "Category & ISBN Modules",
+    "task": "Xây dựng Backend service và API cho Category/ISBN",
     "status": "completed",
     "files": [
-      "src/features/auth/*",
-      "src/services/api.ts",
-      "src/routes/AppRouter.tsx",
-      "src/components/ui/protected-route/*"
+      "backend/src/modules/category/*",
+      "backend/src/modules/isbn/*",
+      "backend/prisma/schema.prisma",
+      "backend/src/routes/index.ts"
     ],
     "blockers": [],
-    "notes": "Đã hoàn thành tích hợp Auth, xử lý xong các lỗi kết nối DB và lỗi TS Enum."
+    "notes": "Đã hoàn thành phần logic backend cho việc lấy thông tin sách qua ISBN và quản lý danh mục."
   },
   "pending_tasks": [
     {
-      "task": "Triển khai quản lý Sách (Books)",
+      "task": "Triển khai UI quản lý Sách (Books)",
       "priority": "high",
-      "notes": "CRUD sách, lọc và tìm kiếm"
+      "notes": "Tích hợp ISBN fetcher vào form thêm sách"
+    },
+    {
+      "task": "Triển khai UI quản lý Danh mục (Categories)",
+      "priority": "medium",
+      "notes": "Trang danh sách và thêm/sửa danh mục"
     },
     {
       "task": "Triển khai quản lý Độc giả (Readers)",
@@ -27,44 +32,39 @@
   ],
   "recent_changes": [
     {
+      "timestamp": "2026-04-20T00:30:00Z",
+      "type": "feature",
+      "description": "Thêm module Category và ISBN service (Google Books + OpenLibrary fallback)",
+      "files": ["backend/src/modules/category/", "backend/src/modules/isbn/"]
+    },
+    {
+      "timestamp": "2026-04-20T00:15:00Z",
+      "type": "database",
+      "description": "Cập nhật Prisma schema thêm bảng Category và liên kết Book",
+      "files": ["backend/prisma/schema.prisma"]
+    },
+    {
       "timestamp": "2026-04-19T11:00:00Z",
       "type": "ui",
       "description": "Thêm hình nền Library-main.png vào trang Login/Register với hiệu ứng Glassmorphism",
       "files": ["src/features/auth/LoginPage/LoginPage.tsx", "src/features/auth/RegisterPage/RegisterPage.tsx"]
-    },
-    {
-      "timestamp": "2026-04-19T10:45:00Z",
-      "type": "fix",
-      "description": "Sửa lỗi P1000 Prisma (tên DB sai) và lỗi TS 'erasableSyntaxOnly' (chuyển Enum sang Const Object)",
-      "files": ["backend/.env", "src/types/auth/user.entity.ts"]
-    },
-    {
-      "timestamp": "2026-04-19T10:35:00Z",
-      "type": "feature",
-      "description": "Tích hợp Auth flow (Login, Register, JWT handling, Protected Routes)",
-      "files": ["src/features/auth/", "src/services/api.ts", "App.tsx"]
     }
   ],
   "errors_encountered": [
     {
-      "error": "P1000: Authentication failed against database server (lib_mgnt vs libmgnt)",
-      "solution": "Đổi tên database trong .env thành libmgnt và restart backend server",
-      "resolved": true
-    },
-    {
-      "error": "TS: This syntax is not allowed when 'erasableSyntaxOnly' is enabled (Enum error)",
-      "solution": "Chuyển Enum sang 'const object + type' để TypeScript có thể xóa bỏ hoàn toàn cú pháp khi compile",
+      "error": "Google Books API fallback",
+      "solution": "Triển khai OpenLibrary API làm fallback khi Google Books không tìm thấy ISBN hoặc bị lỗi",
       "resolved": true
     }
   ],
   "decisions_made": [
     {
-      "decision": "Sử dụng 'const object + as const' thay cho Enum cho UserRole",
-      "reason": "Khắc phục lỗi TS 5.5+ với config 'erasableSyntaxOnly: true' của Vite"
+      "decision": "Sử dụng 'categoryMap.json' để chuẩn hóa dữ liệu thể loại ngoại vi",
+      "reason": "Dữ liệu từ Google Books thường không đồng nhất, cần map về các mã danh mục nội bộ của thư viện"
     },
     {
-      "decision": "Dùng URL nền fixed cho Login/Register thay vì split layout",
-      "reason": "Phù hợp với ảnh library ngang và tạo cảm giác premium qua glassmorphism"
+      "decision": "Mount ISBN route dưới prefix /books",
+      "reason": "Giữ cho cấu trúc API gọn gàng vì ISBN fetcher phục vụ trực tiếp cho việc quản lý sách"
     }
   ]
 }

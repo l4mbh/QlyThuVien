@@ -15,6 +15,7 @@ export interface UserEntity {
 export interface CreateUserDTO {
   name: string;
   email: string;
+  password: string;
   role?: UserRole;
   borrowLimit?: number;
 }

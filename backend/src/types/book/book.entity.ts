@@ -1,3 +1,5 @@
+import { CategoryEntity } from "../category/category.entity";
+
 export interface BookEntity {
   id: string;
   title: string;
@@ -8,6 +10,9 @@ export interface BookEntity {
   isArchived: boolean;
   createdAt: Date;
   updatedAt: Date;
+  categoryId: string | null;
+  category?: CategoryEntity;
+  callNumber: string | null;
 }
 
 export interface CreateBookDTO {
@@ -15,6 +20,9 @@ export interface CreateBookDTO {
   author: string;
   isbn: string;
   totalQuantity: number;
+  categoryId?: string;
+  callNumber?: string;
+  publishedYear?: string | number; // Used for auto call number if not provided
 }
 
 export interface UpdateBookDTO {
@@ -23,4 +31,6 @@ export interface UpdateBookDTO {
   totalQuantity?: number;
   availableQuantity?: number;
   isArchived?: boolean;
+  categoryId?: string;
+  callNumber?: string;
 }

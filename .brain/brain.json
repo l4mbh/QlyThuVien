@@ -6,7 +6,7 @@
   "project": {
     "name": "LibMgnt",
     "type": "Library Management System Dashboard",
-    "status": "Implemented Authentication Flow"
+    "status": "Implemented Category & ISBN Modules"
   },
   "tech_stack": {
     "frontend": {
@@ -23,13 +23,23 @@
       "orm": "Prisma",
       "database": "PostgreSQL",
       "authentication": "JWT (jsonwebtoken)",
-      "validation": "Zod"
+      "validation": "Zod",
+      "external_apis": [
+        "Google Books API",
+        "OpenLibrary API"
+      ]
     }
   },
   "database_schema": {
-    "summary": "Database quan hệ PostgreSQL quản lý: Người dùng, Sách, Phiếu mượn và Chi tiết mượn sách.",
-    "tables": ["users", "books", "borrow_records", "borrow_items"],
-    "relationships_explained": "1 User có nhiều BorrowRecord. 1 BorrowRecord có nhiều BorrowItem (mỗi item liên kết với 1 Book)."
+    "summary": "Database quan hệ PostgreSQL quản lý: Người dùng, Danh mục, Sách, Phiếu mượn và Chi tiết mượn sách.",
+    "tables": [
+      "users",
+      "categories",
+      "books",
+      "borrow_records",
+      "borrow_items"
+    ],
+    "relationships_explained": "1 Category có nhiều Book. 1 User có nhiều BorrowRecord. 1 BorrowRecord có nhiều BorrowItem (mỗi item liên kết với 1 Book)."
   },
   "api_endpoints": [
     {
@@ -43,6 +53,14 @@
     {
       "path": "/auth/me",
       "explained": "Lấy thông tin profile user hiện tại qua JWT token"
+    },
+    {
+      "path": "/books/fetch-isbn/:isbn",
+      "explained": "Lấy thông tin sách từ Google Books/OpenLibrary theo mã ISBN"
+    },
+    {
+      "path": "/categories",
+      "explained": "Lấy danh sách các danh mục sách"
     }
   ],
   "business_rules": [
@@ -50,26 +68,32 @@
     "Mọi component UI dùng chung phải đặt vào thư mục src/components/ui",
     "Call API qua axios instance với Authorization header: Bearer <token>",
     "Tự động logout và điều hướng về /login nếu gặp lỗi 401 Unauthorized",
-    "Phân quyền: Chỉ ADMIN mới được xem Reports và các tính năng quản trị cao cấp"
+    "Phân quyền: Chỉ ADMIN mới được xem Reports và các tính năng quản trị cao cấp",
+    "Tự động ánh xạ thể loại sách từ nguồn bên ngoài sang danh mục nội bộ (Category Mapping)"
   ],
   "features": [
     "Dashboard: Xem tổng quan sách và độc giả",
     "Authentication: Hệ thống đăng nhập/đăng ký với JWT",
     "Protected Routes: Bảo vệ các trang nội bộ, yêu cầu login để truy cập",
-    "Role-based UI: Ẩn/hiện menu dựa trên quyền (Admin/Staff)"
+    "Role-based UI: Ẩn/hiện menu dựa trên quyền (Admin/Staff)",
+    "ISBN Integration: Tự động điền thông tin sách qua mã ISBN",
+    "Category Management: Quản lý danh mục sách với mã phân loại"
   ],
   "knowledge_items": {
     "patterns": [
       "Atomic UI Decomposition: Chia nhỏ UI thay vì viết lồng nhau",
-      "Module-Based Types: Chia nhỏ interface theo tính năng (src/types/auth/)"
+      "Module-Based Types: Chia nhỏ interface theo tính năng (src/types/auth/)",
+      "Service Fallback: Sử dụng OpenLibrary làm fallback nếu Google Books lỗi"
     ],
     "gotchas": [
       "TypeScript v5.5+: erasableSyntaxOnly: true khiến Enum bị lỗi, cần dùng 'const object + type' thay thế",
-      "Prisma DB Connection: Cần restart server sau khi thay đổi .env để nhận cấu hình DB mới"
+      "Prisma DB Connection: Cần restart server sau khi thay đổi .env để nhận cấu hình DB mới",
+      "ISBN API Limits: Lưu ý giới hạn rate limit của Google Books API"
     ],
     "conventions": [
-      "Folder Structure 100% Encapsulation: Mỗi component phức tạp (như LoginPage) nằm trong folder riêng",
-      "Zero 'any' Policy: Sử dụng 'type' hoặc 'interface' cho mọi dữ liệu"
+      "Folder Structure 100% Encapsulation: Mỗi component phức tạp nằm trong folder riêng",
+      "Zero 'any' Policy: Sử dụng 'type' hoặc 'interface' cho mọi dữ liệu",
+      "HTTP 200 Always Success: Backend luôn trả về code 200, status thực tế nằm trong body"
     ]
   }
 }

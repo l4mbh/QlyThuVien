@@ -4,6 +4,9 @@ export const ErrorMessages: Record<ErrorCode, string> = {
   [ErrorCode.SUCCESS]: "Operation successful",
   
   [ErrorCode.UNAUTHORIZED]: "Unauthorized access",
+  [ErrorCode.INVALID_CREDENTIALS]: "Invalid email or password",
+  [ErrorCode.TOKEN_INVALID]: "Invalid token",
+  [ErrorCode.TOKEN_EXPIRED]: "Token has expired",
   [ErrorCode.FORBIDDEN]: "Permission denied",
   [ErrorCode.NOT_FOUND]: "Resource not found",
   [ErrorCode.INTERNAL_SERVER_ERROR]: "Internal server error",
@@ -20,4 +23,10 @@ export const ErrorMessages: Record<ErrorCode, string> = {
 
   [ErrorCode.BORROW_RECORD_NOT_FOUND]: "Borrow record not found",
   [ErrorCode.INVALID_BORROW_OPERATION]: "Invalid borrow operation",
+
+  [ErrorCode.CATEGORY_NOT_FOUND]: "Category not found",
+  [ErrorCode.CATEGORY_ALREADY_EXISTS]: "Category with this name already exists",
+
+  [ErrorCode.ISBN_NOT_FOUND]: "ISBN not found in external sources",
+  [ErrorCode.ISBN_FETCH_FAILED]: "Failed to fetch book data from external APIs",
 };
