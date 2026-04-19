@@ -1,0 +1,59 @@
+{
+  "updated_at": "2026-04-19T01:31:00Z",
+  "working_on": {
+    "feature": "Project Setup",
+    "task": "Khởi tạo LibMgnt Base Project",
+    "status": "completed",
+    "files": [],
+    "blockers": [],
+    "notes": "Hoàn tất việc set up cơ sở hạ tầng frontend"
+  },
+  "pending_tasks": [
+    {
+      "task": "Tích hợp Database & Backend API",
+      "priority": "high",
+      "notes": "Thay thế mock data bằng call API thật"
+    },
+    {
+      "task": "Hoàn thiện UI cho trang Books và Readers",
+      "priority": "medium",
+      "notes": "Hiển thị bảng danh sách sách và người dùng"
+    }
+  ],
+  "recent_changes": [
+    {
+      "timestamp": "2026-04-19T01:30:00Z",
+      "type": "feature",
+      "description": "Thêm loading state vào Dashboard và tích hợp Toaster (shadcn/sonner) vào App.tsx",
+      "files": ["src/pages/Dashboard.tsx", "src/App.tsx"]
+    },
+    {
+      "timestamp": "2026-04-19T01:25:00Z",
+      "type": "setup",
+      "description": "Khởi tạo Vite React TS, cài đặt Tailwind CSS v3, cấu hình shadcn/ui, thiết lập Alias paths",
+      "files": ["package.json", "tailwind.config.js", "tsconfig.json"]
+    }
+  ],
+  "errors_encountered": [
+    {
+      "error": "Lỗi TS5101: Option 'baseUrl' is deprecated (Vite template mới dùng TS 5.5+)",
+      "solution": "Thêm 'ignoreDeprecations': '6.0' vào tsconfig để tránh báo lỗi",
+      "resolved": true
+    },
+    {
+      "error": "Lỗi Tailwind v4 PostCSS",
+      "solution": "Downgrade Tailwind xuống v3 để tương thích tốt nhất với shadcn mà không cần sửa đổi phức tạp",
+      "resolved": true
+    }
+  ],
+  "decisions_made": [
+    {
+      "decision": "Dùng Tailwind CSS v3 thay vì v4",
+      "reason": "Tương thích 100% với cấu trúc class mặc định của shadcn/ui"
+    },
+    {
+      "decision": "Sử dụng Enum theo chuẩn cho Error/Status Codes",
+      "reason": "Giữ đúng quy tắc Type-First Development theo yêu cầu Antigravity"
+    }
+  ]
+}

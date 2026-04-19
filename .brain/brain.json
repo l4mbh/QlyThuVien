@@ -1,0 +1,58 @@
+{
+  "meta": {
+    "schema_version": "1.1.0",
+    "awf_version": "3.3.0"
+  },
+  "project": {
+    "name": "LibMgnt",
+    "type": "Library Management System Dashboard",
+    "status": "Initialized base setup"
+  },
+  "tech_stack": {
+    "frontend": {
+      "framework": "React + Vite",
+      "language": "TypeScript",
+      "styling": "Tailwind CSS v3",
+      "ui_components": "shadcn/ui (radix-ui, lucide-react)",
+      "routing": "React Router DOM",
+      "api_client": "Axios",
+      "notifications": "Sonner (Toast)"
+    }
+  },
+  "database_schema": {
+    "summary": "Dự án hiện tại là Frontend, chưa có database thực tế. Sử dụng các interface (ví dụ: User, Book, BorrowRecord) để làm dữ liệu mẫu.",
+    "tables": [],
+    "relationships_explained": "Tạm thời: 1 User có thể mượn nhiều Book, được theo dõi qua BorrowRecord."
+  },
+  "api_endpoints": [
+    {
+      "path": "/api/*",
+      "explained": "Base URL cho tất cả API call, hiện được quản lý bởi Axios instance tại src/services/api.ts"
+    }
+  ],
+  "business_rules": [
+    "Sử dụng chuẩn DRY, không lặp lại code",
+    "Mọi component UI dùng chung phải đặt vào thư mục src/components/ui",
+    "Call API qua axios instance thay vì gọi fetch trực tiếp",
+    "Sử dụng Enum cho Error code và Status code (tại src/types/api.enum.ts)"
+  ],
+  "features": [
+    "Dashboard: Xem tổng quan sách và độc giả",
+    "Books: Quản lý sách (placeholder)",
+    "Readers: Quản lý độc giả (placeholder)",
+    "Borrow: Mượn trả sách (modal)"
+  ],
+  "knowledge_items": {
+    "patterns": [
+      "Atomic UI Decomposition: Chia nhỏ UI thay vì viết lồng nhau",
+      "Module-Based Types: Chia nhỏ interface theo tính năng"
+    ],
+    "gotchas": [
+      "TypeScript v5.5+ bắt buộc cấu hình paths cẩn thận để tránh lỗi baseUrl bị deprecate"
+    ],
+    "conventions": [
+      "Folder Structure 100% Encapsulation: Mỗi component phức tạp nên nằm trong 1 folder",
+      "Zero 'any' Policy: Tất cả dữ liệu phải có kiểu rõ ràng"
+    ]
+  }
+}

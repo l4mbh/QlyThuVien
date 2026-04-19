@@ -1,0 +1,88 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+}
+
+enum BorrowRecordStatus {
+  BORROWING
+  OVERDUE
+  COMPLETED
+}
+
+enum BorrowItemStatus {
+  BORROWING
+  RETURNED
+  OVERDUE
+}
+
+model User {
+  id                 String          @id @default(uuid())
+  name               String
+  email              String          @unique
+  role               UserRole        @default(STAFF)
+  status             UserStatus      @default(ACTIVE)
+  borrowLimit        Int             @default(5)
+  currentBorrowCount Int             @default(0)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  borrowRecords      BorrowRecord[]
+
+  @@map("users")
+}
+
+model Book {
+  id                String       @id @default(uuid())
+  title             String
+  author            String
+  isbn              String       @unique
+  totalQuantity     Int
+  availableQuantity Int
+  isArchived        Boolean      @default(false)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  borrowItems       BorrowItem[]
+
+  @@map("books")
+}
+
+model BorrowRecord {
+  id          String             @id @default(uuid())
+  userId      String
+  user        User               @relation(fields: [userId], references: [id])
+  borrowDate  DateTime           @default(now())
+  dueDate     DateTime
+  status      BorrowRecordStatus @default(BORROWING)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  borrowItems BorrowItem[]
+
+  @@map("borrow_records")
+}
+
+model BorrowItem {
+  id             String           @id @default(uuid())
+  borrowRecordId String
+  borrowRecord   BorrowRecord     @relation(fields: [borrowRecordId], references: [id])
+  bookId         String
+  book           Book             @relation(fields: [bookId], references: [id])
+  status         BorrowItemStatus @default(BORROWING)
+  borrowedAt     DateTime         @default(now())
+  returnedAt     DateTime?
+  updatedAt      DateTime         @updatedAt
+
+  @@map("borrow_items")
+}
