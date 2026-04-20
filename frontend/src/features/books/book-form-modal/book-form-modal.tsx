@@ -46,7 +46,6 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetchingIsbn, setIsFetchingIsbn] = useState(false);
   const [isbnInput, setIsbnInput] = useState("");
-  const [coverUrl, setCoverUrl] = useState<string | undefined>(selectedBook?.coverUrl);
 
   // Confirmation states
   const [isConfirmCloseOpen, setIsConfirmCloseOpen] = useState(false);
@@ -69,11 +68,13 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
       totalQuantity: 1,
       categoryId: "",
       callNumber: "",
+      coverUrl: "",
     },
   });
 
   const watchedCategoryId = watch("categoryId");
   const watchedAuthor = watch("author");
+  const watchedCoverUrl = watch("coverUrl");
 
   // Reset form when modal opens/changes
   useEffect(() => {
@@ -86,9 +87,9 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
           totalQuantity: selectedBook.totalQuantity,
           categoryId: selectedBook.categoryId || "",
           callNumber: selectedBook.callNumber || "",
+          coverUrl: selectedBook.coverUrl || "",
         });
         setIsbnInput(selectedBook.isbn);
-        setCoverUrl(selectedBook.coverUrl);
       } else {
         reset({
           title: "",
@@ -97,9 +98,9 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
           totalQuantity: 1,
           categoryId: "",
           callNumber: "",
+          coverUrl: "",
         });
         setIsbnInput("");
-        setCoverUrl(undefined);
       }
     }
   }, [isOpen, selectedBook, reset]);
@@ -151,7 +152,7 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
         setValue("title", title, { shouldDirty: true });
         setValue("author", author, { shouldDirty: true });
         setValue("isbn", isbnInput, { shouldDirty: true });
-        setCoverUrl(coverUrl);
+        setValue("coverUrl", coverUrl || "", { shouldDirty: true });
 
         if (categoryName) {
           const matchedCategory = categories.find(
@@ -225,7 +226,12 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
           </DialogHeader>
 
           {!selectedBook && (
-            <div className="flex gap-2 items-end mb-4 bg-muted/30 p-4 rounded-lg border">
+            <div className="flex gap-4 items-start mb-4 bg-muted/30 p-4 rounded-lg border">
+              {watchedCoverUrl && (
+                <div className="h-24 w-16 bg-muted rounded overflow-hidden flex-shrink-0 border shadow-sm">
+                  <img src={watchedCoverUrl} alt="Preview" className="h-full w-full object-cover" />
+                </div>
+              )}
               <div className="flex-1 space-y-2">
                 <Label htmlFor="isbn-fetch">Smart ISBN Fetch</Label>
                 <div className="relative">
@@ -238,16 +244,31 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
                   />
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 </div>
+                <div className="flex justify-end pt-1">
+                  <Button
+                    type="button"
+                    onClick={handleFetchIsbn}
+                    disabled={isFetchingIsbn || !isbnInput}
+                    variant="secondary"
+                    size="sm"
+                  >
+                    {isFetchingIsbn ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Info className="mr-2 h-4 w-4" />}
+                    Fetch Info
+                  </Button>
+                </div>
               </div>
-              <Button
-                type="button"
-                onClick={handleFetchIsbn}
-                disabled={isFetchingIsbn || !isbnInput}
-                variant="secondary"
-              >
-                {isFetchingIsbn ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Info className="mr-2 h-4 w-4" />}
-                Fetch Info
-              </Button>
+            </div>
+          )}
+
+          {selectedBook && watchedCoverUrl && (
+            <div className="flex gap-4 items-center mb-4 p-4 rounded-lg border bg-muted/10">
+              <div className="h-20 w-14 bg-muted rounded overflow-hidden flex-shrink-0 border shadow-sm">
+                <img src={watchedCoverUrl} alt="Cover" className="h-full w-full object-cover" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Current Book Cover</p>
+                <p className="text-xs text-muted-foreground">This image will be displayed in the library catalog.</p>
+              </div>
             </div>
           )}
 
@@ -303,9 +324,14 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
               <div className="space-y-2">
                 <Label htmlFor="callNumber">Call Number *</Label>
                 <Input id="callNumber" {...register("callNumber")} className={errors.callNumber ? "border-destructive" : ""} />
-                <p className="text-[10px] text-muted-foreground italic">
-                  Auto: {watchedCategoryId ? generateCallNumber(watchedCategoryId, watchedAuthor) : "Select category"}
-                </p>
+                <div className="flex flex-col gap-0.5">
+                  <p className="text-[10px] text-muted-foreground italic">
+                    Auto: {watchedCategoryId ? generateCallNumber(watchedCategoryId, watchedAuthor) : "Select category"}
+                  </p>
+                  <p className="text-[10px] text-primary/70 italic">
+                    * Duplicates will automatically get suffixes (e.g., .1, .2)
+                  </p>
+                </div>
                 {errors.callNumber && <p className="text-xs text-destructive">{errors.callNumber.message}</p>}
               </div>
             </div>

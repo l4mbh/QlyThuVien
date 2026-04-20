@@ -14,6 +14,6 @@ export async function generateCallNumber(
     where: { callNumber: { startsWith: base } },
   });
 
-  const suffix = count > 0 ? String.fromCharCode(65 + count - 1) : '';
+  const suffix = count > 0 ? `.${count}` : '';
   return base + suffix;
 }

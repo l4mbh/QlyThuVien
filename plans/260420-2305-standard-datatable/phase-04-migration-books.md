@@ -1,24 +1,24 @@
 # Phase 04: Migration - Books
-Status: ⬜ Pending
+Status: ✅ Complete
 Dependencies: Phase 01, Phase 02, Phase 03
 
 ## Objective
 Chuyển đổi trang Quản lý Sách sang hệ thống DataTable, hỗ trợ các bộ lọc chuyên sâu và hiển thị dữ liệu phức tạp.
 
 ## Tasks
-- [ ] **Task 1: Cập nhật Book API ở Frontend**
+- [x] **Task 1: Cập nhật Book API ở Frontend**
   - Chỉnh sửa `src/features/books/book.service.ts`.
   - Hỗ trợ đầy đủ params: `page`, `limit`, `search`, `categoryId`, `available`, `sort`.
-- [ ] **Task 2: Định nghĩa Columns cho Books**
+- [x] **Task 2: Định nghĩa Columns cho Books**
   - Tạo `src/features/books/components/book-columns.tsx`.
   - Hiển thị thông tin sách chuyên nghiệp: Ảnh bìa (nếu có), Tên sách, Tác giả, Thể loại (Badge), Số lượng (Indicator), Trạng thái.
-- [ ] **Task 3: Refactor Book Management**
+- [x] **Task 3: Refactor Book Management**
   - Chuyển đổi trang Sách sang dùng `DataTable`.
-- [ ] **Task 4: Advanced Toolbar Filters**
+- [x] **Task 4: Advanced Toolbar Filters**
   - Tích hợp thêm các bộ lọc vào `DataTableToolbar`: 
     - Dropdown chọn Thể loại.
     - Toggle chọn trạng thái (Còn sách/Hết sách).
-- [ ] **Task 5: Bulk Actions & Export**
+- [x] **Task 5: Bulk Actions & Export**
   - Xử lý xóa nhiều sách.
   - Tích hợp tính năng Export dữ liệu ra file Excel/CSV (nếu cần).
 

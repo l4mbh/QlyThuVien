@@ -1,24 +1,18 @@
 {
-  "updated_at": "2026-04-20T23:43:00Z",
+  "updated_at": "2026-04-21T00:15:00Z",
   "working_on": {
     "feature": "Standard DataTable Migration",
-    "task": "Phase 3: Category Migration & Global Localization",
+    "task": "Phase 4: Book Migration & Database Sync",
     "status": "completed",
     "files": [
-      "frontend/src/features/categories/*",
-      "frontend/src/components/ui/data-table/*",
-      "frontend/src/features/auth/*",
-      "frontend/src/components/layout/Sidebar.tsx"
+      "frontend/src/features/books/*",
+      "backend/src/repositories/book/*",
+      "backend/prisma/schema.prisma"
     ],
     "blockers": [],
-    "notes": "Completed migration of Categories to generic DataTable. Standardized UI and Toasts to English project-wide."
+    "notes": "Completed migration of Books to generic DataTable. Added coverUrl to DB. Fixed Prisma relation issues. Implemented numeric sequence call numbers."
   },
   "pending_tasks": [
-    {
-      "task": "Phase 4: Migration - Books",
-      "priority": "high",
-      "notes": "Migrate Book Management to the standardized DataTable pattern"
-    },
     {
       "task": "Readers Module",
       "priority": "medium",
@@ -32,43 +26,59 @@
   ],
   "recent_changes": [
     {
-      "timestamp": "2026-04-20T23:30:00Z",
+      "timestamp": "2026-04-21T00:05:00Z",
       "type": "feature",
-      "description": "Category Migration to DataTable with Bulk Delete and Book constraints check",
-      "files": ["backend/src/repositories/category/", "frontend/src/features/categories/"]
+      "description": "Book Migration to DataTable with Advanced Filters and Bulk Delete",
+      "files": ["frontend/src/features/books/"]
     },
     {
-      "timestamp": "2026-04-20T23:40:00Z",
-      "type": "ui",
-      "description": "Global English Localization (UI, Toasts, Buttons)",
-      "files": ["frontend/src/**/*"]
+      "timestamp": "2026-04-21T00:08:00Z",
+      "type": "db",
+      "description": "Added coverUrl field to Book model and synced with DB",
+      "files": ["backend/prisma/schema.prisma"]
     },
     {
-      "timestamp": "2026-04-20T23:37:00Z",
+      "timestamp": "2026-04-21T00:06:00Z",
       "type": "fix",
-      "description": "Fixed TanStack Table SyntaxError in Vite by using 'import type'",
-      "files": ["frontend/src/components/ui/data-table/data-table.tsx"]
+      "description": "Fixed Prisma categoryId vs category connect validation error",
+      "files": ["backend/src/repositories/book/book.repository.ts"]
+    },
+    {
+      "timestamp": "2026-04-21T00:06:30Z",
+      "type": "logic",
+      "description": "Call Number suffix changed to numeric sequence (.1, .2...)",
+      "files": ["backend/src/utils/generateCallNumber.ts"]
     }
   ],
   "errors_encountered": [
     {
-      "error": "TanStack Table ColumnDef SyntaxError",
-      "solution": "Import types using 'import type { ... }' to satisfy Vite's ESM requirement",
+      "error": "categories.map is not a function",
+      "solution": "Handle paginated response by extracting 'items' and adding robust type checking",
+      "resolved": true
+    },
+    {
+      "error": "Prisma Unknown argument categoryId",
+      "solution": "Use relation connect syntax: category: { connect: { id: categoryId } }",
+      "resolved": true
+    },
+    {
+      "error": "P2022: Column coverUrl not found",
+      "solution": "Run 'npx prisma db push' after schema update",
       "resolved": true
     }
   ],
   "decisions_made": [
     {
-      "decision": "Use generic useDataTable hook and DataTable component",
-      "reason": "Ensure consistency and reduce boilerplate for future modules"
+      "decision": "Use numeric suffixes for duplicate call numbers",
+      "reason": "Clearer sequence and aligns with library standards (.1, .2...)"
     },
     {
-      "decision": "Refuse category deletion if linked to books",
-      "reason": "Maintain data integrity (Foreign Key constraint equivalent in service layer)"
+      "decision": "Fetch categories with limit: 100 for filter dropdowns",
+      "reason": "Ensure all categories are available in filters without full pagination complexity"
     },
     {
-      "decision": "Strict English UI and Toast standard",
-      "reason": "Maintain professional consistency and follow user requirement"
+      "decision": "Show book cover preview in ISBN smart fetch",
+      "reason": "Improve UX and data verification before saving"
     }
   ]
 }

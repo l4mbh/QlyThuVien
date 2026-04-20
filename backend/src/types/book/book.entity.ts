@@ -13,6 +13,7 @@ export interface BookEntity {
   categoryId: string | null;
   category?: CategoryEntity;
   callNumber: string | null;
+  coverUrl: string | null;
 }
 
 export interface CreateBookDTO {
@@ -22,6 +23,7 @@ export interface CreateBookDTO {
   totalQuantity: number;
   categoryId?: string;
   callNumber?: string;
+  coverUrl?: string;
   publishedYear?: string | number; // Used for auto call number if not provided
 }
 
@@ -33,6 +35,7 @@ export interface UpdateBookDTO {
   isArchived?: boolean;
   categoryId?: string;
   callNumber?: string;
+  coverUrl?: string;
 }
 
 export interface BookFilterDTO {

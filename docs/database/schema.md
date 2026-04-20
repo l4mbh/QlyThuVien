@@ -48,6 +48,7 @@ Thông tin chi tiết về sách.
 | availableQuantity | Int | Số lượng còn lại trong kho |
 | categoryId | String | Liên kết tới Category |
 | callNumber | String | Số hiệu sách trên kệ |
+| coverUrl | String | URL ảnh bìa sách |
 | isArchived | Boolean | Đánh dấu sách đã lưu trữ/hủy |
 
 ### 4. `borrow_records`

@@ -76,6 +76,10 @@ export class BookService {
     await this.getBookById(id);
     return this.bookRepository.softDelete(id);
   }
+
+  async bulkDeleteBooks(ids: string[]): Promise<{ count: number }> {
+    return this.bookRepository.bulkDelete(ids);
+  }
 }
 
 export class IsbnService {

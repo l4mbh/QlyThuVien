@@ -1,15 +1,17 @@
 import { api } from "@/services/api";
-import type { ApiResponse } from "@/types/response.type";
+import type { ApiResponse, PaginatedData } from "@/types/response.type";
 import type { BookEntity, CreateBookDTO, UpdateBookDTO, BookFetchInfo } from "@/types/books/book.entity";
 import type { CategoryEntity } from "@/types/category/category.entity";
 
 export const bookService = {
   getBooks: async (params?: {
+    page?: number;
+    limit?: number;
     search?: string;
     categoryId?: string;
     available?: boolean;
     sort?: string;
-  }): Promise<ApiResponse<BookEntity[]>> => {
+  }): Promise<ApiResponse<PaginatedData<BookEntity>>> => {
     const response = await api.get("/books", { params });
     return response.data;
   },
@@ -34,13 +36,18 @@ export const bookService = {
     return response.data;
   },
 
+  bulkDeleteBooks: async (ids: string[]): Promise<ApiResponse<{ count: number }>> => {
+    const response = await api.delete("/books/bulk", { data: { ids } });
+    return response.data;
+  },
+
   fetchISBN: async (isbn: string): Promise<ApiResponse<BookFetchInfo>> => {
     const response = await api.get(`/books/fetch-isbn/${isbn}`);
     return response.data;
   },
 
-  getCategories: async (): Promise<ApiResponse<CategoryEntity[]>> => {
-    const response = await api.get("/categories");
+  getCategories: async (params?: { page?: number; limit?: number; search?: string }): Promise<ApiResponse<PaginatedData<CategoryEntity>>> => {
+    const response = await api.get("/categories", { params });
     return response.data;
   },
 };

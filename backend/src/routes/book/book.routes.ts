@@ -11,6 +11,7 @@ router.post("/", authMiddleware, roleMiddleware([UserRole.ADMIN, UserRole.STAFF]
 router.get("/:id", authMiddleware, bookController.getBookById);
 router.get("/fetch-isbn/:isbn", authMiddleware, bookController.fetchISBN);
 router.patch("/:id", authMiddleware, roleMiddleware([UserRole.ADMIN, UserRole.STAFF]), bookController.updateBook);
+router.delete("/bulk", authMiddleware, roleMiddleware([UserRole.ADMIN]), bookController.bulkDeleteBooks);
 router.delete("/:id", authMiddleware, roleMiddleware([UserRole.ADMIN]), bookController.deleteBook);
 
 export default router;

@@ -38,6 +38,7 @@ interface DataTableProps<TData, TValue> {
   showExport?: boolean;
   showImport?: boolean;
   onBulkDelete?: (ids: string[]) => void;
+  children?: React.ReactNode;
 }
 
 export function DataTable<TData, TValue>({
@@ -57,6 +58,7 @@ export function DataTable<TData, TValue>({
   showExport,
   showImport,
   onBulkDelete,
+  children,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
 
@@ -95,7 +97,9 @@ export function DataTable<TData, TValue>({
         selectedCount={selectedRows.length}
         onBulkDelete={handleBulkDelete}
         onClearSelection={() => setRowSelection({})}
-      />
+      >
+        {children}
+      </DataTableToolbar>
 
       <div className="rounded-xl border border-muted-foreground/10 bg-card overflow-hidden shadow-sm">
         <Table>

@@ -7,6 +7,7 @@ export const bookFormSchema = z.object({
   totalQuantity: z.coerce.number().min(0, "Quantity must be at least 0"),
   categoryId: z.string().min(1, "Category is required"),
   callNumber: z.string().min(1, "Call number is required"),
+  coverUrl: z.string().optional(),
 });
 
 export type BookFormValues = z.infer<typeof bookFormSchema>;

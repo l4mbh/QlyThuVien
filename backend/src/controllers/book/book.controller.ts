@@ -70,6 +70,17 @@ export class BookController {
     }
   };
 
+  bulkDeleteBooks = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { ids } = req.body;
+      const result = await this.bookService.bulkDeleteBooks(ids);
+      const response: ApiResponse = { data: result, code: ErrorCode.SUCCESS };
+      res.json(response);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   fetchISBN = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const info = await this.isbnService.fetchBookInfo(req.params.isbn as string);

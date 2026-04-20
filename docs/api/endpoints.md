@@ -33,6 +33,11 @@ List books with filters (search, categoryId, available, sort).
 ### POST `/books`
 Add new book.
 
+### DELETE `/books/bulk`
+Bulk delete books.
+**Request:** `{ ids: string[] }`
+**Response:** `{ data: { count }, code: 0 }`
+
 ### GET `/books/fetch-isbn/:isbn`
 Smart fetch book info from external APIs.
 **Response:** `{ data: { title, author, category, publishedYear, coverUrl }, code: 0 }`

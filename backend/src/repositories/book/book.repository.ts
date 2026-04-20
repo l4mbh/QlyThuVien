@@ -61,20 +61,25 @@ export class BookRepository {
   }
 
   async create(data: CreateBookDTO): Promise<BookEntity> {
-    const { publishedYear, ...createData } = data;
+    const { publishedYear, categoryId, ...createData } = data;
     return prisma.book.create({
       data: {
         ...createData,
         availableQuantity: data.totalQuantity,
+        category: categoryId ? { connect: { id: categoryId } } : undefined,
       },
       include: { category: true }
     }) as unknown as BookEntity;
   }
 
   async update(id: string, data: UpdateBookDTO): Promise<BookEntity> {
+    const { categoryId, ...updateData } = data;
     return prisma.book.update({ 
       where: { id }, 
-      data,
+      data: {
+        ...updateData,
+        category: categoryId ? { connect: { id: categoryId } } : undefined,
+      },
       include: { category: true }
     }) as unknown as BookEntity;
   }
@@ -84,6 +89,13 @@ export class BookRepository {
       where: { id },
       data: { isArchived: true },
     }) as unknown as BookEntity;
+  }
+
+  async bulkDelete(ids: string[]): Promise<{ count: number }> {
+    return prisma.book.updateMany({
+      where: { id: { in: ids } },
+      data: { isArchived: true },
+    });
   }
 
   async updateAvailableQuantity(id: string, increment: number): Promise<BookEntity> {

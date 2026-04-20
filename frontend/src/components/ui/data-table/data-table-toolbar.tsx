@@ -12,6 +12,7 @@ interface DataTableToolbarProps {
   selectedCount?: number;
   onBulkDelete?: () => void;
   onClearSelection?: () => void;
+  children?: React.ReactNode;
 }
 
 export function DataTableToolbar({
@@ -24,6 +25,7 @@ export function DataTableToolbar({
   selectedCount = 0,
   onBulkDelete,
   onClearSelection,
+  children,
 }: DataTableToolbarProps) {
   return (
     <div className="flex flex-col gap-4 py-4">
@@ -38,6 +40,13 @@ export function DataTableToolbar({
             className="pl-10 h-10 bg-background border-muted-foreground/20 focus:border-primary transition-colors"
           />
         </div>
+
+        {/* Custom Filters */}
+        {children && (
+          <div className="flex items-center gap-2 flex-1 lg:flex-none">
+            {children}
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2">

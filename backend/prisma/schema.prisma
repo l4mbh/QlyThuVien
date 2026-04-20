@@ -69,6 +69,7 @@ model Book {
   categoryId        String?
   category          Category?  @relation(fields: [categoryId], references: [id])
   callNumber        String?
+  coverUrl          String?
 
   @@map("books")
 }
