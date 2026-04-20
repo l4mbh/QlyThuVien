@@ -18,17 +18,17 @@ export const LoginPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      toast.error("Vui lòng nhập đầy đủ email và mật khẩu");
+      toast.error("Please enter email and password");
       return;
     }
 
     setIsSubmitting(true);
     try {
       await login({ email, password });
-      toast.success("Đăng nhập thành công");
+      toast.success("Login successful");
       navigate(from, { replace: true });
     } catch (error: any) {
-      toast.error(error.message || "Email hoặc mật khẩu không chính xác");
+      toast.error(error.message || "Invalid email or password");
     } finally {
       setIsSubmitting(false);
     }
@@ -51,9 +51,9 @@ export const LoginPage: React.FC = () => {
 
       <Card className="relative z-10 w-full max-w-md shadow-xl border-none bg-white dark:bg-slate-900 rounded-none">
         <CardHeader className="space-y-1 pt-8">
-          <CardTitle className="text-3xl font-bold text-center tracking-tight">Đăng nhập</CardTitle>
+          <CardTitle className="text-3xl font-bold text-center tracking-tight">Login</CardTitle>
           <CardDescription className="text-center text-slate-500">
-            Hệ thống quản lý thư viện LibMgnt
+            Library Management System - LibMgnt
           </CardDescription>
         </CardHeader>
         <CardContent className="px-8 pb-8">
@@ -73,7 +73,7 @@ export const LoginPage: React.FC = () => {
             </div>
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Mật khẩu
+                Password
               </label>
               <Input
                 type="password"
@@ -89,15 +89,15 @@ export const LoginPage: React.FC = () => {
               className="w-full h-11 rounded-none font-bold uppercase tracking-widest text-xs transition-transform active:scale-[0.98]" 
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Đang xử lý..." : "Đăng nhập"}
+              {isSubmitting ? "Processing..." : "Login"}
             </Button>
           </form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4 pb-8 bg-slate-50 dark:bg-slate-950/50">
           <div className="text-sm text-center text-slate-500">
-            Chưa có tài khoản?{" "}
+            Don't have an account?{" "}
             <Link to="/register" className="text-primary hover:text-primary/80 font-bold transition-colors">
-              Đăng ký ngay
+              Register now
             </Link>
           </div>
         </CardFooter>

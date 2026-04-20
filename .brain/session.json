@@ -1,70 +1,74 @@
 {
-  "updated_at": "2026-04-20T00:33:00Z",
+  "updated_at": "2026-04-20T23:43:00Z",
   "working_on": {
-    "feature": "Category & ISBN Modules",
-    "task": "Xây dựng Backend service và API cho Category/ISBN",
+    "feature": "Standard DataTable Migration",
+    "task": "Phase 3: Category Migration & Global Localization",
     "status": "completed",
     "files": [
-      "backend/src/modules/category/*",
-      "backend/src/modules/isbn/*",
-      "backend/prisma/schema.prisma",
-      "backend/src/routes/index.ts"
+      "frontend/src/features/categories/*",
+      "frontend/src/components/ui/data-table/*",
+      "frontend/src/features/auth/*",
+      "frontend/src/components/layout/Sidebar.tsx"
     ],
     "blockers": [],
-    "notes": "Đã hoàn thành phần logic backend cho việc lấy thông tin sách qua ISBN và quản lý danh mục."
+    "notes": "Completed migration of Categories to generic DataTable. Standardized UI and Toasts to English project-wide."
   },
   "pending_tasks": [
     {
-      "task": "Triển khai UI quản lý Sách (Books)",
+      "task": "Phase 4: Migration - Books",
       "priority": "high",
-      "notes": "Tích hợp ISBN fetcher vào form thêm sách"
+      "notes": "Migrate Book Management to the standardized DataTable pattern"
     },
     {
-      "task": "Triển khai UI quản lý Danh mục (Categories)",
+      "task": "Readers Module",
       "priority": "medium",
-      "notes": "Trang danh sách và thêm/sửa danh mục"
+      "notes": "User and reader management"
     },
     {
-      "task": "Triển khai quản lý Độc giả (Readers)",
-      "priority": "medium",
-      "notes": "Quản lý thông tin người dùng"
+      "task": "Borrowing Module",
+      "priority": "high",
+      "notes": "Core library transaction logic"
     }
   ],
   "recent_changes": [
     {
-      "timestamp": "2026-04-20T00:30:00Z",
+      "timestamp": "2026-04-20T23:30:00Z",
       "type": "feature",
-      "description": "Thêm module Category và ISBN service (Google Books + OpenLibrary fallback)",
-      "files": ["backend/src/modules/category/", "backend/src/modules/isbn/"]
+      "description": "Category Migration to DataTable with Bulk Delete and Book constraints check",
+      "files": ["backend/src/repositories/category/", "frontend/src/features/categories/"]
     },
     {
-      "timestamp": "2026-04-20T00:15:00Z",
-      "type": "database",
-      "description": "Cập nhật Prisma schema thêm bảng Category và liên kết Book",
-      "files": ["backend/prisma/schema.prisma"]
-    },
-    {
-      "timestamp": "2026-04-19T11:00:00Z",
+      "timestamp": "2026-04-20T23:40:00Z",
       "type": "ui",
-      "description": "Thêm hình nền Library-main.png vào trang Login/Register với hiệu ứng Glassmorphism",
-      "files": ["src/features/auth/LoginPage/LoginPage.tsx", "src/features/auth/RegisterPage/RegisterPage.tsx"]
+      "description": "Global English Localization (UI, Toasts, Buttons)",
+      "files": ["frontend/src/**/*"]
+    },
+    {
+      "timestamp": "2026-04-20T23:37:00Z",
+      "type": "fix",
+      "description": "Fixed TanStack Table SyntaxError in Vite by using 'import type'",
+      "files": ["frontend/src/components/ui/data-table/data-table.tsx"]
     }
   ],
   "errors_encountered": [
     {
-      "error": "Google Books API fallback",
-      "solution": "Triển khai OpenLibrary API làm fallback khi Google Books không tìm thấy ISBN hoặc bị lỗi",
+      "error": "TanStack Table ColumnDef SyntaxError",
+      "solution": "Import types using 'import type { ... }' to satisfy Vite's ESM requirement",
       "resolved": true
     }
   ],
   "decisions_made": [
     {
-      "decision": "Sử dụng 'categoryMap.json' để chuẩn hóa dữ liệu thể loại ngoại vi",
-      "reason": "Dữ liệu từ Google Books thường không đồng nhất, cần map về các mã danh mục nội bộ của thư viện"
+      "decision": "Use generic useDataTable hook and DataTable component",
+      "reason": "Ensure consistency and reduce boilerplate for future modules"
     },
     {
-      "decision": "Mount ISBN route dưới prefix /books",
-      "reason": "Giữ cho cấu trúc API gọn gàng vì ISBN fetcher phục vụ trực tiếp cho việc quản lý sách"
+      "decision": "Refuse category deletion if linked to books",
+      "reason": "Maintain data integrity (Foreign Key constraint equivalent in service layer)"
+    },
+    {
+      "decision": "Strict English UI and Toast standard",
+      "reason": "Maintain professional consistency and follow user requirement"
     }
   ]
 }

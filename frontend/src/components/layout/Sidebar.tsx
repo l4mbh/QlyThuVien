@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { BookOpen, Users, BookCopy, LayoutDashboard, Menu, LogOut, BarChart3 } from "lucide-react";
+import { BookOpen, Users, BookCopy, LayoutDashboard, Menu, LogOut, BarChart3, Tags } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth.hook";
@@ -14,6 +14,7 @@ interface SidebarProps {
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
   { icon: BookOpen, label: "Books", href: "/books" },
+  { icon: Tags, label: "Categories", href: "/categories" },
   { icon: Users, label: "Readers", href: "/readers" },
   { icon: BookCopy, label: "Borrow", href: "/borrow" },
   { icon: BarChart3, label: "Reports", href: "/reports", roles: [UserRole.ADMIN] },
@@ -26,7 +27,7 @@ export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
 
   const handleLogout = () => {
     logout();
-    toast.success("Đã đăng xuất");
+    toast.success("Logged out successfully");
     navigate("/login");
   };
 
@@ -86,7 +87,7 @@ export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
           )}
         >
           <LogOut className="h-5 w-5 shrink-0" />
-          {isOpen && <span className="font-medium">Đăng xuất</span>}
+          {isOpen && <span className="font-medium">Logout</span>}
         </Button>
       </div>
     </aside>

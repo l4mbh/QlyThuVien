@@ -6,7 +6,7 @@
   "project": {
     "name": "LibMgnt",
     "type": "Library Management System Dashboard",
-    "status": "Implemented Category & ISBN Modules"
+    "status": "Implemented Standard DataTable & Category Migration"
   },
   "tech_stack": {
     "frontend": {
@@ -16,7 +16,8 @@
       "ui_components": "shadcn/ui (radix-ui, lucide-react)",
       "routing": "React Router DOM",
       "api_client": "Axios",
-      "notifications": "Sonner (Toast)"
+      "notifications": "Sonner (Toast)",
+      "table_library": "@tanstack/react-table v8"
     },
     "backend": {
       "framework": "Node.js + Express",
@@ -44,56 +45,65 @@
   "api_endpoints": [
     {
       "path": "/auth/login",
-      "explained": "Đăng nhập: nhận email/password, trả về user info + JWT token"
+      "explained": "Login: receives email/password, returns user info + JWT token"
     },
     {
       "path": "/auth/register",
-      "explained": "Đăng ký: tạo user mới, trả về user info + JWT token"
+      "explained": "Register: creates new user, returns user info + JWT token"
     },
     {
       "path": "/auth/me",
-      "explained": "Lấy thông tin profile user hiện tại qua JWT token"
+      "explained": "Get current profile info via JWT token"
     },
     {
       "path": "/books/fetch-isbn/:isbn",
-      "explained": "Lấy thông tin sách từ Google Books/OpenLibrary theo mã ISBN"
+      "explained": "Fetch book info from external sources by ISBN"
     },
     {
       "path": "/categories",
-      "explained": "Lấy danh sách các danh mục sách"
+      "explained": "List all book categories with server-side pagination & search"
+    },
+    {
+      "path": "/categories/bulk",
+      "explained": "Bulk delete categories (refused if any category contains books)"
     }
   ],
   "business_rules": [
-    "Sử dụng chuẩn DRY, không lặp lại code",
-    "Mọi component UI dùng chung phải đặt vào thư mục src/components/ui",
-    "Call API qua axios instance với Authorization header: Bearer <token>",
-    "Tự động logout và điều hướng về /login nếu gặp lỗi 401 Unauthorized",
-    "Phân quyền: Chỉ ADMIN mới được xem Reports và các tính năng quản trị cao cấp",
-    "Tự động ánh xạ thể loại sách từ nguồn bên ngoài sang danh mục nội bộ (Category Mapping)"
+    "Strict DRY principle, no logic duplication",
+    "Shared UI components must reside in src/components/ui",
+    "API calls via axios instance with Authorization header",
+    "Auto-logout on 401 Unauthorized",
+    "RBAC: Admin-only Reports and advanced management",
+    "Category Mapping for external data standardization",
+    "DataTable usage: Always use server-side pagination/search for main resource tables",
+    "Strict English UI and Toast standard"
   ],
   "features": [
-    "Dashboard: Xem tổng quan sách và độc giả",
-    "Authentication: Hệ thống đăng nhập/đăng ký với JWT",
-    "Protected Routes: Bảo vệ các trang nội bộ, yêu cầu login để truy cập",
-    "Role-based UI: Ẩn/hiện menu dựa trên quyền (Admin/Staff)",
-    "ISBN Integration: Tự động điền thông tin sách qua mã ISBN",
-    "Category Management: Quản lý danh mục sách với mã phân loại"
+    "Dashboard: Overview of books and readers",
+    "Authentication: JWT-based Login/Register",
+    "Protected Routes: Role-based access control",
+    "ISBN Integration: Smart book info auto-fetch",
+    "Category Management: CRUD with bulk delete and book constraints",
+    "Generic DataTable: Reusable component for standardized tables"
   ],
   "knowledge_items": {
     "patterns": [
-      "Atomic UI Decomposition: Chia nhỏ UI thay vì viết lồng nhau",
-      "Module-Based Types: Chia nhỏ interface theo tính năng (src/types/auth/)",
-      "Service Fallback: Sử dụng OpenLibrary làm fallback nếu Google Books lỗi"
+      "Atomic UI Decomposition: Smaller components for better maintainability",
+      "Module-Based Types: Split interfaces by feature",
+      "Service Fallback: OpenLibrary as fallback for Google Books",
+      "Generic DataTable Pattern: Decoupled table UI from data fetching logic",
+      "useDataTable Hook: Centralized state for server-side table operations"
     ],
     "gotchas": [
-      "TypeScript v5.5+: erasableSyntaxOnly: true khiến Enum bị lỗi, cần dùng 'const object + type' thay thế",
-      "Prisma DB Connection: Cần restart server sau khi thay đổi .env để nhận cấu hình DB mới",
-      "ISBN API Limits: Lưu ý giới hạn rate limit của Google Books API"
+      "TypeScript v5.5+: Avoid Enums, use 'const object + type' or 'import type' for external libs",
+      "Vite ESM: Must use 'import type' for @tanstack/react-table types to avoid SyntaxError",
+      "Prisma DB Connection: Restart server after .env changes"
     ],
     "conventions": [
-      "Folder Structure 100% Encapsulation: Mỗi component phức tạp nằm trong folder riêng",
-      "Zero 'any' Policy: Sử dụng 'type' hoặc 'interface' cho mọi dữ liệu",
-      "HTTP 200 Always Success: Backend luôn trả về code 200, status thực tế nằm trong body"
+      "Folder Structure 100% Encapsulation",
+      "Zero 'any' Policy",
+      "HTTP 200 Always Success strategy",
+      "English Localization for all UI and code comments"
     ]
   }
 }

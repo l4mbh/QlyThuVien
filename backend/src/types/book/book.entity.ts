@@ -34,3 +34,12 @@ export interface UpdateBookDTO {
   categoryId?: string;
   callNumber?: string;
 }
+
+export interface BookFilterDTO {
+  search?: string;
+  categoryId?: string;
+  available?: boolean;
+  sort?: string; // newest, az, author
+  page?: number;
+  limit?: number;
+}

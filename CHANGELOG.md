@@ -1,26 +1,27 @@
 # Changelog
 
-Tất cả các thay đổi quan trọng của dự án sẽ được ghi lại tại đây.
+All notable changes to this project will be documented in this file.
 
-## [2026-04-20]
+## [2026-04-20] - Phase 3 & Standardization
 ### Added
-- **Module Category**: Quản lý danh mục sách, hỗ trợ tự động gán mã danh mục (Category Code).
-- **Service ISBN**: Tích hợp Google Books API và OpenLibrary API để tự động lấy thông tin sách qua mã ISBN.
-- **API Endpoint**: `GET /api/books/fetch-isbn/:isbn` - Trích xuất dữ liệu sách từ internet.
-- **Database Schema**: Thêm bảng `Category` và liên kết với bảng `Book`.
-- **Error Handling**: Thêm mã lỗi và tin nhắn thông báo cho Module Category.
-- **Data Seeding**: Cập nhật seed script để tạo dữ liệu mẫu cho Categories.
+- **Standardized DataTable**: Implemented generic `DataTable` component with server-side pagination, sorting, and search.
+- **useDataTable Hook**: Centralized state management for table operations.
+- **Bulk Operations**: Added bulk delete functionality for Categories with backend validation (prevents deleting categories containing books).
+- **Backend Enhancements**: Added `findByIdsWithCount` and `deleteMany` to `CategoryRepository`.
+- **API Endpoints**: `DELETE /api/categories/bulk` for bulk operations.
+- **Global Localization**: Switched entire UI and toast notifications to English.
 
 ### Changed
-- Cập nhật cấu trúc thư mục backend để bao gồm modules `category` và `isbn`.
-- Cải thiện `BookService` để hỗ trợ gán Category khi tạo sách mới.
-
-## [2026-04-19]
-### Added
-- Hệ thống Authentication (Login, Register, JWT).
-- Protected Routes trên Frontend.
-- Role-based UI (Admin/Staff).
+- **Category Migration**: Refactored `CategoriesPage` and `CategoryTable` to use the new standardized components.
+- **Auth UI**: Translated Login, Register, and Sidebar to English.
+- **Component Standard**: Standardized all UI components to use consistent naming and encapsulation patterns.
 
 ### Fixed
-- Lỗi kết nối Database (P1000).
-- Lỗi TypeScript Enum với config `erasableSyntaxOnly`.
+- **Vite SyntaxError**: Fixed `@tanstack/react-table` import issues by using `import type`.
+- **API Response Sync**: Ensured frontend correctly handles the standardized `HTTP 200 Always Success` backend responses.
+
+## [Earlier Updates]
+- **Category Module**: Initial category management and Category Code auto-generation.
+- **ISBN Service**: Integrated Google Books and OpenLibrary APIs for smart data fetching.
+- **Authentication**: JWT-based auth system with Protected Routes and RBAC.
+- **Database Schema**: Implemented Prisma models for Users, Categories, Books, and Borrowing.

@@ -26,6 +26,7 @@ export const ErrorMessages: Record<ErrorCode, string> = {
 
   [ErrorCode.CATEGORY_NOT_FOUND]: "Category not found",
   [ErrorCode.CATEGORY_ALREADY_EXISTS]: "Category with this name already exists",
+  [ErrorCode.CATEGORY_HAS_BOOKS]: "Cannot delete category because it contains books",
 
   [ErrorCode.ISBN_NOT_FOUND]: "ISBN not found in external sources",
   [ErrorCode.ISBN_FETCH_FAILED]: "Failed to fetch book data from external APIs",

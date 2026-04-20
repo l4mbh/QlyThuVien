@@ -1,6 +1,6 @@
 # API Documentation
 
-Ngày cập nhật: 20/04/2026
+Updated: 2026-04-20
 Base URL: `http://localhost:3000/api`
 
 ---
@@ -8,17 +8,17 @@ Base URL: `http://localhost:3000/api`
 ## 🔐 Authentication (`/auth`)
 
 ### POST `/auth/register`
-Đăng ký tài khoản mới.
+Register new account.
 **Request:** `{ name, email, password }`
 **Response:** `{ data: { user, token }, code: 0 }`
 
 ### POST `/auth/login`
-Đăng nhập.
+Login to system.
 **Request:** `{ email, password }`
 **Response:** `{ data: { user, token }, code: 0 }`
 
 ### GET `/auth/me`
-Lấy thông tin profile hiện tại (yêu cầu JWT).
+Get current user profile (JWT required).
 **Response:** `{ data: user, code: 0 }`
 
 ---
@@ -26,13 +26,15 @@ Lấy thông tin profile hiện tại (yêu cầu JWT).
 ## 📚 Books (`/books`)
 
 ### GET `/books`
-Lấy danh sách sách.
+List books with filters (search, categoryId, available, sort).
+**Params:** `page`, `limit`, `search`, `categoryId`, `available`, `sort`
+**Response:** `{ data: BookEntity[], meta: { total, totalPages, page, limit }, code: 0 }`
 
 ### POST `/books`
-Thêm sách mới.
+Add new book.
 
 ### GET `/books/fetch-isbn/:isbn`
-Lấy thông tin sách từ nguồn bên ngoài (Google Books/OpenLibrary).
+Smart fetch book info from external APIs.
 **Response:** `{ data: { title, author, category, publishedYear, coverUrl }, code: 0 }`
 
 ---
@@ -40,21 +42,29 @@ Lấy thông tin sách từ nguồn bên ngoài (Google Books/OpenLibrary).
 ## 📂 Categories (`/categories`)
 
 ### GET `/categories`
-Lấy danh sách danh mục sách.
+List categories with server-side pagination/search.
+**Params:** `page`, `limit`, `search`
+**Response:** `{ data: CategoryEntity[], meta: { total, totalPages, page, limit }, code: 0 }`
+
+### DELETE `/categories/bulk`
+Bulk delete categories.
+**Request:** `{ ids: string[] }`
+**Validation:** Refuses if any category contains books.
+**Response:** `{ message, code: 0 }`
 
 ---
 
 ## 👤 Users (`/users`)
 
 ### GET `/users`
-Lấy danh sách người dùng (Chỉ Admin).
+List users (Admin only).
 
 ---
 
 ## 🤝 Borrowing (`/borrow`)
 
 ### POST `/borrow`
-Tạo phiếu mượn sách.
+Create borrow record.
 
 ### POST `/borrow/return`
-Trả sách.
+Return books.
