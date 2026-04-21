@@ -61,6 +61,7 @@ export const ReaderTable: React.FC<ReaderTableProps> = ({
       onLimitChange={onLimitChange}
       onAdd={onAdd}
       onBulkDelete={onBulkDelete}
+      onRowClick={onView}
       searchPlaceholder="Search readers by name or email..."
     >
       {children}

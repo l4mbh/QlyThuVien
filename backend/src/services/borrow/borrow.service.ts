@@ -101,6 +101,7 @@ export class BorrowService {
 
     return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const results = [];
+      const now = new Date();
 
       for (const borrowItemId of borrowItemIds) {
         // 1. Find Borrow Item
@@ -117,22 +118,27 @@ export class BorrowService {
           continue; // Skip if already returned to avoid double inventory increase
         }
 
-        // 2. Update Borrow Item Status
+        // 2. Calculate Fine
+        const dueDate = new Date(item.borrowRecord.dueDate);
+        const fineAmount = this.calculateFine(dueDate, now);
+
+        // 3. Update Borrow Item Status & Fine
         const updatedItem = await tx.borrowItem.update({
           where: { id: borrowItemId },
           data: {
             status: BorrowItemStatus.RETURNED,
-            returnedAt: new Date(),
+            returnedAt: now,
+            fineAmount: fineAmount,
           },
         });
 
-        // 3. Update Book availableQuantity (+1)
+        // 4. Update Book availableQuantity (+1)
         await tx.book.update({
           where: { id: item.bookId },
           data: { availableQuantity: { increment: 1 } },
         });
 
-        // 4. Update User currentBorrowCount (-1)
+        // 5. Update User currentBorrowCount (-1)
         await tx.user.update({
           where: { id: item.borrowRecord.userId },
           data: { currentBorrowCount: { decrement: 1 } },
@@ -140,7 +146,7 @@ export class BorrowService {
 
         results.push(updatedItem);
 
-        // 5. Check if all items in this record are returned to complete the record
+        // 6. Check if all items in this record are returned to complete the record
         const allItems = await tx.borrowItem.findMany({
           where: { borrowRecordId: item.borrowRecordId },
         });
@@ -156,6 +162,15 @@ export class BorrowService {
 
       return results;
     });
+  }
+
+  private calculateFine(dueDate: Date, returnedAt: Date): number {
+    const diffTime = returnedAt.getTime() - dueDate.getTime();
+    if (diffTime <= 0) return 0;
+
+    // Calculate days overdue (any part of a day counts as 1 day)
+    const overdueDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return overdueDays * 5000;
   }
 
   private createError(message: string, errorCode: ErrorCode) {

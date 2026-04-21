@@ -24,7 +24,8 @@ export interface BorrowItem {
   };
   status: BorrowItemStatus;
   borrowedAt: string;
-  returnedAt?: string;
+  fineAmount?: number | null;
+  returnedAt?: string | null;
   dueDate: string;
 }
 

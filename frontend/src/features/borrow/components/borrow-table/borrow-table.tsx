@@ -53,6 +53,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
       onPageChange={onPageChange}
       onLimitChange={onLimitChange}
       onAdd={onAdd}
+      onRowClick={onView}
       searchPlaceholder="Search reader name, email..."
     >
       {children}

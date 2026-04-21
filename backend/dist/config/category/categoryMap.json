@@ -1,0 +1,8 @@
+{
+    "computer": { "name": "Programming", "code": "005" },
+    "business": { "name": "Business", "code": "650" },
+    "science": { "name": "Science", "code": "500" },
+    "history": { "name": "History", "code": "900" },
+    "fiction": { "name": "Literature", "code": "800" },
+    "art": { "name": "Arts", "code": "700" }
+}

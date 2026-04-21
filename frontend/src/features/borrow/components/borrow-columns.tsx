@@ -12,6 +12,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { calculateOverdue } from "../utils/fine-utils";
 
 interface BorrowColumnProps {
   onView: (record: BorrowRecord) => void;
@@ -50,12 +51,24 @@ export const getBorrowColumns = ({
       accessorKey: "dueDate",
       header: "Due Date",
       cell: ({ row }) => {
+        const record = row.original;
         const dueDate = new Date(row.getValue("dueDate"));
-        const isOverdue = dueDate < new Date() && row.original.status !== BorrowRecordStatus.COMPLETED;
+        
+        // For display, we check if it's currently overdue
+        const { isOverdue, days } = calculateOverdue(dueDate, record.status === BorrowRecordStatus.COMPLETED ? record.updatedAt : null);
+        const isActuallyOverdue = isOverdue && record.status !== BorrowRecordStatus.COMPLETED;
+
         return (
-          <span className={isOverdue ? "text-destructive font-bold" : ""}>
-            {format(dueDate, "dd MMM yyyy")}
-          </span>
+          <div className="flex flex-col">
+            <span className={isActuallyOverdue ? "text-destructive font-bold" : ""}>
+              {format(dueDate, "dd MMM yyyy")}
+            </span>
+            {isActuallyOverdue && (
+              <span className="text-[10px] text-destructive font-bold uppercase tracking-tight">
+                {days} days trễ
+              </span>
+            )}
+          </div>
         );
       },
     },
@@ -63,18 +76,24 @@ export const getBorrowColumns = ({
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => {
-        const status = row.getValue("status") as BorrowRecordStatus;
+        const record = row.original;
+        const dueDate = new Date(record.dueDate);
+        const { isOverdue } = calculateOverdue(dueDate, record.status === BorrowRecordStatus.COMPLETED ? record.updatedAt : null);
+        
+        const status = record.status;
+        const displayStatus = (isOverdue && status !== BorrowRecordStatus.COMPLETED) ? BorrowRecordStatus.OVERDUE : status;
+
         let variant: "default" | "secondary" | "destructive" | "outline" = "outline";
         let className = "";
 
-        switch (status) {
+        switch (displayStatus) {
           case BorrowRecordStatus.COMPLETED:
             variant = "outline";
             className = "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 capitalize";
             break;
           case BorrowRecordStatus.OVERDUE:
             variant = "destructive";
-            className = "capitalize";
+            className = "capitalize animate-pulse";
             break;
           case BorrowRecordStatus.BORROWING:
             variant = "secondary";
@@ -84,7 +103,7 @@ export const getBorrowColumns = ({
 
         return (
           <Badge variant={variant} className={className}>
-            {status.toLowerCase()}
+            {displayStatus.toLowerCase()}
           </Badge>
         );
       },

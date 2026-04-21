@@ -16,6 +16,7 @@ export interface BorrowItemEntity {
   bookId: string;
   status: BorrowItemStatus;
   borrowedAt: Date;
+  fineAmount?: number | null;
   returnedAt?: Date | null;
   updatedAt: Date;
 }

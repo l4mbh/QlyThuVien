@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const book_controller_1 = require("../../controllers/book/book.controller");
+const auth_middleware_1 = require("../../middlewares/auth/auth.middleware");
+const client_1 = require("@prisma/client");
+const router = (0, express_1.Router)();
+const bookController = new book_controller_1.BookController();
+router.get("/", auth_middleware_1.authMiddleware, bookController.getAllBooks);
+router.post("/", auth_middleware_1.authMiddleware, (0, auth_middleware_1.roleMiddleware)([client_1.UserRole.ADMIN, client_1.UserRole.STAFF]), bookController.createBook);
+router.get("/:id", auth_middleware_1.authMiddleware, bookController.getBookById);
+router.get("/fetch-isbn/:isbn", auth_middleware_1.authMiddleware, bookController.fetchISBN);
+router.patch("/:id", auth_middleware_1.authMiddleware, (0, auth_middleware_1.roleMiddleware)([client_1.UserRole.ADMIN, client_1.UserRole.STAFF]), bookController.updateBook);
+router.delete("/bulk", auth_middleware_1.authMiddleware, (0, auth_middleware_1.roleMiddleware)([client_1.UserRole.ADMIN]), bookController.bulkDeleteBooks);
+router.delete("/:id", auth_middleware_1.authMiddleware, (0, auth_middleware_1.roleMiddleware)([client_1.UserRole.ADMIN]), bookController.deleteBook);
+exports.default = router;

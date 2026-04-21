@@ -97,6 +97,7 @@ model BorrowItem {
   book           Book             @relation(fields: [bookId], references: [id])
   status         BorrowItemStatus @default(BORROWING)
   borrowedAt     DateTime         @default(now())
+  fineAmount     Int?
   returnedAt     DateTime?
   updatedAt      DateTime         @updatedAt
 

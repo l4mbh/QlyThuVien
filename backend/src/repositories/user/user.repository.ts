@@ -9,8 +9,21 @@ export class UserRepository {
     });
   }
 
-  async findById(id: string): Promise<UserEntity | null> {
-    return prisma.user.findUnique({ where: { id } });
+  async findById(id: string): Promise<any | null> {
+    return prisma.user.findUnique({
+      where: { id },
+      include: {
+        borrowRecords: {
+          include: {
+            borrowItems: {
+              include: {
+                book: true,
+              },
+            },
+          },
+        },
+      },
+    });
   }
 
   async findByEmail(email: string): Promise<UserEntity | null> {

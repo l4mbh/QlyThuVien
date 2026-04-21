@@ -15,14 +15,39 @@ export class UserService {
     return this.userRepository.findAll(filter);
   }
 
-  async getUserById(id: string): Promise<UserEntity> {
+  async getUserById(id: string): Promise<any> {
     const user = await this.userRepository.findById(id);
     if (!user) {
       const error = new Error("User not found") as any;
       error.errorCode = ErrorCode.USER_NOT_FOUND;
       throw error;
     }
-    return user;
+
+    // Compute dynamic stats
+    let totalFine = 0;
+    let overdueCount = 0;
+    const now = new Date();
+
+    user.borrowRecords?.forEach((record: any) => {
+      const dueDate = new Date(record.dueDate);
+      record.borrowItems?.forEach((item: any) => {
+        // Sum finalized fines from returned items
+        if (item.fineAmount) {
+          totalFine += item.fineAmount;
+        }
+
+        // Count items currently borrowing that are overdue
+        if (item.status !== "RETURNED" && now > dueDate) {
+          overdueCount++;
+        }
+      });
+    });
+
+    return {
+      ...user,
+      totalFine,
+      overdueCount,
+    };
   }
 
   async createUser(data: CreateUserDTO): Promise<UserEntity> {

@@ -1,6 +1,6 @@
 # Plan: Borrow Management System
 Created: 2026-04-21 23:59
-Status: 🟡 In Progress
+Status: � Completed
 
 ## Overview
 Xây dựng hệ thống quản lý mượn/trả sách toàn diện, tối ưu cho tốc độ xử lý của thủ thư (POS-style).

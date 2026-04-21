@@ -38,6 +38,7 @@ interface DataTableProps<TData, TValue> {
   showExport?: boolean;
   showImport?: boolean;
   onBulkDelete?: (ids: string[]) => void;
+  onRowClick?: (data: TData) => void;
   children?: React.ReactNode;
 }
 
@@ -58,6 +59,7 @@ export function DataTable<TData, TValue>({
   showExport,
   showImport,
   onBulkDelete,
+  onRowClick,
   children,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
@@ -137,7 +139,14 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className="hover:bg-muted/30 transition-colors"
+                  className={`hover:bg-muted/30 transition-colors ${onRowClick ? "cursor-pointer" : ""}`}
+                  onClick={(e) => {
+                    const target = e.target as HTMLElement;
+                    if (target.closest('button') || target.closest('a') || target.closest('[role="checkbox"]')) {
+                      return;
+                    }
+                    onRowClick?.(row.original);
+                  }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="p-4">

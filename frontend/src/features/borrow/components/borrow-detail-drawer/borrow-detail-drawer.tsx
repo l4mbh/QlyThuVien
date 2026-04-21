@@ -39,6 +39,7 @@ import {
 import type { BorrowRecord, BorrowItem } from "@/types/borrow/borrow.entity";
 import { BorrowRecordStatus, BorrowItemStatus } from "@/types/borrow/borrow.entity";
 import { borrowService } from "../../borrow.service";
+import { calculateOverdue, formatVND } from "../../utils/fine-utils";
 
 interface BorrowDetailDrawerProps {
   isOpen: boolean;
@@ -85,7 +86,14 @@ export const BorrowDetailDrawer: React.FC<BorrowDetailDrawerProps> = ({
   };
 
   const borrowingItems = record.borrowItems.filter(i => i.status !== BorrowItemStatus.RETURNED);
-  const isOverdue = new Date(record.dueDate) < new Date() && record.status !== BorrowRecordStatus.COMPLETED;
+  
+  // Calculate overdue for the entire record (using its dueDate)
+  const recordOverdue = calculateOverdue(record.dueDate);
+  const isOverdue = recordOverdue.isOverdue && record.status !== BorrowRecordStatus.COMPLETED;
+
+  // Calculate total fine for currently selected items
+  const totalSelectedFine = selectedItems.length * recordOverdue.fine;
+  const hasSelectedOverdue = selectedItems.length > 0 && recordOverdue.isOverdue;
 
   return (
     <>
@@ -97,7 +105,7 @@ export const BorrowDetailDrawer: React.FC<BorrowDetailDrawerProps> = ({
                 variant={record.status === BorrowRecordStatus.COMPLETED ? "outline" : (isOverdue ? "destructive" : "secondary")}
                 className={record.status === BorrowRecordStatus.COMPLETED ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : ""}
               >
-                {record.status.toLowerCase()}
+                {isOverdue && record.status !== BorrowRecordStatus.COMPLETED ? "overdue" : record.status.toLowerCase()}
               </Badge>
               <span className="text-[10px] text-muted-foreground font-mono">{record.id.split('-')[0]}</span>
             </div>
@@ -167,59 +175,82 @@ export const BorrowDetailDrawer: React.FC<BorrowDetailDrawerProps> = ({
                 </div>
                 
                 <div className="space-y-3">
-                  {record.borrowItems.map((item: BorrowItem) => (
-                    <Card 
-                      key={item.id} 
-                      className={`p-4 space-y-3 overflow-hidden relative group border-accent/20 transition-all ${
-                        selectedItems.includes(item.id) ? "ring-2 ring-primary bg-primary/5" : ""
-                      }`}
-                      onClick={() => item.status !== BorrowItemStatus.RETURNED && toggleItem(item.id)}
-                    >
-                      {item.status === BorrowItemStatus.RETURNED && (
-                        <div className="absolute top-0 right-0 p-1 bg-emerald-500 text-white rounded-bl-lg">
-                          <CheckCircle2 className="h-3 w-3" />
+                  {record.borrowItems.map((item: BorrowItem) => {
+                    const itemOverdue = calculateOverdue(record.dueDate, item.returnedAt);
+                    return (
+                      <Card 
+                        key={item.id} 
+                        className={`p-4 space-y-3 overflow-hidden relative group border-accent/20 transition-all ${
+                          selectedItems.includes(item.id) ? "ring-2 ring-primary bg-primary/5" : ""
+                        }`}
+                        onClick={() => item.status !== BorrowItemStatus.RETURNED && toggleItem(item.id)}
+                      >
+                        {item.status === BorrowItemStatus.RETURNED && (
+                          <div className="absolute top-0 right-0 p-1 bg-emerald-500 text-white rounded-bl-lg">
+                            <CheckCircle2 className="h-3 w-3" />
+                          </div>
+                        )}
+                        
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="flex items-start gap-3 flex-grow">
+                            {item.status !== BorrowItemStatus.RETURNED && (
+                              <div className="mt-0.5">
+                                {selectedItems.includes(item.id) ? (
+                                  <CheckSquare className="h-4 w-4 text-primary" />
+                                ) : (
+                                  <Square className="h-4 w-4 text-muted-foreground/30" />
+                                )}
+                              </div>
+                            )}
+                            <div className="flex flex-col gap-1 min-w-0">
+                              <span className="font-bold text-sm leading-tight truncate">{item.book.title}</span>
+                              <span className="text-[10px] font-mono text-muted-foreground">Call: {item.book.callNumber}</span>
+                            </div>
+                          </div>
+                          
+                          <Badge 
+                            variant={item.status === BorrowItemStatus.RETURNED ? "outline" : (itemOverdue.isOverdue ? "destructive" : "secondary")}
+                            className={item.status === BorrowItemStatus.RETURNED ? "text-emerald-600 bg-emerald-50" : ""}
+                          >
+                            {item.status === BorrowItemStatus.RETURNED ? "returned" : (itemOverdue.isOverdue ? "overdue" : "borrowing")}
+                          </Badge>
                         </div>
-                      )}
-                      
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="flex items-start gap-3 flex-grow">
-                          {item.status !== BorrowItemStatus.RETURNED && (
-                            <div className="mt-0.5">
-                              {selectedItems.includes(item.id) ? (
-                                <CheckSquare className="h-4 w-4 text-primary" />
+
+                        <div className="flex justify-between items-end pt-2">
+                          <div className="flex flex-col">
+                            <span className="text-[9px] uppercase text-muted-foreground">Status</span>
+                            {item.status === BorrowItemStatus.RETURNED ? (
+                              <span className="text-[10px] text-emerald-600 font-medium italic">
+                                Returned on {format(new Date(item.returnedAt!), "dd MMM")}
+                              </span>
+                            ) : (
+                              itemOverdue.isOverdue ? (
+                                <span className="text-[10px] text-destructive font-bold">
+                                  Overdue {itemOverdue.days} days
+                                </span>
                               ) : (
-                                <Square className="h-4 w-4 text-muted-foreground/30" />
-                              )}
+                                <span className="text-[10px] text-orange-600 font-medium">Still borrowing</span>
+                              )
+                            )}
+                          </div>
+                          
+                          {/* Fine display */}
+                          {(item.fineAmount || 0) > 0 && (
+                            <div className="flex flex-col items-end">
+                              <span className="text-[9px] uppercase text-muted-foreground">Fine Paid</span>
+                              <span className="text-xs font-bold text-emerald-600">{formatVND(item.fineAmount!)}</span>
                             </div>
                           )}
-                          <div className="flex flex-col gap-1 min-w-0">
-                            <span className="font-bold text-sm leading-tight truncate">{item.book.title}</span>
-                            <span className="text-[10px] font-mono text-muted-foreground">Call: {item.book.callNumber}</span>
-                          </div>
-                        </div>
-                        
-                        <Badge 
-                          variant={item.status === BorrowItemStatus.RETURNED ? "outline" : "secondary"}
-                          className={item.status === BorrowItemStatus.RETURNED ? "text-emerald-600 bg-emerald-50" : ""}
-                        >
-                          {item.status.toLowerCase()}
-                        </Badge>
-                      </div>
-
-                      <div className="flex justify-between items-center pt-2">
-                        <div className="flex flex-col">
-                          <span className="text-[9px] uppercase text-muted-foreground">Status</span>
-                          {item.status === BorrowItemStatus.RETURNED ? (
-                            <span className="text-[10px] text-emerald-600 font-medium italic">
-                              Returned on {format(new Date(item.returnedAt!), "dd MMM")}
-                            </span>
-                          ) : (
-                            <span className="text-[10px] text-orange-600 font-medium">Still borrowing</span>
+                          {item.status !== BorrowItemStatus.RETURNED && itemOverdue.fine > 0 && (
+                            <div className="flex flex-col items-end">
+                              <span className="text-[9px] uppercase text-destructive font-bold">Pending Fine</span>
+                              <span className="text-xs font-bold text-destructive">{formatVND(itemOverdue.fine)}</span>
+                            </div>
                           )}
                         </div>
-                      </div>
-                    </Card>
-                  ))}
+                      </Card>
+                    );
+                  })}
                 </div>
               </section>
             </div>
@@ -228,7 +259,7 @@ export const BorrowDetailDrawer: React.FC<BorrowDetailDrawerProps> = ({
           <div className="p-6 border-t bg-accent/5 space-y-3">
             {selectedItems.length > 0 && (
               <Button 
-                className="w-full gap-2 shadow-lg shadow-primary/20" 
+                className={`w-full gap-2 shadow-lg ${hasSelectedOverdue ? "bg-destructive hover:bg-destructive/90 shadow-destructive/20" : "shadow-primary/20"}`}
                 onClick={() => setConfirmOpen(true)}
                 disabled={isProcessing}
               >
@@ -246,10 +277,37 @@ export const BorrowDetailDrawer: React.FC<BorrowDetailDrawerProps> = ({
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Return</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to return {selectedItems.length} selected book(s)? 
-              This will update inventory levels and reader borrow counts immediately.
+            <AlertDialogTitle className="flex items-center gap-2">
+              {hasSelectedOverdue && <Clock className="h-5 w-5 text-destructive" />}
+              Confirm Return
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                Are you sure you want to return {selectedItems.length} selected book(s)?
+              </p>
+              
+              {hasSelectedOverdue && (
+                <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg space-y-2">
+                  <p className="text-sm font-bold text-destructive flex items-center gap-2">
+                    ⚠️ SÁCH QUÁ HẠN PHÁT HIỆN
+                  </p>
+                  <div className="flex justify-between text-sm">
+                    <span>Số ngày trễ:</span>
+                    <span className="font-bold">{recordOverdue.days} ngày</span>
+                  </div>
+                  <div className="flex justify-between text-base border-t border-destructive/20 pt-2">
+                    <span className="font-bold">Tổng tiền phạt:</span>
+                    <span className="font-black text-destructive">{formatVND(totalSelectedFine)}</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground italic">
+                    * Vui lòng thu tiền phạt trước khi xác nhận trả sách.
+                  </p>
+                </div>
+              )}
+              
+              {!hasSelectedOverdue && (
+                <p>This will update inventory levels and reader borrow counts immediately.</p>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -257,9 +315,9 @@ export const BorrowDetailDrawer: React.FC<BorrowDetailDrawerProps> = ({
             <AlertDialogAction 
               onClick={handleBulkReturn} 
               disabled={isProcessing}
-              className="bg-primary hover:bg-primary/90"
+              className={hasSelectedOverdue ? "bg-destructive hover:bg-destructive/90" : "bg-primary hover:bg-primary/90"}
             >
-              {isProcessing ? "Processing..." : "Confirm Return"}
+              {isProcessing ? "Processing..." : (hasSelectedOverdue ? "Confirm & Pay" : "Confirm Return")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
