@@ -8,8 +8,8 @@ import {
 } from "@/components/ui/sheet";
 import type { Reader } from "@/types/reader/reader.entity";
 import { ReaderStatus } from "@/types/reader/reader.entity";
-import type { BorrowItem } from "@/types/borrow.entity";
-import { BorrowItemStatus } from "@/types/borrow.entity";
+import type { BorrowItem } from "@/types/borrow/borrow.entity";
+import { BorrowItemStatus } from "@/types/borrow/borrow.entity";
 import { borrowService } from "../../borrow/borrow.service";
 import { LibraryCardPreview } from "./library-card-preview";
 import { Badge } from "@/components/ui/badge/badge";
@@ -50,9 +50,16 @@ export const ReaderDetailDrawer: React.FC<ReaderDetailDrawerProps> = ({
     if (!reader) return;
     setIsLoading(true);
     try {
-      const response = await borrowService.getReaderBorrowings(reader.id);
+      const response = await borrowService.getAllBorrows({ userId: reader.id });
       if (response.code === 0 && response.data) {
-        setBorrowings(response.data);
+        // Flatten all items from all records for this user
+        const allItems = response.data.flatMap(record => 
+          record.borrowItems.map(item => ({
+            ...item,
+            dueDate: record.dueDate // Inject due date from record to items
+          }))
+        );
+        setBorrowings(allItems as any);
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to fetch borrowings");
@@ -70,7 +77,7 @@ export const ReaderDetailDrawer: React.FC<ReaderDetailDrawerProps> = ({
   const handleReturn = async (borrowItemId: string) => {
     setIsReturning(borrowItemId);
     try {
-      const response = await borrowService.returnBook(borrowItemId);
+      const response = await borrowService.returnBook({ borrowItemIds: [borrowItemId] });
       if (response.code === 0) {
         toast.success("Book returned successfully");
         fetchBorrowings();

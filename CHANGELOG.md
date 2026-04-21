@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-04-21] - Phase 4 & Borrow System
+### Added
+- **Borrow Management Module**: Complete POS-style borrowing system.
+- **Single Modal Workflow**: Integrated reader/book selection and cart in one modal.
+- **Real-Time Validation**: Automated checks for reader limits, stock availability, and blocked status.
+- **Borrow Detail Drawer**: Quick view of transaction history with item-level return functionality.
+- **API Endpoints**: `POST /borrow`, `POST /borrow/return`, `GET /borrow`.
+
+### Changed
+- **Type Refactoring**: Centralized borrow entities and DTOs in `@/types/borrow`.
+- **Service Sync**: Updated `reader-detail-drawer.tsx` to utilize the new unified borrow API.
+- **UX Polish**: Added glassmorphism and smooth animations to the borrowing interface.
+
+### Fixed
+- **TypeScript Build Errors**: Resolved all type mismatches and optional property issues for production build.
+
 ## [2026-04-20] - Phase 3 & Standardization
 ### Added
 - **Standardized DataTable**: Implemented generic `DataTable` component with server-side pagination, sorting, and search.

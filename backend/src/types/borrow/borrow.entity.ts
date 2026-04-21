@@ -27,5 +27,5 @@ export interface CreateBorrowDTO {
 }
 
 export interface ReturnBookDTO {
-  borrowItemId: string;
+  borrowItemIds: string[];
 }

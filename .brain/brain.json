@@ -6,7 +6,7 @@
   "project": {
     "name": "LibMgnt",
     "type": "Library Management System Dashboard",
-    "status": "Completed Book & Category Migration to Standard DataTable"
+    "status": "Implemented Borrow Management POS-style Flow"
   },
   "tech_stack": {
     "frontend": {
@@ -74,6 +74,14 @@
     {
       "path": "/categories/bulk",
       "explained": "Bulk delete categories (refused if any category contains books)"
+    },
+    {
+      "path": "/borrow",
+      "explained": "Create/List borrowing transactions with multi-book support"
+    },
+    {
+      "path": "/borrow/return",
+      "explained": "Process book returns and update stock/reader limits"
     }
   ],
   "business_rules": [
@@ -94,7 +102,8 @@
     "ISBN Integration: Smart book info auto-fetch with cover preview",
     "Book Management: Advanced DataTable with server-side pagination, filters, and bulk actions",
     "Category Management: CRUD with bulk delete and book constraints",
-    "Generic DataTable: Reusable component for standardized tables"
+    "Generic DataTable: Reusable component for standardized tables",
+    "Borrow Management: POS-style workflow with real-time validation and multi-book transactions"
   ],
   "knowledge_items": {
     "patterns": [

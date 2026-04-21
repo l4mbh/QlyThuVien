@@ -1,4 +1,4 @@
-import type { Reader } from "./reader/reader.entity";
+import type { Reader } from "../reader/reader.entity";
 
 export enum BorrowRecordStatus {
   BORROWING = "BORROWING",
@@ -44,4 +44,14 @@ export interface BorrowSummary {
   borrowedCount: number;
   overdueCount: number;
   borrowLimit: number;
+}
+
+export interface CreateBorrowDTO {
+  userId: string;
+  bookIds: string[];
+  dueDate: Date;
+}
+
+export interface ReturnBookDTO {
+  borrowItemIds: string[];
 }

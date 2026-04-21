@@ -97,58 +97,64 @@ export class BorrowService {
   }
 
   async returnBook(data: ReturnBookDTO) {
-    const { borrowItemId } = data;
+    const { borrowItemIds } = data;
 
     return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // 1. Find Borrow Item
-      const item = await tx.borrowItem.findUnique({
-        where: { id: borrowItemId },
-        include: { borrowRecord: true },
-      });
+      const results = [];
 
-      if (!item) {
-        throw this.createError("Borrow item not found", ErrorCode.BORROW_RECORD_NOT_FOUND);
-      }
-
-      if (item.status === BorrowItemStatus.RETURNED) {
-        throw this.createError("Book already returned", ErrorCode.INVALID_BORROW_OPERATION);
-      }
-
-      // 2. Update Borrow Item Status
-      const updatedItem = await tx.borrowItem.update({
-        where: { id: borrowItemId },
-        data: {
-          status: BorrowItemStatus.RETURNED,
-          returnedAt: new Date(),
-        },
-      });
-
-      // 3. Update Book availableQuantity (+1)
-      await tx.book.update({
-        where: { id: item.bookId },
-        data: { availableQuantity: { increment: 1 } },
-      });
-
-      // 4. Update User currentBorrowCount (-1)
-      await tx.user.update({
-        where: { id: item.borrowRecord.userId },
-        data: { currentBorrowCount: { decrement: 1 } },
-      });
-
-      // 5. Check if all items in the record are returned to complete the record
-      const allItems = await tx.borrowItem.findMany({
-        where: { borrowRecordId: item.borrowRecordId },
-      });
-
-      const allReturned = allItems.every((i: any) => i.status === BorrowItemStatus.RETURNED);
-      if (allReturned) {
-        await tx.borrowRecord.update({
-          where: { id: item.borrowRecordId },
-          data: { status: "COMPLETED" },
+      for (const borrowItemId of borrowItemIds) {
+        // 1. Find Borrow Item
+        const item = await tx.borrowItem.findUnique({
+          where: { id: borrowItemId },
+          include: { borrowRecord: true },
         });
+
+        if (!item) {
+          throw this.createError(`Borrow item ${borrowItemId} not found`, ErrorCode.BORROW_RECORD_NOT_FOUND);
+        }
+
+        if (item.status === BorrowItemStatus.RETURNED) {
+          continue; // Skip if already returned to avoid double inventory increase
+        }
+
+        // 2. Update Borrow Item Status
+        const updatedItem = await tx.borrowItem.update({
+          where: { id: borrowItemId },
+          data: {
+            status: BorrowItemStatus.RETURNED,
+            returnedAt: new Date(),
+          },
+        });
+
+        // 3. Update Book availableQuantity (+1)
+        await tx.book.update({
+          where: { id: item.bookId },
+          data: { availableQuantity: { increment: 1 } },
+        });
+
+        // 4. Update User currentBorrowCount (-1)
+        await tx.user.update({
+          where: { id: item.borrowRecord.userId },
+          data: { currentBorrowCount: { decrement: 1 } },
+        });
+
+        results.push(updatedItem);
+
+        // 5. Check if all items in this record are returned to complete the record
+        const allItems = await tx.borrowItem.findMany({
+          where: { borrowRecordId: item.borrowRecordId },
+        });
+
+        const allReturned = allItems.every((i) => i.status === BorrowItemStatus.RETURNED);
+        if (allReturned) {
+          await tx.borrowRecord.update({
+            where: { id: item.borrowRecordId },
+            data: { status: "COMPLETED" },
+          });
+        }
       }
 
-      return updatedItem;
+      return results;
     });
   }
 

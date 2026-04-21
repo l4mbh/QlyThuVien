@@ -1,84 +1,23 @@
 {
-  "updated_at": "2026-04-21T00:15:00Z",
+  "updated_at": "2026-04-22T00:15:00Z",
   "working_on": {
-    "feature": "Standard DataTable Migration",
-    "task": "Phase 4: Book Migration & Database Sync",
+    "feature": "Borrow Management",
+    "task": "Full integration and build fix",
     "status": "completed",
     "files": [
-      "frontend/src/features/books/*",
-      "backend/src/repositories/book/*",
-      "backend/prisma/schema.prisma"
+      "src/features/borrow/borrow-page/borrow-page.tsx",
+      "src/features/borrow/components/borrow-modal/borrow-modal.tsx"
     ],
-    "blockers": [],
-    "notes": "Completed migration of Books to generic DataTable. Added coverUrl to DB. Fixed Prisma relation issues. Implemented numeric sequence call numbers."
+    "notes": "Feature is production-ready. Build issues resolved."
   },
   "pending_tasks": [
-    {
-      "task": "Readers Module",
-      "priority": "medium",
-      "notes": "User and reader management"
-    },
-    {
-      "task": "Borrowing Module",
-      "priority": "high",
-      "notes": "Core library transaction logic"
-    }
+    { "task": "Dashboard statistics integration", "priority": "medium" },
+    { "task": "Overdue notifications (email/toast)", "priority": "low" }
   ],
   "recent_changes": [
-    {
-      "timestamp": "2026-04-21T00:05:00Z",
-      "type": "feature",
-      "description": "Book Migration to DataTable with Advanced Filters and Bulk Delete",
-      "files": ["frontend/src/features/books/"]
-    },
-    {
-      "timestamp": "2026-04-21T00:08:00Z",
-      "type": "db",
-      "description": "Added coverUrl field to Book model and synced with DB",
-      "files": ["backend/prisma/schema.prisma"]
-    },
-    {
-      "timestamp": "2026-04-21T00:06:00Z",
-      "type": "fix",
-      "description": "Fixed Prisma categoryId vs category connect validation error",
-      "files": ["backend/src/repositories/book/book.repository.ts"]
-    },
-    {
-      "timestamp": "2026-04-21T00:06:30Z",
-      "type": "logic",
-      "description": "Call Number suffix changed to numeric sequence (.1, .2...)",
-      "files": ["backend/src/utils/generateCallNumber.ts"]
-    }
-  ],
-  "errors_encountered": [
-    {
-      "error": "categories.map is not a function",
-      "solution": "Handle paginated response by extracting 'items' and adding robust type checking",
-      "resolved": true
-    },
-    {
-      "error": "Prisma Unknown argument categoryId",
-      "solution": "Use relation connect syntax: category: { connect: { id: categoryId } }",
-      "resolved": true
-    },
-    {
-      "error": "P2022: Column coverUrl not found",
-      "solution": "Run 'npx prisma db push' after schema update",
-      "resolved": true
-    }
+    { "type": "feature", "description": "Borrow Management POS flow" }
   ],
   "decisions_made": [
-    {
-      "decision": "Use numeric suffixes for duplicate call numbers",
-      "reason": "Clearer sequence and aligns with library standards (.1, .2...)"
-    },
-    {
-      "decision": "Fetch categories with limit: 100 for filter dropdowns",
-      "reason": "Ensure all categories are available in filters without full pagination complexity"
-    },
-    {
-      "decision": "Show book cover preview in ISBN smart fetch",
-      "reason": "Improve UX and data verification before saving"
-    }
+    { "decision": "Single modal POS-style", "reason": "Speed for library staff" }
   ]
 }
