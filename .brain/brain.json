@@ -6,7 +6,7 @@
   "project": {
     "name": "LibMgnt",
     "type": "Library Management System Dashboard",
-    "status": "Implemented Borrow Management POS-style Flow"
+    "status": "Implemented Overdue & Fine Management with Dynamic Tracking"
   },
   "tech_stack": {
     "frontend": {
@@ -32,15 +32,15 @@
     }
   },
   "database_schema": {
-    "summary": "Database quan hệ PostgreSQL quản lý: Người dùng, Danh mục, Sách (có coverUrl), Phiếu mượn và Chi tiết mượn sách.",
+    "summary": "Database quan hệ PostgreSQL quản lý: Người dùng, Danh mục, Sách, Phiếu mượn và Phí phạt trễ hạn (fineAmount).",
     "tables": [
       "users",
       "categories",
       "books",
       "borrow_records",
-      "borrow_items"
+      "borrow_items (added fineAmount)"
     ],
-    "relationships_explained": "1 Category có nhiều Book. 1 User có nhiều BorrowRecord. 1 BorrowRecord có nhiều BorrowItem (mỗi item liên kết với 1 Book)."
+    "relationships_explained": "1 Category có nhiều Book. 1 User có nhiều BorrowRecord. 1 BorrowRecord có nhiều BorrowItem. Quá hạn được tính động dựa trên dueDate."
   },
   "api_endpoints": [
     {
@@ -54,6 +54,10 @@
     {
       "path": "/auth/me",
       "explained": "Get current profile info via JWT token"
+    },
+    {
+      "path": "/users/:id",
+      "explained": "Get reader detail with computed stats: totalFine and overdueCount"
     },
     {
       "path": "/books",
@@ -81,7 +85,7 @@
     },
     {
       "path": "/borrow/return",
-      "explained": "Process book returns and update stock/reader limits"
+      "explained": "Process book returns, calculate fines (5,000 VND/day), and update reader limits atomically"
     }
   ],
   "business_rules": [
@@ -93,7 +97,11 @@
     "Category Mapping for external data standardization",
     "DataTable usage: Always use server-side pagination/search for main resource tables",
     "Strict English UI and Toast standard",
-    "Call Number Generation: base + numeric sequence suffix (.1, .2) for duplicates"
+    "Call Number Generation: base + numeric sequence suffix (.1, .2) for duplicates",
+    "Compute-on-read Overdue Pattern: Overdue status is calculated dynamically (today > dueDate) to ensure 100% accuracy without cron jobs",
+    "Fine Calculation: fine = overdueDays * 5,000 VND, calculated and persisted only upon return",
+    "Reader Stats: Profiles must show lifetime total fine paid and current overdue count",
+    "UX row-click: Main DataTables (Readers, Borrow) must support row-click to open detail drawers"
   ],
   "features": [
     "Dashboard: Overview of books and readers",
@@ -103,7 +111,10 @@
     "Book Management: Advanced DataTable with server-side pagination, filters, and bulk actions",
     "Category Management: CRUD with bulk delete and book constraints",
     "Generic DataTable: Reusable component for standardized tables",
-    "Borrow Management: POS-style workflow with real-time validation and multi-book transactions"
+    "Borrow Management: POS-style workflow with real-time validation and multi-book transactions",
+    "Overdue Tracking: Dynamic visual indicators and pulse badges for late books",
+    "Fine Management: Automated penalty calculation and historical fine tracking",
+    "Reader Profile Stats: Financial and borrowing reliability overview in reader details"
   ],
   "knowledge_items": {
     "patterns": [
@@ -111,13 +122,15 @@
       "Module-Based Types: Split interfaces by feature",
       "Service Fallback: OpenLibrary as fallback for Google Books",
       "Generic DataTable Pattern: Decoupled table UI from data fetching logic",
-      "useDataTable Hook: Centralized state for server-side table operations"
+      "useDataTable Hook: Centralized state for server-side table operations",
+      "Compute-on-read Overdue Pattern for real-time accurate state"
     ],
     "gotchas": [
       "TypeScript v5.5+: Avoid Enums, use 'const object + type' or 'import type' for external libs",
       "Vite ESM: Must use 'import type' for @tanstack/react-table types to avoid SyntaxError",
       "Prisma DB Connection: Restart server after .env changes",
-      "Prisma Relations: Use 'connect' syntax for categoryId mapping during create/update"
+      "Prisma Relations: Use 'connect' syntax for categoryId mapping during create/update",
+      "Prisma null types: Optional fields in Prisma return 'null', must be handled in TS interfaces as 'number | null'"
     ],
     "conventions": [
       "Folder Structure 100% Encapsulation",

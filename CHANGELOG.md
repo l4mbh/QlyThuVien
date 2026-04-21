@@ -1,6 +1,22 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+ 
+## [2026-04-22] - Overdue & Fine Management
+### Added
+- **Overdue Detection System**: Dynamic "Compute-on-read" pattern for 100% accurate overdue tracking without cron jobs.
+- **Fine Calculation Engine**: Automated penalty calculation (5,000 VND/day) integrated into the return transaction.
+- **Reader Reliability Profile**: Lifetime total fine paid and current overdue count added to reader details.
+- **Visual Warning System**: Overdue pulse badges, highlighted table rows, and payment warning modals.
+- **UX Row-Click**: Enhanced navigation by enabling row-click to open detail drawers in Readers and Borrow tables.
+
+### Changed
+- **Database Schema**: Added `fineAmount` to `BorrowItem` for historical financial tracking.
+- **Backend Services**: Updated `UserService` and `BorrowService` with atomic transaction logic for fines and stats.
+
+### Fixed
+- **Type Compatibility**: Fixed Prisma/TypeScript `null` vs `undefined` mismatches for optional financial fields.
+- **Import Integrity**: Resolved missing `date-fns` formatting utilities in detail drawers.
 
 ## [2026-04-21] - Phase 4 & Borrow System
 ### Added

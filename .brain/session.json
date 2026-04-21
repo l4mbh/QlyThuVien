@@ -1,23 +1,32 @@
 {
-  "updated_at": "2026-04-22T00:15:00Z",
+  "updated_at": "2026-04-22T00:50:00Z",
   "working_on": {
-    "feature": "Borrow Management",
-    "task": "Full integration and build fix",
-    "status": "completed",
+    "feature": "Overdue & Fine Management",
+    "task": "Completed all phases including UI/UX improvements",
+    "status": "ready",
     "files": [
-      "src/features/borrow/borrow-page/borrow-page.tsx",
-      "src/features/borrow/components/borrow-modal/borrow-modal.tsx"
+      "backend/src/services/borrow/borrow.service.ts",
+      "frontend/src/features/borrow/components/borrow-detail-drawer/borrow-detail-drawer.tsx",
+      "frontend/src/features/readers/components/reader-detail-drawer.tsx"
     ],
-    "notes": "Feature is production-ready. Build issues resolved."
+    "blockers": [],
+    "notes": "System is stable, build passed for both frontend and backend."
   },
   "pending_tasks": [
-    { "task": "Dashboard statistics integration", "priority": "medium" },
-    { "task": "Overdue notifications (email/toast)", "priority": "low" }
+    { "task": "Implement Fine Payment History page", "priority": "low", "notes": "Optional feature to list all historical fines" },
+    { "task": "Add email notifications for overdue books", "priority": "medium", "notes": "Needs mail server setup" }
   ],
   "recent_changes": [
-    { "type": "feature", "description": "Borrow Management POS flow" }
+    { "timestamp": "2026-04-22T00:30:00Z", "type": "feature", "description": "Implemented Overdue detection and Fine calculation logic", "files": ["borrow.service.ts", "fine-utils.ts"] },
+    { "timestamp": "2026-04-22T00:40:00Z", "type": "ui", "description": "Enhanced Reader profile with lifetime fine stats and overdue highlights", "files": ["reader-detail-drawer.tsx"] },
+    { "timestamp": "2026-04-22T00:47:00Z", "type": "ux", "description": "Enabled row-click for Readers and Borrow tables", "files": ["data-table.tsx", "reader-table.tsx", "borrow-table.tsx"] }
+  ],
+  "errors_encountered": [
+    { "error": "TS2322: Type 'number | null' is not assignable to type 'number | undefined'", "solution": "Updated BorrowItemEntity interface to allow 'null' for fineAmount", "resolved": true },
+    { "error": "Missing 'format' import in reader-detail-drawer.tsx", "solution": "Added import { format } from 'date-fns'", "resolved": true }
   ],
   "decisions_made": [
-    { "decision": "Single modal POS-style", "reason": "Speed for library staff" }
+    { "decision": "Compute-on-read for Overdue", "reason": "Avoids complexity of cron jobs and ensures real-time accuracy" },
+    { "decision": "Row-click UX", "reason": "Improves library staff workflow efficiency" }
   ]
 }
