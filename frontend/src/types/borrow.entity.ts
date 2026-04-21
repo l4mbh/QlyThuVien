@@ -1,21 +1,47 @@
-export interface User {
-  id: string;
-  name: string;
-  email: string;
+import type { Reader } from "./reader/reader.entity";
+
+export enum BorrowRecordStatus {
+  BORROWING = "BORROWING",
+  OVERDUE = "OVERDUE",
+  COMPLETED = "COMPLETED",
 }
 
-export interface Book {
+export enum BorrowItemStatus {
+  BORROWING = "BORROWING",
+  RETURNED = "RETURNED",
+  OVERDUE = "OVERDUE",
+}
+
+export interface BorrowItem {
   id: string;
-  title: string;
-  author: string;
-  status: "AVAILABLE" | "BORROWED";
+  borrowRecordId: string;
+  bookId: string;
+  book: {
+    id: string;
+    title: string;
+    coverUrl?: string;
+    callNumber?: string;
+  };
+  status: BorrowItemStatus;
+  borrowedAt: string;
+  returnedAt?: string;
+  dueDate: string;
 }
 
 export interface BorrowRecord {
   id: string;
   userId: string;
-  bookId: string;
+  user?: Reader;
   borrowDate: string;
   dueDate: string;
-  returnDate?: string;
+  status: BorrowRecordStatus;
+  borrowItems: BorrowItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BorrowSummary {
+  borrowedCount: number;
+  overdueCount: number;
+  borrowLimit: number;
 }

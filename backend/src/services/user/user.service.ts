@@ -2,6 +2,7 @@ import { UserRepository } from "../../repositories/user/user.repository";
 import { CreateUserDTO, UpdateUserDTO, UserEntity } from "../../types/user/user.entity";
 import { ErrorCode } from "../../constants/errors/error.enum";
 import { UserStatus } from "@prisma/client";
+import { hashPassword } from "../../utils/hash.util";
 
 export class UserService {
   private userRepository: UserRepository;
@@ -10,8 +11,8 @@ export class UserService {
     this.userRepository = new UserRepository();
   }
 
-  async getAllUsers(): Promise<UserEntity[]> {
-    return this.userRepository.findAll();
+  async getAllUsers(filter: { role?: any } = {}): Promise<UserEntity[]> {
+    return this.userRepository.findAll(filter);
   }
 
   async getUserById(id: string): Promise<UserEntity> {
@@ -31,7 +32,13 @@ export class UserService {
       error.errorCode = ErrorCode.USER_ALREADY_EXISTS;
       throw error;
     }
-    return this.userRepository.create(data);
+    const password = data.password || "123456";
+    const hashedPassword = await hashPassword(password);
+
+    return this.userRepository.create({
+      ...data,
+      password: hashedPassword,
+    });
   }
 
   async updateUser(id: string, data: UpdateUserDTO): Promise<UserEntity> {

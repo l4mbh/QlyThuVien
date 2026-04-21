@@ -12,7 +12,8 @@ export class UserController {
 
   getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const users = await this.userService.getAllUsers();
+      const { role } = req.query;
+      const users = await this.userService.getAllUsers(role ? { role } : {});
       const response: ApiResponse = { data: users, code: ErrorCode.SUCCESS };
       res.json(response);
     } catch (error) {

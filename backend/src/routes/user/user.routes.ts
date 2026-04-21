@@ -7,9 +7,9 @@ const router = Router();
 const userController = new UserController();
 
 router.get("/", authMiddleware, userController.getAllUsers);
-router.post("/", authMiddleware, roleMiddleware([UserRole.ADMIN]), userController.createUser);
+router.post("/", authMiddleware, roleMiddleware([UserRole.ADMIN, UserRole.STAFF]), userController.createUser);
 router.get("/:id", authMiddleware, userController.getUserById);
 router.patch("/:id", authMiddleware, userController.updateUser);
-router.patch("/:id/block", authMiddleware, roleMiddleware([UserRole.ADMIN]), userController.blockUser);
+router.patch("/:id/block", authMiddleware, roleMiddleware([UserRole.ADMIN, UserRole.STAFF]), userController.blockUser);
 
 export default router;

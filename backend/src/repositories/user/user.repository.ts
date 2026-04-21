@@ -3,8 +3,10 @@ import { CreateUserDTO, UpdateUserDTO, UserEntity } from "../../types/user/user.
 import { UserStatus } from "@prisma/client";
 
 export class UserRepository {
-  async findAll(): Promise<UserEntity[]> {
-    return prisma.user.findMany();
+  async findAll(filter: { role?: any } = {}): Promise<UserEntity[]> {
+    return prisma.user.findMany({
+      where: filter
+    });
   }
 
   async findById(id: string): Promise<UserEntity | null> {

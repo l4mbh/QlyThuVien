@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
+import type { SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
@@ -52,14 +53,7 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
   const [isConfirmRegenOpen, setIsConfirmRegenOpen] = useState(false);
   const [pendingCategoryId, setPendingCategoryId] = useState("");
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    reset,
-    formState: { errors, isDirty },
-  } = useForm<BookFormValues>({
+  const form = useForm<BookFormValues>({
     resolver: zodResolver(bookFormSchema),
     defaultValues: {
       title: "",
@@ -72,15 +66,15 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
     },
   });
 
-  const watchedCategoryId = watch("categoryId");
-  const watchedAuthor = watch("author");
-  const watchedCoverUrl = watch("coverUrl");
+  const watchedCategoryId = form.watch("categoryId");
+  const watchedAuthor = form.watch("author");
+  const watchedCoverUrl = form.watch("coverUrl");
 
   // Reset form when modal opens/changes
   useEffect(() => {
     if (isOpen) {
       if (selectedBook) {
-        reset({
+        form.reset({
           title: selectedBook.title,
           author: selectedBook.author,
           isbn: selectedBook.isbn,
@@ -91,7 +85,7 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
         });
         setIsbnInput(selectedBook.isbn);
       } else {
-        reset({
+        form.reset({
           title: "",
           author: "",
           isbn: "",
@@ -103,7 +97,7 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
         setIsbnInput("");
       }
     }
-  }, [isOpen, selectedBook, reset]);
+  }, [isOpen, selectedBook, form.reset]);
 
   // Call Number Generation Logic
   const generateCallNumber = useCallback((catId: string, authorName: string) => {
@@ -118,12 +112,12 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
 
   // Handle Category Change
   const handleCategoryChange = (value: string) => {
-    setValue("categoryId", value, { shouldDirty: true });
+    form.setValue("categoryId", value, { shouldDirty: true });
 
     const newCallNumber = generateCallNumber(value, watchedAuthor);
     if (newCallNumber) {
-      if (!watch("callNumber")) {
-        setValue("callNumber", newCallNumber, { shouldDirty: true });
+      if (!form.watch("callNumber")) {
+        form.setValue("callNumber", newCallNumber, { shouldDirty: true });
       } else {
         setPendingCategoryId(value);
         setIsConfirmRegenOpen(true);
@@ -133,7 +127,7 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
 
   const confirmRegenCallNumber = () => {
     const newCallNumber = generateCallNumber(pendingCategoryId, watchedAuthor);
-    setValue("callNumber", newCallNumber, { shouldDirty: true });
+    form.setValue("callNumber", newCallNumber, { shouldDirty: true });
     setIsConfirmRegenOpen(false);
   };
 
@@ -149,18 +143,18 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
       const response = await bookService.fetchISBN(isbnInput);
       if (response.code === 0 && response.data) {
         const { title, author, coverUrl, category: categoryName } = response.data;
-        setValue("title", title, { shouldDirty: true });
-        setValue("author", author, { shouldDirty: true });
-        setValue("isbn", isbnInput, { shouldDirty: true });
-        setValue("coverUrl", coverUrl || "", { shouldDirty: true });
+        form.setValue("title", title, { shouldDirty: true });
+        form.setValue("author", author, { shouldDirty: true });
+        form.setValue("isbn", isbnInput, { shouldDirty: true });
+        form.setValue("coverUrl", coverUrl || "", { shouldDirty: true });
 
         if (categoryName) {
           const matchedCategory = categories.find(
             (c) => c.name.toLowerCase() === categoryName.toLowerCase()
           );
           if (matchedCategory) {
-            setValue("categoryId", matchedCategory.id, { shouldDirty: true });
-            setValue("callNumber", generateCallNumber(matchedCategory.id, author), { shouldDirty: true });
+            form.setValue("categoryId", matchedCategory.id, { shouldDirty: true });
+            form.setValue("callNumber", generateCallNumber(matchedCategory.id, author), { shouldDirty: true });
           }
         }
         toast.success("Book info fetched successfully");
@@ -174,7 +168,7 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
     }
   };
 
-  const onSubmit = async (data: BookFormValues) => {
+  const onSubmit: SubmitHandler<BookFormValues> = async (data) => {
     setIsSubmitting(true);
     try {
       if (selectedBook) {
@@ -207,7 +201,7 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
   };
 
   const handleCloseAttempt = () => {
-    if (isDirty) {
+    if (form.formState.isDirty) {
       setIsConfirmCloseOpen(true);
     } else {
       onClose();
@@ -272,30 +266,30 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="title">Title *</Label>
-                <Input id="title" {...register("title")} className={errors.title ? "border-destructive" : ""} />
-                {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
+                <Input id="title" {...form.register("title")} className={form.formState.errors.title ? "border-destructive" : ""} />
+                {form.formState.errors.title && <p className="text-xs text-destructive">{form.formState.errors.title.message}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="author">Author *</Label>
-                <Input id="author" {...register("author")} className={errors.author ? "border-destructive" : ""} />
-                {errors.author && <p className="text-xs text-destructive">{errors.author.message}</p>}
+                <Input id="author" {...form.register("author")} className={form.formState.errors.author ? "border-destructive" : ""} />
+                {form.formState.errors.author && <p className="text-xs text-destructive">{form.formState.errors.author.message}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="isbn">ISBN *</Label>
-                <Input id="isbn" {...register("isbn")} className={errors.isbn ? "border-destructive" : ""} />
-                {errors.isbn && <p className="text-xs text-destructive">{errors.isbn.message}</p>}
+                <Input id="isbn" {...form.register("isbn")} className={form.formState.errors.isbn ? "border-destructive" : ""} />
+                {form.formState.errors.isbn && <p className="text-xs text-destructive">{form.formState.errors.isbn.message}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="categoryId">Category *</Label>
                 <Select value={watchedCategoryId} onValueChange={handleCategoryChange}>
-                  <SelectTrigger id="categoryId" className={errors.categoryId ? "border-destructive" : ""}>
+                  <SelectTrigger id="categoryId" className={form.formState.errors.categoryId ? "border-destructive" : ""}>
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -307,7 +301,7 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
                     {categories.length === 0 && <SelectItem value="none" disabled>No categories available</SelectItem>}
                   </SelectContent>
                 </Select>
-                {errors.categoryId && <p className="text-xs text-destructive">{errors.categoryId.message}</p>}
+                {form.formState.errors.categoryId && <p className="text-xs text-destructive">{form.formState.errors.categoryId.message}</p>}
               </div>
 
               <div className="space-y-2">
@@ -315,15 +309,18 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
                 <Input
                   id="totalQuantity"
                   type="number"
-                  {...register("totalQuantity", { valueAsNumber: true })}
-                  className={errors.totalQuantity ? "border-destructive" : ""}
+                  {...form.register("totalQuantity", {
+                    valueAsNumber: true,
+                    onChange: (e) => form.setValue("totalQuantity", parseInt(e.target.value, 10), { shouldDirty: true })
+                  })}
+                  className={form.formState.errors.totalQuantity ? "border-destructive" : ""}
                 />
-                {errors.totalQuantity && <p className="text-xs text-destructive">{errors.totalQuantity.message}</p>}
+                {form.formState.errors.totalQuantity && <p className="text-xs text-destructive">{form.formState.errors.totalQuantity.message}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="callNumber">Call Number *</Label>
-                <Input id="callNumber" {...register("callNumber")} className={errors.callNumber ? "border-destructive" : ""} />
+                <Input id="callNumber" {...form.register("callNumber")} className={form.formState.errors.callNumber ? "border-destructive" : ""} />
                 <div className="flex flex-col gap-0.5">
                   <p className="text-[10px] text-muted-foreground italic">
                     Auto: {watchedCategoryId ? generateCallNumber(watchedCategoryId, watchedAuthor) : "Select category"}
@@ -332,7 +329,7 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
                     * Duplicates will automatically get suffixes (e.g., .1, .2)
                   </p>
                 </div>
-                {errors.callNumber && <p className="text-xs text-destructive">{errors.callNumber.message}</p>}
+                {form.formState.errors.callNumber && <p className="text-xs text-destructive">{form.formState.errors.callNumber.message}</p>}
               </div>
             </div>
 
