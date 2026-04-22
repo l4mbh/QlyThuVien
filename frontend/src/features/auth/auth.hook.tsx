@@ -16,11 +16,25 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
+  const [user, setUser] = useState<User | null>(() => {
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser || storedUser === "undefined") return null;
+    try {
+      return JSON.parse(storedUser);
+    } catch (e) {
+      console.error("AuthHook: Failed to parse stored user", e);
+      return null;
+    }
+  });
+  const [token, setToken] = useState<string | null>(() => {
+    const storedToken = localStorage.getItem("token");
+    if (!storedToken || storedToken === "undefined" || storedToken === "null") return null;
+    return storedToken;
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   const logout = useCallback(() => {
+    console.log("AuthHook: Logging out...");
     setToken(null);
     setUser(null);
     localStorage.removeItem("token");
@@ -28,7 +42,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (data: LoginRequest) => {
+    console.log("AuthHook: Attempting login for", data.email);
     const response = await authService.login(data);
+    console.log("AuthHook: Login successful, setting state for", response.user.email);
     setToken(response.token);
     setUser(response.user);
     localStorage.setItem("token", response.token);
@@ -48,19 +64,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const storedToken = localStorage.getItem("token");
       const storedUser = localStorage.getItem("user");
 
+      console.log("AuthHook: Initializing auth state...", { 
+        hasToken: !!storedToken, 
+        hasUser: !!storedUser,
+        tokenPrefix: storedToken ? `${storedToken.substring(0, 10)}...` : null
+      });
+
       if (storedToken) {
         try {
-          // If we have a user in storage, set it first for faster UI
-          if (storedUser) {
-            setUser(JSON.parse(storedUser));
-          }
-
-          // Then verify with backend
+          // If we have a user in storage, it's already set by useState initializer
+          // but we verify with backend anyway to get fresh data
           const freshUser = await authService.getMe();
+          console.log("AuthHook: Session verified, user is", freshUser.role);
           setUser(freshUser);
           localStorage.setItem("user", JSON.stringify(freshUser));
         } catch (error) {
-          console.error("Failed to restore session:", error);
+          console.error("AuthHook: Failed to restore session:", error);
           logout();
         }
       }
