@@ -6,7 +6,7 @@
   "project": {
     "name": "LibMgnt",
     "type": "Library Management System Dashboard",
-    "status": "Implemented Overdue & Fine Management with Dynamic Tracking"
+    "status": "Admin Reporting & Auth Session Stability Phase Completed"
   },
   "tech_stack": {
     "frontend": {
@@ -17,7 +17,9 @@
       "routing": "React Router DOM",
       "api_client": "Axios",
       "notifications": "Sonner (Toast)",
-      "table_library": "@tanstack/react-table v8"
+      "table_library": "@tanstack/react-table v8",
+      "csv_library": "PapaParse (replaced json2csv for browser compatibility)",
+      "chart_library": "Recharts"
     },
     "backend": {
       "framework": "Node.js + Express",
@@ -54,6 +56,18 @@
     {
       "path": "/auth/me",
       "explained": "Get current profile info via JWT token"
+    },
+    {
+      "path": "/reports/monthly",
+      "explained": "Get summary metrics for a specific month (borrows, returns, overdues, fines)"
+    },
+    {
+      "path": "/reports/inventory",
+      "explained": "Get current repository snapshot: total, available, borrowed, and category breakdown"
+    },
+    {
+      "path": "/reports/readers",
+      "explained": "Get engagement & risk report: top readers and reader watchlist"
     },
     {
       "path": "/users/:id",
@@ -101,12 +115,15 @@
     "Compute-on-read Overdue Pattern: Overdue status is calculated dynamically (today > dueDate) to ensure 100% accuracy without cron jobs",
     "Fine Calculation: fine = overdueDays * 5,000 VND, calculated and persisted only upon return",
     "Reader Stats: Profiles must show lifetime total fine paid and current overdue count",
-    "UX row-click: Main DataTables (Readers, Borrow) must support row-click to open detail drawers"
+    "UX row-click: Main DataTables (Readers, Borrow) must support row-click to open detail drawers",
+    "Auth Persistence: Initialize user state from localStorage on mount and verify via /auth/me for seamless refresh"
   ],
   "features": [
-    "Dashboard: Overview of books and readers",
-    "Authentication: JWT-based Login/Register",
-    "Protected Routes: Role-based access control",
+    "Admin Reporting System: Monthly, Inventory, and Reader Activity snapshot reports",
+    "Export System: Multi-format support (CSV via PapaParse, PDF via jsPDF) for report docs",
+    "Dashboard: Overview of books and readers with Recharts trend visualization",
+    "Authentication: JWT-based Login/Register with optimized session persistence",
+    "Protected Routes: Role-based access control with secure Admin-only sections",
     "ISBN Integration: Smart book info auto-fetch with cover preview",
     "Book Management: Advanced DataTable with server-side pagination, filters, and bulk actions",
     "Category Management: CRUD with bulk delete and book constraints",
@@ -130,7 +147,10 @@
       "Vite ESM: Must use 'import type' for @tanstack/react-table types to avoid SyntaxError",
       "Prisma DB Connection: Restart server after .env changes",
       "Prisma Relations: Use 'connect' syntax for categoryId mapping during create/update",
-      "Prisma null types: Optional fields in Prisma return 'null', must be handled in TS interfaces as 'number | null'"
+      "Prisma null types: Optional fields in Prisma return 'null', must be handled in TS interfaces as 'number | null'",
+      "Browser CSV Library: json2csv alpha uses Node streams; use PapaParse for browser-compatible CSV generation",
+      "Auth Synchronization: Initialize user/token states from localStorage simultaneously to prevent unauthorized redirects on refresh",
+      "Prisma Logic Gotcha: Field-to-field comparison in gt/lt requires raw SQL or specific Prisma version syntax; avoid GT on nested objects"
     ],
     "conventions": [
       "Folder Structure 100% Encapsulation",

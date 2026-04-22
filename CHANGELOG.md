@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
  
+## [2026-04-23] - Admin Reporting & Auth Stability
+### Added
+- **Admin Reporting System**: Integrated on-demand snapshots for Monthly performance, Inventory status, and Reader activity.
+- **Export Capabilities**: Multi-format exports (CSV via PapaParse, PDF via jsPDF) for all reporting modules.
+- **Enhanced Auth Logging**: Detailed debug logs in AuthHook for faster session troubleshooting.
+
+### Fixed
+- **Auth Session Persistence**: Resolved "văng ra login" bug by synchronizing user state initialization from localStorage on mount.
+- **JSON Parse Errors**: Fixed `SyntaxError: "undefined" is not valid JSON` in AuthProvider initialization.
+- **Backend Service Stability**: Resolved Prisma runtime errors in ReportService due to invalid nested field comparisons.
+- **CSV Browser Crash**: Replaced `json2csv` with `papaparse` to eliminate Node.js stream dependency crashes in browsers.
+- **Data Mapping Sync**: Corrected `authService.getMe()` frontend mapping to match backend response structure.
+- **Recharts Layout**: Fixed sizing warnings by adding explicit container heights to Dashboard charts.
+
 ## [2026-04-22] - Overdue & Fine Management
 ### Added
 - **Overdue Detection System**: Dynamic "Compute-on-read" pattern for 100% accurate overdue tracking without cron jobs.

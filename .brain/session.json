@@ -1,32 +1,34 @@
 {
-  "updated_at": "2026-04-22T00:50:00Z",
+  "updated_at": "2026-04-23T00:37:00Z",
   "working_on": {
-    "feature": "Overdue & Fine Management",
-    "task": "Completed all phases including UI/UX improvements",
-    "status": "ready",
+    "feature": "Admin Reporting & Auth Stability",
+    "task": "Completed stabilization and session persistence fixes",
+    "status": "stable",
     "files": [
-      "backend/src/services/borrow/borrow.service.ts",
-      "frontend/src/features/borrow/components/borrow-detail-drawer/borrow-detail-drawer.tsx",
-      "frontend/src/features/readers/components/reader-detail-drawer.tsx"
+      "backend/src/services/report/report.service.ts",
+      "frontend/src/features/auth/auth.hook.tsx",
+      "frontend/src/features/reports/utils/export-utils.ts"
     ],
     "blockers": [],
-    "notes": "System is stable, build passed for both frontend and backend."
+    "notes": "Admin reporting is now fully functional with PDF/CSV export. Session persistence is rock solid after refresh."
   },
   "pending_tasks": [
-    { "task": "Implement Fine Payment History page", "priority": "low", "notes": "Optional feature to list all historical fines" },
-    { "task": "Add email notifications for overdue books", "priority": "medium", "notes": "Needs mail server setup" }
+    { "task": "PDF Customization", "priority": "low", "notes": "Add library logo and header branding to exported PDFs" },
+    { "task": "Fine Payment History page", "priority": "low", "notes": "Optional feature to list all historical fines" },
+    { "task": "Email notifications for overdue books", "priority": "medium", "notes": "Needs mail server setup" }
   ],
   "recent_changes": [
-    { "timestamp": "2026-04-22T00:30:00Z", "type": "feature", "description": "Implemented Overdue detection and Fine calculation logic", "files": ["borrow.service.ts", "fine-utils.ts"] },
-    { "timestamp": "2026-04-22T00:40:00Z", "type": "ui", "description": "Enhanced Reader profile with lifetime fine stats and overdue highlights", "files": ["reader-detail-drawer.tsx"] },
-    { "timestamp": "2026-04-22T00:47:00Z", "type": "ux", "description": "Enabled row-click for Readers and Borrow tables", "files": ["data-table.tsx", "reader-table.tsx", "borrow-table.tsx"] }
+    { "timestamp": "2026-04-23T00:20:00Z", "type": "fix", "description": "Fixed Prisma syntax errors in ReportService and frontend getMe data mapping", "files": ["report.service.ts", "auth.service.ts"] },
+    { "timestamp": "2026-04-23T00:30:00Z", "type": "fix", "description": "Stabilized Auth session persistence on refresh and fixed JSON parse errors", "files": ["auth.hook.tsx"] },
+    { "timestamp": "2026-04-22T23:50:00Z", "type": "feature", "description": "Implemented complete Admin Reporting System with CSV/PDF exports", "files": ["reports-page.tsx", "export-utils.ts", "monthly-preview.tsx"] }
   ],
   "errors_encountered": [
-    { "error": "TS2322: Type 'number | null' is not assignable to type 'number | undefined'", "solution": "Updated BorrowItemEntity interface to allow 'null' for fineAmount", "resolved": true },
-    { "error": "Missing 'format' import in reader-detail-drawer.tsx", "solution": "Added import { format } from 'date-fns'", "resolved": true }
+    { "error": "Prisma: Invalid comparison GT on nested field", "solution": "Updated query logic to compare static dates calculated via date-fns", "resolved": true },
+    { "error": "json2csv: TypeError Class extends value undefined", "solution": "Replaced with PapaParse for browser-side CSV generation", "resolved": true },
+    { "error": "AuthHook: SyntaxError 'undefined' is not valid JSON", "solution": "Added guard for 'undefined' and 'null' strings in localStorage before parsing", "resolved": true }
   ],
   "decisions_made": [
-    { "decision": "Compute-on-read for Overdue", "reason": "Avoids complexity of cron jobs and ensures real-time accuracy" },
-    { "decision": "Row-click UX", "reason": "Improves library staff workflow efficiency" }
+    { "decision": "Use PapaParse", "reason": "Avoids Node.js stream dependencies in browser environment" },
+    { "decision": "Sync Auth State Init", "reason": "Prevents unauthorized flashes and 'văng ra login' on page refresh" }
   ]
 }
