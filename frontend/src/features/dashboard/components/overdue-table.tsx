@@ -44,12 +44,12 @@ export const OverdueTable = ({ data }: OverdueTableProps) => {
             </TableHeader>
             <TableBody>
               {data.map((item) => (
-                <TableRow key={item.borrowItemId} className="border-slate-50 group">
+                <TableRow key={item.id} className="border-slate-50 group">
                   <TableCell className="font-medium text-slate-700">{item.readerName}</TableCell>
                   <TableCell className="text-slate-600 truncate max-w-[150px]">{item.bookTitle}</TableCell>
                   <TableCell className="text-right">
                     <Badge variant="destructive" className="bg-red-50 font-semibold text-red-600 border-none">
-                      +{item.daysLate}d
+                      +{item.daysOverdue}d
                     </Badge>
                   </TableCell>
                 </TableRow>

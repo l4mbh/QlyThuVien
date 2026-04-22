@@ -239,7 +239,7 @@ export const ReaderDetailDrawer: React.FC<ReaderDetailDrawerProps> = ({
                 ) : (
                   <div className="space-y-3">
                     {borrowings.map((item) => {
-                      const { isOverdue, days, fine } = calculateOverdue(item.dueDate, item.returnedAt);
+                      const { isOverdue, fine } = calculateOverdue(item.dueDate, item.returnedAt);
                       const isActuallyOverdue = isOverdue && item.status !== BorrowItemStatus.RETURNED;
                       const isSelected = selectedItems.includes(item.id);
 
@@ -308,8 +308,8 @@ export const ReaderDetailDrawer: React.FC<ReaderDetailDrawerProps> = ({
 
                               {/* Fine amount display */}
                               {item.status === BorrowItemStatus.RETURNED ? (
-                                item.fineAmount > 0 && (
-                                  <span className="text-[10px] font-bold text-emerald-600">{formatVND(item.fineAmount)} paid</span>
+                                (item.fineAmount ?? 0) > 0 && (
+                                  <span className="text-[10px] font-bold text-emerald-600">{formatVND(item.fineAmount ?? 0)} paid</span>
                                 )
                               ) : (
                                 fine > 0 && (

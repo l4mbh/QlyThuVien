@@ -3,7 +3,7 @@ export interface DashboardSummary {
   availableBooks: number;
   activeBorrows: number;
   overdueCount: number;
-  totalFines?: number | null; // Only for ADMIN
+  totalFines: number | null;
 }
 
 export interface BorrowTrend {
@@ -16,14 +16,70 @@ export interface TopBook {
   title: string;
   author: string;
   borrowCount: number;
-  coverUrl?: string;
 }
 
 export interface OverdueDetail {
-  borrowItemId: string;
-  readerName: string;
+  id: string;
   bookTitle: string;
+  readerName: string;
+  borrowDate: string;
   dueDate: string;
-  daysLate: number;
-  fineAmount: number;
+  daysOverdue: number;
+}
+
+// --- NEW REPORT TYPES ---
+
+export interface MonthlyReport {
+  period: string; // YYYY-MM
+  generatedAt: Date;
+  summary: {
+    totalBorrows: number;
+    totalReturns: number;
+    returnRate: number;
+    overdueCases: number;
+    overdueRate: number;
+    totalFinesCollected: number;
+  };
+  topBooks: TopBook[];
+}
+
+export interface InventoryReport {
+  generatedAt: Date;
+  totalBooks: number;
+  available: number;
+  borrowed: number;
+  byCategory: {
+    categoryId: string;
+    categoryName: string;
+    count: number;
+  }[];
+}
+
+export interface ReaderActivityReport {
+  generatedAt: Date;
+  topReaders: {
+    id: string;
+    name: string;
+    email: string;
+    borrowCount: number;
+  }[];
+  riskyReaders: {
+    id: string;
+    name: string;
+    overdueCount: number;
+    lastOverdueAt: Date;
+  }[];
+  nearLimitReaders: {
+    id: string;
+    name: string;
+    currentBorrows: number;
+  }[];
+  blockedReadersCount: number;
+}
+
+export interface FineReport {
+  generatedAt: Date;
+  totalFines: number;
+  paid: number;
+  unpaid: number;
 }

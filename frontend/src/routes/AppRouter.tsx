@@ -5,9 +5,11 @@ import { Books } from "@/pages/Books";
 import { Categories } from "@/pages/Categories";
 import { Readers } from "@/pages/Readers";
 import { Borrow } from "@/pages/Borrow";
+import { Reports } from "@/pages/Reports";
 import { LoginPage } from "@/features/auth/LoginPage/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage/RegisterPage";
 import { ProtectedRoute } from "@/components/ui/protected-route/protected-route";
+import { UserRole } from "@/types/auth/user.entity";
 
 export const AppRouter = () => {
   return (
@@ -15,9 +17,9 @@ export const AppRouter = () => {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        
-        <Route 
-          path="/" 
+
+        <Route
+          path="/"
           element={
             <ProtectedRoute>
               <MainLayout />
@@ -30,6 +32,14 @@ export const AppRouter = () => {
           <Route path="categories" element={<Categories />} />
           <Route path="readers" element={<Readers />} />
           <Route path="borrow" element={<Borrow />} />
+          <Route
+            path="reports"
+            element={
+              <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+                <Reports />
+              </ProtectedRoute>
+            }
+          />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

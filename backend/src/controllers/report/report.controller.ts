@@ -46,4 +46,44 @@ export class ReportController {
       next(error);
     }
   };
+
+  getMonthlyReport = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { month } = req.query; // Expects YYYY-MM
+      if (!month) {
+        return res.status(200).json({ error: { msg: "Month is required" }, code: 1001 });
+      }
+      const data = await this.reportService.getMonthlyReport(month as string);
+      res.json({ data, code: 0 });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getInventoryReport = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const data = await this.reportService.getInventoryReport();
+      res.json({ data, code: 0 });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getReaderActivityReport = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const data = await this.reportService.getReaderActivityReport();
+      res.json({ data, code: 0 });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getFineReport = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const data = await this.reportService.getFineReport();
+      res.json({ data, code: 0 });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
