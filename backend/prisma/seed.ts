@@ -24,6 +24,27 @@ async function main() {
   });
 
   console.log('Default category created:', unknownCategory);
+
+  // Create admin user
+  const bcrypt = require('bcrypt');
+  const adminPassword = await bcrypt.hash('123456', 10);
+  
+  const adminUser = await prisma.user.upsert({
+    where: { email: 'admin@admin.com' },
+    update: {
+      password: adminPassword,
+      role: 'ADMIN'
+    },
+    create: {
+      name: 'Library Admin',
+      email: 'admin@admin.com',
+      password: adminPassword,
+      role: 'ADMIN',
+      status: 'ACTIVE'
+    },
+  });
+
+  console.log('Admin user created/updated:', adminUser.email);
 }
 
 main()

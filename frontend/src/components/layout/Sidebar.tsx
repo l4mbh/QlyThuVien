@@ -38,21 +38,21 @@ export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
   return (
     <aside
       className={cn(
-        "bg-card border-r border-border h-full transition-all duration-300 flex flex-col shrink-0 overflow-hidden",
+        "bg-primary text-primary-foreground h-full transition-all duration-300 flex flex-col shrink-0 overflow-hidden",
         isOpen ? "w-64" : "w-16 sm:w-20"
       )}
     >
-      <div className="h-16 flex items-center justify-between px-4 border-b border-border">
+      <div className="h-16 flex items-center justify-between px-4 border-b border-primary-foreground/10">
         {isOpen && (
-          <span className="font-bold text-lg text-primary truncate">LibMgnt</span>
+          <span className="font-bold text-lg truncate tracking-wider">LibMgnt</span>
         )}
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setIsOpen(!isOpen)}
-          className="shrink-0"
+          className="shrink-0 text-primary-foreground/70 hover:bg-white/10 hover:text-white"
         >
-          <Menu className="h-5 w-5 text-muted-foreground" />
+          <Menu className="h-5 w-5" />
         </Button>
       </div>
 
@@ -64,25 +64,25 @@ export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
               key={item.href}
               to={item.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
+                "flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200",
                 isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                  ? "bg-white/10 text-white shadow-sm ring-1 ring-white/20"
+                  : "text-primary-foreground/70 hover:bg-white/5 hover:text-white"
               )}
             >
-              <item.icon className="h-5 w-5 shrink-0" />
+              <item.icon className={cn("h-5 w-5 shrink-0", isActive ? "text-white" : "text-primary-foreground/70")} />
               {isOpen && <span className="font-medium">{item.label}</span>}
             </Link>
           );
         })}
       </nav>
 
-      <div className="p-3 border-t border-border">
+      <div className="p-3 border-t border-primary-foreground/10">
         <Button
           variant="ghost"
           onClick={handleLogout}
           className={cn(
-            "w-full flex items-center gap-3 px-3 py-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors justify-start",
+            "w-full flex items-center gap-3 px-3 py-2 text-primary-foreground/70 hover:bg-destructive/20 hover:text-white transition-colors justify-start",
             !isOpen && "justify-center px-0"
           )}
         >
