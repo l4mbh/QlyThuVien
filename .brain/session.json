@@ -1,34 +1,33 @@
 {
-  "updated_at": "2026-04-24T13:10:00Z",
+  "updated_at": "2026-04-23T21:20:00Z",
   "working_on": {
-    "feature": "Librarian Command Center V2",
-    "task": "Finalized operational dashboards and branded PDF exports",
+    "feature": "Librarian Command Center Overhaul",
+    "task": "Bento Grid Dashboard & Inventory Hardening",
     "status": "stable",
     "files": [
-      "frontend/src/features/reports/reports-page/reports-page.tsx",
-      "frontend/src/features/reports/utils/export-utils.ts",
+      "frontend/src/features/dashboard/dashboard-page/dashboard-page.tsx",
+      "frontend/src/features/books/components/inventory-management-modal.tsx",
       "backend/src/services/report/report.service.ts"
     ],
     "blockers": [],
-    "notes": "Librarian Command Center is now fully operational with workflow-driven tabs. Builds are passing 100%."
+    "notes": "Dashboard is now a high-level command center with actionable signals. Inventory management has been hardened with directional logic."
   },
   "pending_tasks": [
-    { "task": "Email notifications for overdue books", "priority": "medium", "notes": "Needs mail server setup or third-party API integration" },
+    { "task": "Email notifications for overdue books", "priority": "medium", "notes": "Implement the 'Remind' (Bell icon) logic" },
     { "task": "Fine Payment Integration", "priority": "low", "notes": "Connect with payment gateways (MoMo/VNPAY) if needed" },
     { "task": "Real-time Dashboard", "priority": "low", "notes": "Websocket integration for live borrow/return notifications" }
   ],
   "recent_changes": [
-    { "timestamp": "2026-04-24T12:30:00Z", "type": "feature", "description": "Implemented Librarian Command Center with Daily Ops, Overdue list, and Financial Ledger", "files": ["reports-page.tsx", "report.service.ts"] },
-    { "timestamp": "2026-04-24T13:00:00Z", "type": "fix", "description": "Fixed production build errors (JSX escaping, type-only imports, duplicate identifiers)", "files": ["stock-rotation.tsx", "reports-page.tsx"] },
-    { "timestamp": "2026-04-24T12:50:00Z", "type": "feature", "description": "Revamped Export engine with branded headers/footers for official reports", "files": ["export-utils.ts"] }
+    { "timestamp": "2026-04-23T21:00:00Z", "type": "feature", "description": "Overhauled Dashboard with Bento Grid layout and Actionable Signals", "files": ["dashboard-page.tsx", "stats-card.tsx"] },
+    { "timestamp": "2026-04-23T21:10:00Z", "type": "feature", "description": "Hardened Inventory Management UI with directional buttons and delta preview", "files": ["inventory-management-modal.tsx"] },
+    { "timestamp": "2026-04-23T21:15:00Z", "type": "fix", "description": "Resolved Revenue card visibility and production build errors", "files": ["stats-card.tsx", "dashboard-page.tsx"] }
   ],
   "errors_encountered": [
-    { "error": "TS1382: Unexpected token '>' in JSX", "solution": "Escaped with &gt;", "resolved": true },
-    { "error": "TS1484: Type must be imported using type-only import", "solution": "Converted to 'import type'", "resolved": true },
-    { "error": "Duplicate Identifier 'Table'", "solution": "Cleaned up redundant imports after refactoring", "resolved": true }
+    { "error": "TS1005: ';' expected in StatsCard", "solution": "Corrected destructuring syntax", "resolved": true },
+    { "error": "Property 'coverUrl' does not exist on type 'TopBook'", "solution": "Updated frontend entity types", "resolved": true }
   ],
   "decisions_made": [
-    { "decision": "Actionable Dashboard over Passive Reports", "reason": "Librarians need to know WHAT to do today, not just broad statistics" },
-    { "decision": "Branded PDF Export", "reason": "Ensures documents exported from the system look professional and official" }
+    { "decision": "Bento Grid for Dashboard", "reason": "Better prioritization of operational signals over passive data" },
+    { "decision": "isDark prop for StatsCard", "reason": "Consistent UI accessibility for dark-themed revenue cards" }
   ]
 }

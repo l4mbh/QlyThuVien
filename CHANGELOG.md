@@ -1,6 +1,23 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+## [2026-04-23] - Dashboard Overhaul & Inventory Hardening
+### Added
+- **Bento Grid Command Center**: Redesigned the Dashboard with a modern Bento Grid layout, prioritizing actionable signals and operational intelligence.
+- **Inventory Alerts**: New "Low Stock" panel with real-time monitoring of available quantities (< 3 books).
+- **Revenue Insights**: RBAC-protected financial snapshot for Admin, featuring a premium dark-mode interface.
+- **Enhanced Stats Cards**: Support for monthly trends (e.g., "+5 this month") and context-aware styling.
+- **Overdue Table Polish**: Integrated "Remind" action (Bell icon) and explicit due dates for critical loans.
+- **Top Books Covers**: Re-designed popular books list with book cover previews and loan-count signals.
+- **Inventory Directional UI**: Implemented `+` and `-` button controls in Inventory Management with smart directional logic (Restock/Lost/Damaged).
+
+### Fixed
+- **Dashboard API Efficiency**: Refactored data fetching to use `Promise.all` for parallel analytical data retrieval.
+- **Revenue Visibility**: Resolved text contrast issues on dark-themed cards using a new `isDark` prop system.
+- **Type Safety**: Fixed `TopBook` and `StatsCard` type mismatches that caused production build failures.
+- **Inventory Preview**: Improved stock change transparency in the inventory modal with delta visualization (e.g., `10 -> 8 (-2)`).
+
  
 ## [2026-04-24] - Librarian Command Center V2
 ### Added

@@ -6,7 +6,7 @@
   "project": {
     "name": "LibMgnt",
     "type": "Library Management System Dashboard",
-    "status": "Librarian Command Center V2 Completed"
+    "status": "Librarian Command Center V2 + Bento Dashboard Completed"
   },
   "tech_stack": {
     "frontend": {
@@ -63,6 +63,10 @@
       "explained": "Get summary metrics for a specific month (borrows, returns, overdues, fines)"
     },
     {
+      "path": "/reports/low-stock",
+      "explained": "List books with quantity below threshold (Command Center V2)"
+    },
+    {
       "path": "/reports/inventory",
       "explained": "Get current repository snapshot"
     },
@@ -104,10 +108,11 @@
     "Workflow-Driven Dashboards: Favor actionable operational views over passive data",
     "Branded Reporting: All official PDF exports must include system branding (header/footer)",
     "Print Optimization: Use @media print to hide non-content UI during document printing",
-    "Dead Stock: Defined as books with no borrow activity in the last 6 months"
+    "Dead Stock: Defined as books with no borrow activity in the last 6 months",
+    "Low Stock Alert: Triggered when availableQuantity < 3"
   ],
   "features": [
-    "Librarian Command Center: Actionable workflow dashboard (Daily Ops, Overdue, Finance)",
+    "Librarian Command Center: Actionable Bento Grid dashboard (Signals, Overdue, Inventory Alerts)",
     "Official Reporting: Branded PDF generation and print-optimized views",
     "Inventory Audit: Dead stock detection and best-seller tracking",
     "Financial Reconciliation: Real-time ledger for daily fine collection",
@@ -119,7 +124,7 @@
   ],
   "knowledge_items": {
     "patterns": [
-      "Command Center Pattern: Actionable-first UI design",
+      "Command Center Pattern: Actionable-first UI design (Bento Grid)",
       "Branded Export Engine: Unified helper for official document generation",
       "Print-optimized Layouts using global CSS media rules",
       "Generic DataTable + useDataTable Hook for server-side resources",
@@ -130,9 +135,10 @@
       "TypeScript Verbatim: Use 'import type' for entities to comply with verbatimModuleSyntax",
       "Folder Encapsulation: Ensure UI components are imported from their specific folder (e.g., @/components/ui/badge/badge)",
       "Prisma Aggregation: Use sum/count instead of groupBy for non-existent status fields",
-      "Browser CSV: Use PapaParse instead of json2csv"
+      "Browser CSV: Use PapaParse instead of json2csv",
+      "Dark Mode Contrast: Use isDark prop for StatsCard to fix text visibility on dark backgrounds"
     ],
-    "conventions": [
+    "knowledge_items": [
       "Folder Structure 100% Encapsulation",
       "Zero 'any' Policy",
       "HTTP 200 Always Success strategy",
@@ -140,3 +146,4 @@
     ]
   }
 }
+
