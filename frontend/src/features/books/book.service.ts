@@ -1,6 +1,6 @@
 import { api } from "@/services/api";
 import type { ApiResponse, PaginatedData } from "@/types/response.type";
-import type { BookEntity, CreateBookDTO, UpdateBookDTO, BookFetchInfo } from "@/types/books/book.entity";
+import type { BookEntity, CreateBookDTO, UpdateBookDTO, BookFetchInfo, AdjustInventoryDTO, InventoryLogEntity } from "@/types/books/book.entity";
 import type { CategoryEntity } from "@/types/category/category.entity";
 
 export const bookService = {
@@ -43,6 +43,16 @@ export const bookService = {
 
   fetchISBN: async (isbn: string): Promise<ApiResponse<BookFetchInfo>> => {
     const response = await api.get(`/books/fetch-isbn/${isbn}`);
+    return response.data;
+  },
+
+  adjustInventory: async (id: string, data: AdjustInventoryDTO): Promise<ApiResponse<BookEntity>> => {
+    const response = await api.post(`/books/${id}/inventory-adjustments`, data);
+    return response.data;
+  },
+
+  getInventoryLogs: async (id: string): Promise<ApiResponse<InventoryLogEntity[]>> => {
+    const response = await api.get(`/books/${id}/inventory-logs`);
     return response.data;
   },
 

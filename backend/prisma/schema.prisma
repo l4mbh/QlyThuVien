@@ -30,6 +30,13 @@ enum BorrowItemStatus {
   OVERDUE
 }
 
+enum InventoryLogReason {
+  RESTOCK
+  DAMAGED
+  LOST
+  MANUAL_ADJUST
+}
+
 model User {
   id                 String          @id @default(uuid())
   name               String
@@ -42,6 +49,7 @@ model User {
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
   borrowRecords      BorrowRecord[]
+  inventoryLogs      InventoryLog[]
 
   @@map("users")
 }
@@ -71,6 +79,7 @@ model Book {
   category          Category?  @relation(fields: [categoryId], references: [id])
   callNumber        String?
   coverUrl          String?
+  inventoryLogs     InventoryLog[]
 
   @@map("books")
 }
@@ -102,4 +111,18 @@ model BorrowItem {
   updatedAt      DateTime         @updatedAt
 
   @@map("borrow_items")
+}
+
+model InventoryLog {
+  id        String             @id @default(uuid())
+  bookId    String
+  book      Book               @relation(fields: [bookId], references: [id])
+  change    Int
+  reason    InventoryLogReason
+  note      String?
+  userId    String
+  user      User               @relation(fields: [userId], references: [id])
+  createdAt DateTime           @default(now())
+
+  @@map("inventory_logs")
 }

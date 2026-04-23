@@ -1,6 +1,7 @@
 import axios from "axios";
+import prisma from "../../config/db/db";
 import { BookRepository } from "../../repositories/book/book.repository";
-import { CreateBookDTO, UpdateBookDTO, BookEntity, BookFilterDTO } from "../../types/book/book.entity";
+import { CreateBookDTO, UpdateBookDTO, BookEntity, BookFilterDTO, AdjustInventoryDTO, InventoryLogEntity, InventoryLogReason } from "../../types/book/book.entity";
 import { ErrorCode } from "../../constants/errors/error.enum";
 import { CategoryService } from "../category/category.service";
 import { generateCallNumber } from "../../utils/generateCallNumber";
@@ -79,6 +80,66 @@ export class BookService {
 
   async bulkDeleteBooks(ids: string[]): Promise<{ count: number }> {
     return this.bookRepository.bulkDelete(ids);
+  }
+
+  async adjustInventory(bookId: string, userId: string, data: AdjustInventoryDTO): Promise<BookEntity> {
+    const book = await this.getBookById(bookId);
+
+    const newAvailable = book.availableQuantity + data.change;
+    if (newAvailable < 0) {
+      const error = new Error("Số lượng khả dụng không đủ (không thể giảm xuống dưới 0).") as any;
+      error.errorCode = ErrorCode.VALIDATION_ERROR;
+      throw error;
+    }
+
+    let newTotal = book.totalQuantity;
+    if (data.reason === InventoryLogReason.RESTOCK) {
+      newTotal = book.totalQuantity + data.change;
+    } else if (data.reason === InventoryLogReason.DAMAGED || data.reason === InventoryLogReason.LOST) {
+      newTotal = book.totalQuantity - Math.abs(data.change);
+    } // MANUAL_ADJUST only affects availableQuantity
+
+    const borrowedCount = book.totalQuantity - book.availableQuantity;
+    if (newTotal < borrowedCount) {
+      const error = new Error("Tổng số sách không thể nhỏ hơn số lượng sách đang cho mượn.") as any;
+      error.errorCode = ErrorCode.VALIDATION_ERROR;
+      throw error;
+    }
+
+    return prisma.$transaction(async (tx) => {
+      const updatedBook = await tx.book.update({
+        where: { id: bookId },
+        data: {
+          totalQuantity: newTotal,
+          availableQuantity: newAvailable
+        },
+        include: { category: true }
+      });
+
+      await tx.inventoryLog.create({
+        data: {
+          bookId,
+          userId,
+          change: data.change,
+          reason: data.reason,
+          note: data.note || null
+        }
+      });
+
+      return updatedBook as unknown as BookEntity;
+    });
+  }
+
+  async getInventoryLogs(bookId: string): Promise<InventoryLogEntity[]> {
+    return prisma.inventoryLog.findMany({
+      where: { bookId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: {
+          select: { name: true }
+        }
+      }
+    }) as unknown as InventoryLogEntity[];
   }
 }
 

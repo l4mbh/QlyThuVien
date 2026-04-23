@@ -11,22 +11,31 @@ import {
   DailyOperation,
   ActionableOverdue,
   CollectionHealth,
-  FinancialLedgerEntry
+  FinancialLedgerEntry,
+  LowStockBook
 } from "../../types/report/report.entity";
 import { DateHelper } from "../../utils/date.helper";
 
 export class ReportService {
   async getSummary(role: string): Promise<DashboardSummary> {
     const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
     const [
       totalBooks,
+      booksThisMonth,
       availableBooksAgg,
       activeBorrows,
       overdueCount,
       totalFinesAgg
     ] = await Promise.all([
       prisma.book.count({ where: { isArchived: false } }),
+      prisma.book.count({ 
+        where: { 
+          isArchived: false,
+          createdAt: { gte: firstDayOfMonth }
+        } 
+      }),
       prisma.book.aggregate({
         where: { isArchived: false },
         _sum: { availableQuantity: true }
@@ -47,11 +56,30 @@ export class ReportService {
 
     return {
       totalBooks,
+      booksDelta: booksThisMonth,
       availableBooks: availableBooksAgg._sum.availableQuantity || 0,
       activeBorrows,
       overdueCount,
       totalFines: role === 'ADMIN' ? (totalFinesAgg._sum.fineAmount || 0) : null
     };
+  }
+
+  async getLowStockBooks(threshold: number = 3): Promise<LowStockBook[]> {
+    return prisma.book.findMany({
+      where: {
+        isArchived: false,
+        availableQuantity: { lt: threshold }
+      },
+      select: {
+        id: true,
+        title: true,
+        availableQuantity: true,
+        totalQuantity: true,
+        callNumber: true
+      },
+      orderBy: { availableQuantity: 'asc' },
+      take: 10
+    });
   }
 
   async getBorrowTrends(range: string = '7d'): Promise<BorrowTrend[]> {
@@ -373,7 +401,7 @@ export class ReportService {
         book: { select: { title: true } },
         borrowRecord: { 
           include: { 
-            user: { select: { name: true, phone: true } }
+            user: { select: { name: true, email: true } }
           } 
         }
       },
@@ -392,7 +420,7 @@ export class ReportService {
         borrowItemId: item.id,
         bookTitle: item.book.title,
         readerName: item.borrowRecord.user.name,
-        readerPhone: item.borrowRecord.user.phone,
+        readerPhone: null, // User model does not have a phone field
         dueDate: item.borrowRecord.dueDate,
         daysOverdue,
         estimatedFine

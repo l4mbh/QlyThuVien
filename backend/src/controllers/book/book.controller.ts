@@ -90,4 +90,26 @@ export class BookController {
       next(error);
     }
   };
+
+  adjustInventory = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // req.user must exist because this route will be protected by authMiddleware
+      const userId = (req as any).user.userId;
+      const result = await this.bookService.adjustInventory(req.params.id as string, userId, req.body);
+      const response: ApiResponse = { data: result, code: ErrorCode.SUCCESS };
+      res.json(response);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getInventoryLogs = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const logs = await this.bookService.getInventoryLogs(req.params.id as string);
+      const response: ApiResponse = { data: logs, code: ErrorCode.SUCCESS };
+      res.json(response);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

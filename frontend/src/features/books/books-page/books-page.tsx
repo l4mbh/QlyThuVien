@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { BookTable } from "../book-table/book-table";
 import { BookFormModal } from "../book-form-modal/book-form-modal";
+import { InventoryManagementModal } from "../components/inventory-management-modal";
 import { bookService } from "../book.service";
 import type { BookEntity } from "@/types/books/book.entity";
 import type { CategoryEntity } from "@/types/category/category.entity";
@@ -42,6 +43,10 @@ export const BooksPage: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [bookToDelete, setBookToDelete] = useState<BookEntity | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Inventory Modal State
+  const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
+  const [inventoryBook, setInventoryBook] = useState<BookEntity | null>(null);
 
   // Bulk Delete State
   const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
@@ -117,6 +122,11 @@ export const BooksPage: React.FC = () => {
     setIsDeleteModalOpen(true);
   };
 
+  const handleInventoryClick = (book: BookEntity) => {
+    setInventoryBook(book);
+    setIsInventoryModalOpen(true);
+  };
+
   const handleConfirmDelete = async () => {
     if (!bookToDelete) return;
     setIsDeleting(true);
@@ -165,6 +175,7 @@ export const BooksPage: React.FC = () => {
         onLimitChange={setLimit}
         onEdit={handleEditBook}
         onDelete={handleDeleteClick}
+        onInventory={handleInventoryClick}
         onAdd={handleAddBook}
         onBulkDelete={handleBulkDelete}
       >
@@ -223,6 +234,16 @@ export const BooksPage: React.FC = () => {
         }}
         selectedBook={selectedBook}
         categories={categories}
+      />
+
+      <InventoryManagementModal
+        isOpen={isInventoryModalOpen}
+        onClose={() => setIsInventoryModalOpen(false)}
+        book={inventoryBook}
+        onSuccess={() => {
+          setIsInventoryModalOpen(false);
+          fetchData(false);
+        }}
       />
 
       <ConfirmationModal

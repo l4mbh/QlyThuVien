@@ -1,9 +1,19 @@
 export interface DashboardSummary {
   totalBooks: number;
+  booksDelta?: number;
   availableBooks: number;
   activeBorrows: number;
   overdueCount: number;
   totalFines: number | null;
+  unpaidFines?: number;
+}
+
+export interface LowStockBook {
+  id: string;
+  title: string;
+  availableQuantity: number;
+  totalQuantity: number;
+  callNumber: string | null;
 }
 
 export interface BorrowTrend {
@@ -15,6 +25,7 @@ export interface TopBook {
   id: string;
   title: string;
   author: string;
+  coverUrl?: string;
   borrowCount: number;
 }
 

@@ -44,3 +44,26 @@ export interface BookFetchInfo {
   publishedYear?: string;
   source?: string;
 }
+
+export enum InventoryLogReason {
+  RESTOCK = "RESTOCK",
+  DAMAGED = "DAMAGED",
+  LOST = "LOST",
+  MANUAL_ADJUST = "MANUAL_ADJUST"
+}
+
+export interface InventoryLogEntity {
+  id: string;
+  bookId: string;
+  change: number;
+  reason: InventoryLogReason;
+  note: string | null;
+  userId: string;
+  createdAt: string;
+}
+
+export interface AdjustInventoryDTO {
+  change: number;
+  reason: InventoryLogReason;
+  note?: string;
+}

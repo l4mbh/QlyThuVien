@@ -46,3 +46,26 @@ export interface BookFilterDTO {
   page?: number;
   limit?: number;
 }
+
+export enum InventoryLogReason {
+  RESTOCK = "RESTOCK",
+  DAMAGED = "DAMAGED",
+  LOST = "LOST",
+  MANUAL_ADJUST = "MANUAL_ADJUST"
+}
+
+export interface InventoryLogEntity {
+  id: string;
+  bookId: string;
+  change: number;
+  reason: InventoryLogReason;
+  note: string | null;
+  userId: string;
+  createdAt: Date;
+}
+
+export interface AdjustInventoryDTO {
+  change: number;
+  reason: InventoryLogReason;
+  note?: string;
+}

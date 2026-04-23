@@ -184,7 +184,7 @@ export const ReportsPage = () => {
 
         <div className="flex items-center gap-3">
           {activeTab === "monthly" && (
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <Select value={selectedMonth} onValueChange={(val) => { setSelectedMonth(val); setReportData(null); }}>
               <SelectTrigger className="w-[200px] bg-white">
                 <Calendar className="mr-2 h-4 w-4 text-slate-400" />
                 <SelectValue placeholder="Select month" />
@@ -220,7 +220,7 @@ export const ReportsPage = () => {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={(val) => { setActiveTab(val); setReportData(null); }} className="w-full">
         <TabsList className="bg-slate-100 p-1 rounded-xl mb-6 flex-wrap h-auto">
           <TabsTrigger value="daily-ops" className="rounded-lg px-4 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm">
             <Calendar className="mr-2 h-4 w-4" />

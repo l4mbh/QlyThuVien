@@ -47,6 +47,16 @@ export class ReportController {
     }
   };
 
+  getLowStockBooks = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { threshold } = req.query;
+      const data = await this.reportService.getLowStockBooks(Number(threshold) || 3);
+      res.json({ data, code: 0 });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   getMonthlyReport = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { month } = req.query; // Expects YYYY-MM

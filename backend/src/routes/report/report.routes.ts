@@ -9,6 +9,7 @@ router.get("/summary", authMiddleware, reportController.getSummary);
 router.get("/borrow-trends", authMiddleware, reportController.getBorrowTrends);
 router.get("/top-books", authMiddleware, reportController.getTopBooks);
 router.get("/overdue", authMiddleware, reportController.getOverdueItems);
+router.get("/low-stock", authMiddleware, reportController.getLowStockBooks);
 router.get("/monthly", authMiddleware, reportController.getMonthlyReport);
 router.get("/inventory", authMiddleware, reportController.getInventoryReport);
 router.get("/readers", authMiddleware, reportController.getReaderActivityReport);

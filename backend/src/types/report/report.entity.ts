@@ -1,9 +1,19 @@
 export interface DashboardSummary {
   totalBooks: number;
+  booksDelta?: number; // Change in total books this month
   availableBooks: number;
   activeBorrows: number;
   overdueCount: number;
   totalFines: number | null;
+  unpaidFines?: number; // Optional for admin insights
+}
+
+export interface LowStockBook {
+  id: string;
+  title: string;
+  availableQuantity: number;
+  totalQuantity: number;
+  callNumber: string | null;
 }
 
 export interface BorrowTrend {

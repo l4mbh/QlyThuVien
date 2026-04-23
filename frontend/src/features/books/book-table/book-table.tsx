@@ -18,6 +18,7 @@ interface BookTableProps {
   onDelete: (book: BookEntity) => void;
   onAdd: () => void;
   onBulkDelete: (ids: string[]) => void;
+  onInventory: (book: BookEntity) => void;
   children?: React.ReactNode;
 }
 
@@ -36,11 +37,12 @@ export const BookTable: React.FC<BookTableProps> = ({
   onDelete,
   onAdd,
   onBulkDelete,
+  onInventory,
   children,
 }) => {
   const columns = React.useMemo(
-    () => createBookColumns(onEdit, onDelete),
-    [onEdit, onDelete]
+    () => createBookColumns(onEdit, onDelete, onInventory),
+    [onEdit, onDelete, onInventory]
   );
 
   return (

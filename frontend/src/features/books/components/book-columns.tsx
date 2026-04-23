@@ -1,12 +1,13 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import type { BookEntity } from "@/types/books/book.entity";
-import { Pencil, Trash2, BookOpen } from "lucide-react";
+import { Pencil, Trash2, BookOpen, PackageOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge/badge";
 
 export const createBookColumns = (
   onEdit: (book: BookEntity) => void,
-  onDelete: (book: BookEntity) => void
+  onDelete: (book: BookEntity) => void,
+  onInventory: (book: BookEntity) => void
 ): ColumnDef<BookEntity>[] => [
     {
       id: "select",
@@ -116,14 +117,25 @@ export const createBookColumns = (
               size="icon"
               className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
               onClick={() => onEdit(book)}
+              title="Edit book"
             >
               <Pencil className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
+              className="h-8 w-8 text-orange-500 hover:text-orange-500 hover:bg-orange-500/10"
+              onClick={() => onInventory(book)}
+              title="Manage inventory"
+            >
+              <PackageOpen className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
               onClick={() => onDelete(book)}
+              title="Delete book"
             >
               <Trash2 className="h-4 w-4" />
             </Button>

@@ -11,6 +11,11 @@ router.post("/", authMiddleware, roleMiddleware([UserRole.ADMIN, UserRole.STAFF]
 router.get("/:id", authMiddleware, bookController.getBookById);
 router.get("/fetch-isbn/:isbn", authMiddleware, bookController.fetchISBN);
 router.patch("/:id", authMiddleware, roleMiddleware([UserRole.ADMIN, UserRole.STAFF]), bookController.updateBook);
+
+// Inventory Log Routes
+router.post("/:id/inventory-adjustments", authMiddleware, roleMiddleware([UserRole.ADMIN, UserRole.STAFF]), bookController.adjustInventory);
+router.get("/:id/inventory-logs", authMiddleware, roleMiddleware([UserRole.ADMIN, UserRole.STAFF]), bookController.getInventoryLogs);
+
 router.delete("/bulk", authMiddleware, roleMiddleware([UserRole.ADMIN]), bookController.bulkDeleteBooks);
 router.delete("/:id", authMiddleware, roleMiddleware([UserRole.ADMIN]), bookController.deleteBook);
 

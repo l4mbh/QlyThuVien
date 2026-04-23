@@ -4,7 +4,8 @@ import {
   type DashboardSummary, 
   type BorrowTrend, 
   type TopBook, 
-  type OverdueDetail 
+  type OverdueDetail,
+  type LowStockBook 
 } from "@/types/report/report.entity";
 
 export const dashboardService = {
@@ -25,6 +26,11 @@ export const dashboardService = {
 
   async getOverdueItems(): Promise<OverdueDetail[]> {
     const response = await api.get<ApiResponse<OverdueDetail[]>>("/reports/overdue");
+    return response.data.data!;
+  },
+
+  async getLowStockBooks(threshold: number = 3): Promise<LowStockBook[]> {
+    const response = await api.get<ApiResponse<LowStockBook[]>>(`/reports/low-stock?threshold=${threshold}`);
     return response.data.data!;
   },
 };
