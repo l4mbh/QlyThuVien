@@ -6,7 +6,7 @@
   "project": {
     "name": "LibMgnt",
     "type": "Library Management System Dashboard",
-    "status": "Admin Reporting & Auth Session Stability Phase Completed"
+    "status": "Librarian Command Center V2 Completed"
   },
   "tech_stack": {
     "frontend": {
@@ -18,8 +18,9 @@
       "api_client": "Axios",
       "notifications": "Sonner (Toast)",
       "table_library": "@tanstack/react-table v8",
-      "csv_library": "PapaParse (replaced json2csv for browser compatibility)",
-      "chart_library": "Recharts"
+      "csv_library": "PapaParse",
+      "chart_library": "Recharts",
+      "pdf_library": "jsPDF + autoTable"
     },
     "backend": {
       "framework": "Node.js + Express",
@@ -40,7 +41,7 @@
       "categories",
       "books",
       "borrow_records",
-      "borrow_items (added fineAmount)"
+      "borrow_items"
     ],
     "relationships_explained": "1 Category có nhiều Book. 1 User có nhiều BorrowRecord. 1 BorrowRecord có nhiều BorrowItem. Quá hạn được tính động dựa trên dueDate."
   },
@@ -63,94 +64,73 @@
     },
     {
       "path": "/reports/inventory",
-      "explained": "Get current repository snapshot: total, available, borrowed, and category breakdown"
+      "explained": "Get current repository snapshot"
     },
     {
-      "path": "/reports/readers",
-      "explained": "Get engagement & risk report: top readers and reader watchlist"
+      "path": "/reports/daily-operations",
+      "explained": "Get all borrow/return activities for today (Command Center V2)"
+    },
+    {
+      "path": "/reports/actionable-overdue",
+      "explained": "List overdue items with fine estimation and reader contact info"
+    },
+    {
+      "path": "/reports/collection-health",
+      "explained": "Audit inventory: state breakdown, dead stock, and best sellers"
+    },
+    {
+      "path": "/reports/financial-ledger",
+      "explained": "Daily reconciliation of collected fines"
     },
     {
       "path": "/users/:id",
-      "explained": "Get reader detail with computed stats: totalFine and overdueCount"
+      "explained": "Get reader detail with computed stats"
     },
     {
       "path": "/books",
-      "explained": "List books with server-side pagination/filtering (search, category, availability)"
-    },
-    {
-      "path": "/books/bulk",
-      "explained": "Bulk delete books (Admin only)"
-    },
-    {
-      "path": "/books/fetch-isbn/:isbn",
-      "explained": "Fetch book info from external sources by ISBN (includes coverUrl)"
-    },
-    {
-      "path": "/categories",
-      "explained": "List all book categories with server-side pagination & search"
-    },
-    {
-      "path": "/categories/bulk",
-      "explained": "Bulk delete categories (refused if any category contains books)"
-    },
-    {
-      "path": "/borrow",
-      "explained": "Create/List borrowing transactions with multi-book support"
+      "explained": "List books with server-side pagination/filtering"
     },
     {
       "path": "/borrow/return",
-      "explained": "Process book returns, calculate fines (5,000 VND/day), and update reader limits atomically"
+      "explained": "Process book returns, calculate fines (5,000 VND/day) atomically"
     }
   ],
   "business_rules": [
     "Strict DRY principle, no logic duplication",
     "Shared UI components must reside in src/components/ui",
-    "API calls via axios instance with Authorization header",
     "Auto-logout on 401 Unauthorized",
-    "RBAC: Admin-only Reports and advanced management",
-    "Category Mapping for external data standardization",
-    "DataTable usage: Always use server-side pagination/search for main resource tables",
-    "Strict English UI and Toast standard",
-    "Call Number Generation: base + numeric sequence suffix (.1, .2) for duplicates",
-    "Compute-on-read Overdue Pattern: Overdue status is calculated dynamically (today > dueDate) to ensure 100% accuracy without cron jobs",
-    "Fine Calculation: fine = overdueDays * 5,000 VND, calculated and persisted only upon return",
-    "Reader Stats: Profiles must show lifetime total fine paid and current overdue count",
-    "UX row-click: Main DataTables (Readers, Borrow) must support row-click to open detail drawers",
-    "Auth Persistence: Initialize user state from localStorage on mount and verify via /auth/me for seamless refresh"
+    "Compute-on-read Overdue Pattern for real-time accurate state",
+    "Fine Calculation: fine = overdueDays * 5,000 VND, persisted upon return",
+    "Workflow-Driven Dashboards: Favor actionable operational views over passive data",
+    "Branded Reporting: All official PDF exports must include system branding (header/footer)",
+    "Print Optimization: Use @media print to hide non-content UI during document printing",
+    "Dead Stock: Defined as books with no borrow activity in the last 6 months"
   ],
   "features": [
-    "Admin Reporting System: Monthly, Inventory, and Reader Activity snapshot reports",
-    "Export System: Multi-format support (CSV via PapaParse, PDF via jsPDF) for report docs",
-    "Dashboard: Overview of books and readers with Recharts trend visualization",
-    "Authentication: JWT-based Login/Register with optimized session persistence",
-    "Protected Routes: Role-based access control with secure Admin-only sections",
+    "Librarian Command Center: Actionable workflow dashboard (Daily Ops, Overdue, Finance)",
+    "Official Reporting: Branded PDF generation and print-optimized views",
+    "Inventory Audit: Dead stock detection and best-seller tracking",
+    "Financial Reconciliation: Real-time ledger for daily fine collection",
+    "Admin Reporting System: Monthly, Inventory, and Reader snapshots",
+    "Export System: CSV (PapaParse) and PDF (jsPDF) support",
     "ISBN Integration: Smart book info auto-fetch with cover preview",
-    "Book Management: Advanced DataTable with server-side pagination, filters, and bulk actions",
-    "Category Management: CRUD with bulk delete and book constraints",
-    "Generic DataTable: Reusable component for standardized tables",
-    "Borrow Management: POS-style workflow with real-time validation and multi-book transactions",
-    "Overdue Tracking: Dynamic visual indicators and pulse badges for late books",
-    "Fine Management: Automated penalty calculation and historical fine tracking",
-    "Reader Profile Stats: Financial and borrowing reliability overview in reader details"
+    "Borrow Management: POS-style workflow with real-time validation",
+    "Auth Persistence: Synchronized localStorage initialization"
   ],
   "knowledge_items": {
     "patterns": [
-      "Atomic UI Decomposition: Smaller components for better maintainability",
-      "Module-Based Types: Split interfaces by feature",
-      "Service Fallback: OpenLibrary as fallback for Google Books",
-      "Generic DataTable Pattern: Decoupled table UI from data fetching logic",
-      "useDataTable Hook: Centralized state for server-side table operations",
-      "Compute-on-read Overdue Pattern for real-time accurate state"
+      "Command Center Pattern: Actionable-first UI design",
+      "Branded Export Engine: Unified helper for official document generation",
+      "Print-optimized Layouts using global CSS media rules",
+      "Generic DataTable + useDataTable Hook for server-side resources",
+      "Compute-on-read Overdue Pattern"
     ],
     "gotchas": [
-      "TypeScript v5.5+: Avoid Enums, use 'const object + type' or 'import type' for external libs",
-      "Vite ESM: Must use 'import type' for @tanstack/react-table types to avoid SyntaxError",
-      "Prisma DB Connection: Restart server after .env changes",
-      "Prisma Relations: Use 'connect' syntax for categoryId mapping during create/update",
-      "Prisma null types: Optional fields in Prisma return 'null', must be handled in TS interfaces as 'number | null'",
-      "Browser CSV Library: json2csv alpha uses Node streams; use PapaParse for browser-compatible CSV generation",
-      "Auth Synchronization: Initialize user/token states from localStorage simultaneously to prevent unauthorized redirects on refresh",
-      "Prisma Logic Gotcha: Field-to-field comparison in gt/lt requires raw SQL or specific Prisma version syntax; avoid GT on nested objects"
+      "JSX Escaping: Use &gt; or {'<'} for special characters in JSX text to avoid build errors",
+      "TypeScript Verbatim: Use 'import type' for entities to comply with verbatimModuleSyntax",
+      "Folder Encapsulation: Ensure UI components are imported from their specific folder (e.g., @/components/ui/badge/badge)",
+      "Prisma Aggregation: Use sum/count instead of groupBy for non-existent status fields",
+      "Browser CSV: Use PapaParse instead of json2csv"
     ],
     "conventions": [
       "Folder Structure 100% Encapsulation",

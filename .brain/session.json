@@ -1,34 +1,34 @@
 {
-  "updated_at": "2026-04-23T00:37:00Z",
+  "updated_at": "2026-04-24T13:10:00Z",
   "working_on": {
-    "feature": "Admin Reporting & Auth Stability",
-    "task": "Completed stabilization and session persistence fixes",
+    "feature": "Librarian Command Center V2",
+    "task": "Finalized operational dashboards and branded PDF exports",
     "status": "stable",
     "files": [
-      "backend/src/services/report/report.service.ts",
-      "frontend/src/features/auth/auth.hook.tsx",
-      "frontend/src/features/reports/utils/export-utils.ts"
+      "frontend/src/features/reports/reports-page/reports-page.tsx",
+      "frontend/src/features/reports/utils/export-utils.ts",
+      "backend/src/services/report/report.service.ts"
     ],
     "blockers": [],
-    "notes": "Admin reporting is now fully functional with PDF/CSV export. Session persistence is rock solid after refresh."
+    "notes": "Librarian Command Center is now fully operational with workflow-driven tabs. Builds are passing 100%."
   },
   "pending_tasks": [
-    { "task": "PDF Customization", "priority": "low", "notes": "Add library logo and header branding to exported PDFs" },
-    { "task": "Fine Payment History page", "priority": "low", "notes": "Optional feature to list all historical fines" },
-    { "task": "Email notifications for overdue books", "priority": "medium", "notes": "Needs mail server setup" }
+    { "task": "Email notifications for overdue books", "priority": "medium", "notes": "Needs mail server setup or third-party API integration" },
+    { "task": "Fine Payment Integration", "priority": "low", "notes": "Connect with payment gateways (MoMo/VNPAY) if needed" },
+    { "task": "Real-time Dashboard", "priority": "low", "notes": "Websocket integration for live borrow/return notifications" }
   ],
   "recent_changes": [
-    { "timestamp": "2026-04-23T00:20:00Z", "type": "fix", "description": "Fixed Prisma syntax errors in ReportService and frontend getMe data mapping", "files": ["report.service.ts", "auth.service.ts"] },
-    { "timestamp": "2026-04-23T00:30:00Z", "type": "fix", "description": "Stabilized Auth session persistence on refresh and fixed JSON parse errors", "files": ["auth.hook.tsx"] },
-    { "timestamp": "2026-04-22T23:50:00Z", "type": "feature", "description": "Implemented complete Admin Reporting System with CSV/PDF exports", "files": ["reports-page.tsx", "export-utils.ts", "monthly-preview.tsx"] }
+    { "timestamp": "2026-04-24T12:30:00Z", "type": "feature", "description": "Implemented Librarian Command Center with Daily Ops, Overdue list, and Financial Ledger", "files": ["reports-page.tsx", "report.service.ts"] },
+    { "timestamp": "2026-04-24T13:00:00Z", "type": "fix", "description": "Fixed production build errors (JSX escaping, type-only imports, duplicate identifiers)", "files": ["stock-rotation.tsx", "reports-page.tsx"] },
+    { "timestamp": "2026-04-24T12:50:00Z", "type": "feature", "description": "Revamped Export engine with branded headers/footers for official reports", "files": ["export-utils.ts"] }
   ],
   "errors_encountered": [
-    { "error": "Prisma: Invalid comparison GT on nested field", "solution": "Updated query logic to compare static dates calculated via date-fns", "resolved": true },
-    { "error": "json2csv: TypeError Class extends value undefined", "solution": "Replaced with PapaParse for browser-side CSV generation", "resolved": true },
-    { "error": "AuthHook: SyntaxError 'undefined' is not valid JSON", "solution": "Added guard for 'undefined' and 'null' strings in localStorage before parsing", "resolved": true }
+    { "error": "TS1382: Unexpected token '>' in JSX", "solution": "Escaped with &gt;", "resolved": true },
+    { "error": "TS1484: Type must be imported using type-only import", "solution": "Converted to 'import type'", "resolved": true },
+    { "error": "Duplicate Identifier 'Table'", "solution": "Cleaned up redundant imports after refactoring", "resolved": true }
   ],
   "decisions_made": [
-    { "decision": "Use PapaParse", "reason": "Avoids Node.js stream dependencies in browser environment" },
-    { "decision": "Sync Auth State Init", "reason": "Prevents unauthorized flashes and 'văng ra login' on page refresh" }
+    { "decision": "Actionable Dashboard over Passive Reports", "reason": "Librarians need to know WHAT to do today, not just broad statistics" },
+    { "decision": "Branded PDF Export", "reason": "Ensures documents exported from the system look professional and official" }
   ]
 }

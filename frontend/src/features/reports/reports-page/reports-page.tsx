@@ -6,7 +6,9 @@ import {
   Calendar, 
   BookOpen, 
   Users, 
-  AlertCircle 
+  AlertCircle,
+  Printer,
+  Banknote
 } from "lucide-react";
 import { 
   Card, 
@@ -27,14 +29,19 @@ import { toast } from "sonner";
 
 // Previews
 import { MonthlyPreview } from "../components/monthly-preview";
-import { InventoryPreview } from "../components/inventory-preview";
 import { ReaderPreview } from "../components/reader-preview";
+import { DailyDeskSummary } from "../components/operations/daily-desk-summary";
+import { OverdueActionTable } from "../components/operations/overdue-action-table";
+import { FinancialLedgerTable } from "../components/operations/financial-ledger-table";
+import { InventoryAudit } from "../components/collection/inventory-audit";
+import { StockRotationTable } from "../components/collection/stock-rotation";
 
 // Export Utils
 import { 
   exportToCSV, 
   exportMonthlyToPDF, 
-  exportInventoryToPDF 
+  exportDailyOperationsToPDF,
+  exportCollectionHealthToPDF
 } from "../utils/export-utils";
 
 // Helper to generate last 12 months for the picker
@@ -53,7 +60,7 @@ const generateMonths = () => {
 export const ReportsPage = () => {
   const { user, isLoading: isLoadingAuth } = useAuth();
   const [selectedMonth, setSelectedMonth] = useState(generateMonths()[0].value);
-  const [activeTab, setActiveTab] = useState("monthly");
+  const [activeTab, setActiveTab] = useState("daily-ops");
   const [isLoading, setIsLoading] = useState(false);
   const [reportData, setReportData] = useState<any>(null);
 
@@ -64,14 +71,20 @@ export const ReportsPage = () => {
     try {
       let data;
       switch (activeTab) {
-        case "monthly":
-          data = await reportService.getMonthlyReport(selectedMonth);
+        case "daily-ops":
+          data = await reportService.getDailyOperations();
+          break;
+        case "overdue":
+          data = await reportService.getActionableOverdue();
           break;
         case "inventory":
-          data = await reportService.getInventoryReport();
+          data = await reportService.getCollectionHealth();
           break;
-        case "readers":
-          data = await reportService.getReaderActivityReport();
+        case "finance":
+          data = await reportService.getFinancialLedger();
+          break;
+        case "monthly":
+          data = await reportService.getMonthlyReport(selectedMonth);
           break;
       }
       setReportData(data);
@@ -92,11 +105,11 @@ export const ReportsPage = () => {
   const handleExportCSV = () => {
     if (!reportData) return;
     try {
-      let fileName = `report-${activeTab}`;
+      let fileName = `report-${activeTab}-${new Date().toISOString().split('T')[0]}`;
+      let csvData = reportData;
+
       if (activeTab === "monthly") {
-        fileName = `monthly-report-${selectedMonth}`;
-        // Flatten monthly data for CSV
-        const csvData = [
+        csvData = [
           { Metric: "Total Borrows", Value: reportData.summary.totalBorrows },
           { Metric: "Total Returns", Value: reportData.summary.totalReturns },
           { Metric: "Return Rate", Value: `${(reportData.summary.returnRate * 100).toFixed(1)}%` },
@@ -104,12 +117,11 @@ export const ReportsPage = () => {
           { Metric: "Overdue Rate", Value: `${(reportData.summary.overdueRate * 100).toFixed(1)}%` },
           { Metric: "Total Fines", Value: reportData.summary.totalFinesCollected },
         ];
-        exportToCSV(csvData, fileName);
       } else if (activeTab === "inventory") {
-        exportToCSV(reportData.byCategory, `inventory-by-category-${new Date().toISOString().split('T')[0]}`);
-      } else {
-        exportToCSV(reportData, fileName);
+        csvData = reportData.statusBreakdown;
       }
+
+      exportToCSV(csvData, fileName);
       toast.success("CSV exported successfully");
     } catch (err) {
       toast.error("Failed to export CSV");
@@ -119,12 +131,21 @@ export const ReportsPage = () => {
   const handleExportPDF = () => {
     if (!reportData) return;
     try {
-      if (activeTab === "monthly") {
-        exportMonthlyToPDF(reportData);
-      } else if (activeTab === "inventory") {
-        exportInventoryToPDF(reportData);
-      } else {
-        toast.info("PDF export for this report type coming soon");
+      switch (activeTab) {
+        case "monthly":
+          exportMonthlyToPDF(reportData);
+          break;
+        case "inventory":
+          exportCollectionHealthToPDF(reportData);
+          break;
+        case "daily-ops":
+          exportDailyOperationsToPDF(reportData);
+          break;
+        case "overdue":
+        case "readers":
+        case "finance":
+          toast.info("PDF export for this tab coming soon. Use browser 'Print' for now.");
+          return;
       }
       toast.success("PDF exported successfully");
     } catch (err) {
@@ -176,7 +197,7 @@ export const ReportsPage = () => {
             </Select>
           )}
           
-          <div className="flex items-center bg-white border rounded-lg p-1 shadow-sm">
+          <div className="flex items-center bg-white border rounded-lg p-1 shadow-sm no-print">
             <Button variant="ghost" size="sm" onClick={handleExportCSV} className="text-xs h-8">
               <Download className="mr-1.5 h-3.5 w-3.5" />
               CSV
@@ -186,25 +207,42 @@ export const ReportsPage = () => {
               <FileText className="mr-1.5 h-3.5 w-3.5" />
               PDF
             </Button>
+            <div className="w-[1px] h-4 bg-slate-200 mx-1" />
+            <Button variant="ghost" size="sm" onClick={() => window.print()} className="text-xs h-8">
+              <Printer className="mr-1.5 h-3.5 w-3.5" />
+              Print
+            </Button>
           </div>
 
-          <Button variant="default" size="sm" onClick={fetchReport} disabled={isLoading} className="h-9 bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20">
+          <Button variant="default" size="sm" onClick={fetchReport} disabled={isLoading} className="h-9 bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20 no-print">
             Refresh
           </Button>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-slate-100 p-1 rounded-xl mb-6">
-          <TabsTrigger value="monthly" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <FileText className="mr-2 h-4 w-4" />
-            Monthly Report
+        <TabsList className="bg-slate-100 p-1 rounded-xl mb-6 flex-wrap h-auto">
+          <TabsTrigger value="daily-ops" className="rounded-lg px-4 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <Calendar className="mr-2 h-4 w-4" />
+            Daily Operations
           </TabsTrigger>
-          <TabsTrigger value="inventory" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="overdue" className="rounded-lg px-4 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <AlertCircle className="mr-2 h-4 w-4" />
+            Overdue Actions
+          </TabsTrigger>
+          <TabsTrigger value="inventory" className="rounded-lg px-4 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm">
             <BookOpen className="mr-2 h-4 w-4" />
             Inventory
           </TabsTrigger>
-          <TabsTrigger value="readers" className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="finance" className="rounded-lg px-4 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <Banknote className="mr-2 h-4 w-4" />
+            Finance
+          </TabsTrigger>
+          <TabsTrigger value="monthly" className="rounded-lg px-4 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <FileText className="mr-2 h-4 w-4" />
+            Monthly Report
+          </TabsTrigger>
+          <TabsTrigger value="readers" className="rounded-lg px-4 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm">
             <Users className="mr-2 h-4 w-4" />
             Reader Activity
           </TabsTrigger>
@@ -222,14 +260,31 @@ export const ReportsPage = () => {
             </div>
           ) : (
             <>
+              <TabsContent value="daily-ops" className="mt-0 focus-visible:outline-none">
+                <Card className="border-none shadow-md overflow-hidden p-6 bg-white">
+                   <DailyDeskSummary data={reportData} />
+                </Card>
+              </TabsContent>
+              <TabsContent value="overdue" className="mt-0 focus-visible:outline-none">
+                <Card className="border-none shadow-md overflow-hidden p-6 bg-white">
+                   <OverdueActionTable data={reportData} />
+                </Card>
+              </TabsContent>
+              <TabsContent value="finance" className="mt-0 focus-visible:outline-none">
+                <Card className="border-none shadow-md overflow-hidden p-6 bg-white">
+                   <FinancialLedgerTable data={reportData} />
+                </Card>
+              </TabsContent>
               <TabsContent value="monthly" className="mt-0 focus-visible:outline-none">
                 <Card className="border-none shadow-md overflow-hidden">
                    <MonthlyPreview data={reportData} />
                 </Card>
               </TabsContent>
               <TabsContent value="inventory" className="mt-0 focus-visible:outline-none">
-                <Card className="border-none shadow-md overflow-hidden">
-                   <InventoryPreview data={reportData} />
+                <Card className="border-none shadow-md overflow-hidden p-6 bg-white space-y-10">
+                   <InventoryAudit data={reportData} />
+                   <div className="h-[1px] w-full bg-slate-100" />
+                   <StockRotationTable data={reportData} />
                 </Card>
               </TabsContent>
               <TabsContent value="readers" className="mt-0 focus-visible:outline-none">

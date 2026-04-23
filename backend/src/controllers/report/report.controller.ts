@@ -86,4 +86,42 @@ export class ReportController {
       next(error);
     }
   };
+
+  // --- LIBRARIAN COMMAND CENTER (V2) ---
+
+  getDailyOperations = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const data = await this.reportService.getDailyOperations();
+      res.json({ data, code: 0 });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getActionableOverdue = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const data = await this.reportService.getActionableOverdue();
+      res.json({ data, code: 0 });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getCollectionHealth = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const data = await this.reportService.getCollectionHealth();
+      res.json({ data, code: 0 });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getFinancialLedger = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const data = await this.reportService.getFinancialLedger();
+      res.json({ data, code: 0 });
+    } catch (error) {
+      next(error);
+    }
+  };
 }

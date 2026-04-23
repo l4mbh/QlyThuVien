@@ -14,4 +14,10 @@ router.get("/inventory", authMiddleware, reportController.getInventoryReport);
 router.get("/readers", authMiddleware, reportController.getReaderActivityReport);
 router.get("/fines", authMiddleware, reportController.getFineReport);
 
+// --- LIBRARIAN COMMAND CENTER (V2) ---
+router.get("/daily-operations", authMiddleware, reportController.getDailyOperations);
+router.get("/actionable-overdue", authMiddleware, reportController.getActionableOverdue);
+router.get("/collection-health", authMiddleware, reportController.getCollectionHealth);
+router.get("/financial-ledger", authMiddleware, reportController.getFinancialLedger);
+
 export default router;

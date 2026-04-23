@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
  
+## [2026-04-24] - Librarian Command Center V2
+### Added
+- **Workflow-Driven Dashboard**: Replaced static reports with a "Command Center" featuring tabs for Daily Operations, Overdue Actions, and Finance.
+- **Branded PDF Export Engine**: Professional, official-branded PDF generation for Daily Logs, Collection Health, and Monthly reports with headers/footers.
+- **Actionable Overdue Management**: Real-time overdue list with automated fine estimation and integrated reader contact (Phone).
+- **Collection Health Audit**: Automated detection of "Dead Stock" (no activity > 6m) and "Best Sellers" for inventory rotation.
+- **Financial Ledger**: Daily reconciliation view for collected fines.
+- **Print Optimization**: Global `@media print` CSS for high-quality browser-based reporting.
+
+### Fixed
+- **TypeScript Verbatim Compliance**: Fixed production build errors by converting entity imports to `import type`.
+- **JSX Entity Escaping**: Resolved build-breaking unescaped characters in UI components.
+- **Report Service Logic**: Corrected collection health aggregation to use `totalQuantity`/`availableQuantity` mapping instead of non-existent status fields.
+- **Badge Pathing**: Standardized import paths for UI components following the folder encapsulation rule.
+
 ## [2026-04-23] - Admin Reporting & Auth Stability
 ### Added
 - **Admin Reporting System**: Integrated on-demand snapshots for Monthly performance, Inventory status, and Reader activity.

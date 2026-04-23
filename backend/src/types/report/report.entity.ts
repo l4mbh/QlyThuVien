@@ -83,3 +83,53 @@ export interface FineReport {
   paid: number;
   unpaid: number;
 }
+
+// --- LIBRARIAN COMMAND CENTER (V2) ---
+
+export interface DailyOperation {
+  id: string;
+  type: 'BORROW' | 'RETURN';
+  bookTitle: string;
+  readerName: string;
+  timestamp: Date;
+}
+
+export interface ActionableOverdue {
+  borrowItemId: string;
+  bookTitle: string;
+  readerName: string;
+  readerPhone: string | null;
+  dueDate: Date;
+  daysOverdue: number;
+  estimatedFine: number;
+}
+
+export interface CollectionHealth {
+  generatedAt: Date;
+  totalBooks: number;
+  statusBreakdown: {
+    available: number;
+    borrowed: number;
+    lost: number;
+    damaged: number;
+  };
+  deadStock: {
+    id: string;
+    title: string;
+    author: string;
+    lastBorrowedAt: Date | null;
+  }[];
+  bestSellers: {
+    id: string;
+    title: string;
+    borrowCount: number;
+  }[];
+}
+
+export interface FinancialLedgerEntry {
+  id: string;
+  readerName: string;
+  bookTitle: string;
+  amount: number;
+  date: Date;
+}

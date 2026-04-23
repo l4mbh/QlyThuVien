@@ -1,6 +1,6 @@
 # API Documentation
 
-Updated: 2026-04-22
+Updated: 2026-04-24
 Base URL: `http://localhost:3000/api`
 
 ---
@@ -81,3 +81,23 @@ Process book returns and calculate fines.
 - Updates `fineAmount` in `BorrowItem`
 - Restores book stock and decrements reader's `currentBorrowCount`
 **Response:** `{ message: "Books returned successfully", code: 0 }`
+
+---
+
+## 📊 Reports (`/reports`)
+
+### GET `/reports/daily-operations`
+Get all borrow/return activities for today.
+**Response:** `{ data: DailyOperation[], code: 0 }`
+
+### GET `/reports/actionable-overdue`
+List of books currently overdue that require action.
+**Response:** `{ data: ActionableOverdue[], code: 0 }`
+
+### GET `/reports/collection-health`
+Summary of inventory state, dead stock, and best sellers.
+**Response:** `{ data: CollectionHealth, code: 0 }`
+
+### GET `/reports/financial-ledger`
+Reconciliation log of fines collected today.
+**Response:** `{ data: FinancialLedgerEntry[], code: 0 }`

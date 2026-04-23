@@ -32,4 +32,11 @@ export class DateHelper {
   static formatDate(date: Date, formatStr: string = 'yyyy-MM-dd HH:mm:ss') {
     return formatInTimeZone(date, TIMEZONE, formatStr);
   }
+
+  static getTodayRange() {
+    const now = new Date();
+    const start = new Date(now.setHours(0, 0, 0, 0));
+    const end = new Date(now.setHours(23, 59, 59, 999));
+    return { start, end };
+  }
 }

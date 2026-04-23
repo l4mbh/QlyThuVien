@@ -4,7 +4,11 @@ import {
   type MonthlyReport,
   type InventoryReport,
   type ReaderActivityReport,
-  type FineReport
+  type FineReport,
+  type DailyOperation,
+  type ActionableOverdue,
+  type CollectionHealth,
+  type FinancialLedgerEntry
 } from "@/types/report/report.entity";
 
 export const reportService = {
@@ -25,6 +29,26 @@ export const reportService = {
 
   async getFineReport(): Promise<FineReport> {
     const response = await api.get<ApiResponse<FineReport>>("/reports/fines");
+    return response.data.data!;
+  },
+
+  async getDailyOperations(): Promise<DailyOperation[]> {
+    const response = await api.get<ApiResponse<DailyOperation[]>>("/reports/daily-operations");
+    return response.data.data!;
+  },
+
+  async getActionableOverdue(): Promise<ActionableOverdue[]> {
+    const response = await api.get<ApiResponse<ActionableOverdue[]>>("/reports/actionable-overdue");
+    return response.data.data!;
+  },
+
+  async getCollectionHealth(): Promise<CollectionHealth> {
+    const response = await api.get<ApiResponse<CollectionHealth>>("/reports/collection-health");
+    return response.data.data!;
+  },
+
+  async getFinancialLedger(): Promise<FinancialLedgerEntry[]> {
+    const response = await api.get<ApiResponse<FinancialLedgerEntry[]>>("/reports/financial-ledger");
     return response.data.data!;
   }
 };

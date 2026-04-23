@@ -7,7 +7,11 @@ import {
   MonthlyReport,
   InventoryReport,
   ReaderActivityReport,
-  FineReport
+  FineReport,
+  DailyOperation,
+  ActionableOverdue,
+  CollectionHealth,
+  FinancialLedgerEntry
 } from "../../types/report/report.entity";
 import { DateHelper } from "../../utils/date.helper";
 
@@ -119,16 +123,16 @@ export class ReportService {
 
     return overdueItems.map(item => {
       const dueDate = new Date(item.borrowRecord.dueDate);
-      const diffTime = Math.abs(now.getTime() - dueDate.getTime());
-      const daysLate = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const diffTime = Math.max(0, now.getTime() - dueDate.getTime());
+      const daysOverdue = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
       return {
-        borrowItemId: item.id,
-        readerName: item.borrowRecord.user.name,
+        id: item.id,
         bookTitle: item.book.title,
+        readerName: item.borrowRecord.user.name,
+        borrowDate: item.borrowedAt.toISOString(),
         dueDate: item.borrowRecord.dueDate.toISOString(),
-        daysLate,
-        fineAmount: item.fineAmount || 0
+        daysOverdue
       };
     });
   }
@@ -328,5 +332,178 @@ export class ReportService {
       paid: total, // Placeholder
       unpaid: 0    // Placeholder
     };
+  }
+
+  // --- LIBRARIAN COMMAND CENTER (V2) METHODS ---
+
+  async getDailyOperations(): Promise<DailyOperation[]> {
+    const { start, end } = DateHelper.getTodayRange();
+
+    const operations = await prisma.borrowItem.findMany({
+      where: {
+        OR: [
+          { borrowedAt: { gte: start, lte: end } },
+          { returnedAt: { gte: start, lte: end } }
+        ]
+      },
+      include: {
+        book: { select: { title: true } },
+        borrowRecord: { include: { user: { select: { name: true } } } }
+      },
+      orderBy: { updatedAt: 'desc' }
+    });
+
+    return operations.map(op => ({
+      id: op.id,
+      type: op.returnedAt && op.returnedAt >= start && op.returnedAt <= end ? 'RETURN' : 'BORROW',
+      bookTitle: op.book.title,
+      readerName: op.borrowRecord.user.name,
+      timestamp: op.returnedAt && op.returnedAt >= start && op.returnedAt <= end ? op.returnedAt : op.borrowedAt
+    }));
+  }
+
+  async getActionableOverdue(): Promise<ActionableOverdue[]> {
+    const now = new Date();
+    const overdueItems = await prisma.borrowItem.findMany({
+      where: {
+        status: { in: ['BORROWING', 'OVERDUE'] },
+        borrowRecord: { dueDate: { lt: now } }
+      },
+      include: {
+        book: { select: { title: true } },
+        borrowRecord: { 
+          include: { 
+            user: { select: { name: true, phone: true } }
+          } 
+        }
+      },
+      orderBy: {
+        borrowRecord: { dueDate: 'asc' }
+      }
+    });
+
+    return overdueItems.map(item => {
+      const dueDate = new Date(item.borrowRecord.dueDate);
+      const diffTime = Math.max(0, now.getTime() - dueDate.getTime());
+      const daysOverdue = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      const estimatedFine = daysOverdue * 5000;
+
+      return {
+        borrowItemId: item.id,
+        bookTitle: item.book.title,
+        readerName: item.borrowRecord.user.name,
+        readerPhone: item.borrowRecord.user.phone,
+        dueDate: item.borrowRecord.dueDate,
+        daysOverdue,
+        estimatedFine
+      };
+    });
+  }
+
+  async getCollectionHealth(): Promise<CollectionHealth> {
+    const now = new Date();
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(now.getMonth() - 6);
+
+    const [
+      totalBooks,
+      booksSummary,
+      deadStockRaw,
+      bestSellersRaw
+    ] = await Promise.all([
+      prisma.book.count({ where: { isArchived: false } }),
+      prisma.book.aggregate({
+        where: { isArchived: false },
+        _sum: {
+          totalQuantity: true,
+          availableQuantity: true
+        }
+      }),
+      // Dead stock: books not borrowed in last 6 months
+      prisma.book.findMany({
+        take: 10,
+        where: {
+          isArchived: false,
+          borrowItems: {
+            none: {
+              borrowedAt: { gte: sixMonthsAgo }
+            }
+          }
+        },
+        select: {
+          id: true,
+          title: true,
+          author: true,
+          borrowItems: {
+            select: { borrowedAt: true },
+            orderBy: { borrowedAt: 'desc' },
+            take: 1
+          }
+        }
+      }),
+      // Best sellers: most borrowed books
+      prisma.book.findMany({
+        take: 10,
+        where: { isArchived: false },
+        select: {
+          id: true,
+          title: true,
+          _count: { select: { borrowItems: true } }
+        },
+        orderBy: { borrowItems: { _count: 'desc' } }
+      })
+    ]);
+
+    const totalCopies = booksSummary._sum.totalQuantity || 0;
+    const availableCopies = booksSummary._sum.availableQuantity || 0;
+    const borrowedCopies = Math.max(0, totalCopies - availableCopies);
+
+    const counts = {
+      available: availableCopies,
+      borrowed: borrowedCopies,
+      lost: 0,
+      damaged: 0
+    };
+
+    return {
+      generatedAt: now,
+      totalBooks,
+      statusBreakdown: counts,
+      deadStock: deadStockRaw.map(b => ({
+        id: b.id,
+        title: b.title,
+        author: b.author,
+        lastBorrowedAt: b.borrowItems[0]?.borrowedAt || null
+      })),
+      bestSellers: bestSellersRaw.map(b => ({
+        id: b.id,
+        title: b.title,
+        borrowCount: b._count.borrowItems
+      }))
+    };
+  }
+
+  async getFinancialLedger(): Promise<FinancialLedgerEntry[]> {
+    const { start, end } = DateHelper.getTodayRange();
+
+    const fineEntries = await prisma.borrowItem.findMany({
+      where: {
+        returnedAt: { gte: start, lte: end },
+        fineAmount: { gt: 0 }
+      },
+      include: {
+        book: { select: { title: true } },
+        borrowRecord: { include: { user: { select: { name: true } } } }
+      },
+      orderBy: { returnedAt: 'desc' }
+    });
+
+    return fineEntries.map(entry => ({
+      id: entry.id,
+      readerName: entry.borrowRecord.user.name,
+      bookTitle: entry.book.title,
+      amount: entry.fineAmount || 0,
+      date: entry.returnedAt!
+    }));
   }
 }
