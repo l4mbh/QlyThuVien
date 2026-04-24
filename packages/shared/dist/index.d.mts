@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 /**
  * Standardized Error Codes list (String-based).
  * Facilitates mapping and localization on the Frontend.
@@ -9,6 +11,7 @@ declare const ErrorCode: {
     readonly UNAUTHORIZED: "UNAUTHORIZED";
     readonly FORBIDDEN: "FORBIDDEN";
     readonly NOT_FOUND: "NOT_FOUND";
+    readonly MAINTENANCE_MODE: "MAINTENANCE_MODE";
     readonly INVALID_CREDENTIALS: "INVALID_CREDENTIALS";
     readonly TOKEN_EXPIRED: "TOKEN_EXPIRED";
     readonly TOKEN_INVALID: "TOKEN_INVALID";
@@ -44,7 +47,9 @@ declare enum AuditAction {
     INVENTORY_ADJUSTED = "INVENTORY_ADJUSTED",
     USER_CREATED = "USER_CREATED",
     USER_UPDATED = "USER_UPDATED",
-    USER_BLOCKED = "USER_BLOCKED"
+    USER_BLOCKED = "USER_BLOCKED",
+    SYSTEM_CONFIG_UPDATED = "SYSTEM_CONFIG_UPDATED",
+    NOTIFICATION_CONFIG_UPDATED = "NOTIFICATION_CONFIG_UPDATED"
 }
 /**
  * Entity types that can be audited
@@ -188,4 +193,56 @@ interface CreateNotificationDto {
  */
 declare const runRules: <T>(rules: Rule<T>[], input: T) => RuleResult;
 
-export { type ApiResponse, AuditAction, AuditEntityType, type AuditLog, type BorrowContext, type CreateAuditLogDto, type CreateNotificationDto, ErrorCode, type ErrorCodeType, type Notification, NotificationType, type PaginatedData, type PaginationMeta, type Rule, type RuleResult, booksAvailable, borrowRuleSet, isUserActive, noOverdue, runRules, withinLimit };
+/**
+ * Danh sách các khóa cấu hình hệ thống
+ */
+declare enum SettingKey {
+    BORROW_LIMIT = "BORROW_LIMIT",
+    BORROW_DURATION_DAYS = "BORROW_DURATION_DAYS",
+    FINE_PER_DAY = "FINE_PER_DAY",
+    MAX_FINE = "MAX_FINE",
+    DUE_SOON_DAYS = "DUE_SOON_DAYS",
+    OVERDUE_CHECK_TIME = "OVERDUE_CHECK_TIME",
+    ENABLE_FINE = "ENABLE_FINE",
+    ENABLE_NOTIFICATION = "ENABLE_NOTIFICATION",
+    MAINTENANCE_MODE = "MAINTENANCE_MODE"
+}
+/**
+ * Giá trị mặc định (Fallback) khi database chưa có dữ liệu
+ */
+declare const DEFAULT_SETTINGS: Record<SettingKey, any>;
+/**
+ * Phân nhóm settings để hiển thị UI
+ */
+declare const SETTING_CATEGORIES: {
+    BORROW: SettingKey[];
+    FINE: SettingKey[];
+    NOTIFICATION: SettingKey[];
+    SYSTEM: SettingKey[];
+};
+
+/**
+ * Schema dùng để validate request cập nhật một setting
+ */
+declare const UpdateSettingSchema: z.ZodObject<{
+    key: z.ZodEnum<typeof SettingKey>;
+    value: z.ZodAny;
+}, z.core.$strip>;
+type UpdateSettingDto = z.infer<typeof UpdateSettingSchema>;
+/**
+ * Định nghĩa các bộ quy tắc validation riêng cho từng khóa cấu hình
+ * Giúp đảm bảo dữ liệu nhập vào từ Admin UI luôn đúng logic
+ */
+declare const SettingValidationMap: Partial<Record<SettingKey, z.ZodTypeAny>>;
+
+declare enum UserRole {
+    ADMIN = "ADMIN",
+    STAFF = "STAFF",
+    READER = "READER"
+}
+declare enum UserStatus {
+    ACTIVE = "ACTIVE",
+    BLOCKED = "BLOCKED"
+}
+
+export { type ApiResponse, AuditAction, AuditEntityType, type AuditLog, type BorrowContext, type CreateAuditLogDto, type CreateNotificationDto, DEFAULT_SETTINGS, ErrorCode, type ErrorCodeType, type Notification, NotificationType, type PaginatedData, type PaginationMeta, type Rule, type RuleResult, SETTING_CATEGORIES, SettingKey, SettingValidationMap, type UpdateSettingDto, UpdateSettingSchema, UserRole, UserStatus, booksAvailable, borrowRuleSet, isUserActive, noOverdue, runRules, withinLimit };

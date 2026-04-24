@@ -1,13 +1,14 @@
 import prisma from "../../config/db/db";
 import { BorrowRepository } from "../../repositories/borrow/borrow.repository";
 import { CreateBorrowDTO, ReturnBookDTO } from "../../types/borrow/borrow.entity";
-import { ErrorCode, AuditAction, AuditEntityType, NotificationType } from "@qltv/shared";
+import { ErrorCode, AuditAction, AuditEntityType, NotificationType, SettingKey } from "@qltv/shared";
 import { BorrowItemStatus, UserStatus, Prisma } from "@prisma/client";
 import { AppError } from "../../utils/app-error";
 import { runRules } from "@qltv/shared";
 import { borrowRuleSet } from "@qltv/shared";
 import { auditService } from "../audit/audit.service";
 import { notificationService } from "../notification/notification.service";
+import { settingService } from "../settings/setting.service";
 
 export class BorrowService {
   private borrowRepository: BorrowRepository;
@@ -49,7 +50,10 @@ export class BorrowService {
         throw new AppError(ErrorCode.BOOK_NOT_FOUND, "One or more books not found");
       }
 
-      // 2. Check for overdue books
+      // 2. Fetch Global Borrow Limit from Settings
+      const globalBorrowLimit = await settingService.get<number>(SettingKey.BORROW_LIMIT);
+
+      // 3. Check for overdue books
       const overdueItem = await tx.borrowItem.findFirst({
         where: {
           status: BorrowItemStatus.BORROWING,
@@ -60,14 +64,13 @@ export class BorrowService {
         }
       });
 
-
-      // 3. Run Centralized Rules
+      // 4. Run Centralized Rules
       const ruleResult = runRules(borrowRuleSet, {
         user: {
           id: user.id,
           status: user.status,
           currentBorrowCount: user.currentBorrowCount,
-          borrowLimit: user.borrowLimit
+          borrowLimit: globalBorrowLimit // Use global limit from settings
         },
         books: books.map(b => ({
           id: b.id,
@@ -80,6 +83,7 @@ export class BorrowService {
       if (!ruleResult.ok) {
         throw new AppError(ruleResult.code, ruleResult.details?.message || "Borrowing rule violation");
       }
+// ...
 
       // 4. Create Borrow Record
       const borrowRecord = await tx.borrowRecord.create({
@@ -161,9 +165,9 @@ export class BorrowService {
           continue; // Skip if already returned to avoid double inventory increase
         }
 
-        // 2. Calculate Fine
+        // 2. Calculate Fine based on settings
         const dueDate = new Date(item.borrowRecord.dueDate);
-        const fineAmount = this.calculateFine(dueDate, now);
+        const fineAmount = await this.calculateFine(dueDate, now);
 
         // 3. Update Borrow Item Status & Fine
         const updatedItem = await tx.borrowItem.update({
@@ -174,7 +178,6 @@ export class BorrowService {
             fineAmount: fineAmount,
           },
         });
-
         // 4. Update Book availableQuantity (+1)
         await tx.book.update({
           where: { id: item.bookId },
@@ -227,13 +230,23 @@ export class BorrowService {
     });
   }
 
-  private calculateFine(dueDate: Date, returnedAt: Date): number {
+  private async calculateFine(dueDate: Date, returnedAt: Date): Promise<number> {
+    // 1. Check if fine is enabled
+    const isFineEnabled = await settingService.get<boolean>(SettingKey.ENABLE_FINE);
+    if (!isFineEnabled) return 0;
+
     const diffTime = returnedAt.getTime() - dueDate.getTime();
     if (diffTime <= 0) return 0;
 
-    // Calculate days overdue (any part of a day counts as 1 day)
+    // 2. Calculate days overdue (any part of a day counts as 1 day)
     const overdueDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return overdueDays * 5000;
+    
+    // 3. Fetch fine settings
+    const finePerDay = await settingService.get<number>(SettingKey.FINE_PER_DAY);
+    const maxFine = await settingService.get<number>(SettingKey.MAX_FINE);
+
+    const calculatedFine = overdueDays * finePerDay;
+    return Math.min(calculatedFine, maxFine);
   }
 }
 

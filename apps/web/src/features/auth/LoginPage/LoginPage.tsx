@@ -1,20 +1,37 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../auth.hook";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Mail, Lock, Library, ArrowRight, Loader2 } from "lucide-react";
+import { Mail, Lock, Library, ArrowRight, Loader2, Wrench } from "lucide-react";
+import { api } from "@/services/api";
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMaintenance, setIsMaintenance] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || "/dashboard";
+
+  // Check system maintenance status on mount
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        const res = await api.get("/system/status");
+        if (res.data?.data?.maintenance) {
+          setIsMaintenance(true);
+        }
+      } catch (_) {
+        // Silent fail
+      }
+    };
+    checkStatus();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,6 +77,21 @@ export const LoginPage: React.FC = () => {
             <p className="text-slate-400 text-sm font-medium tracking-wide">Enterprise Library Management</p>
           </div>
         </div>
+
+        {/* Maintenance Warning Banner */}
+        {isMaintenance && (
+          <div className="mb-4 flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 backdrop-blur-xl p-4 animate-in fade-in slide-in-from-top-2 duration-500">
+            <div className="shrink-0 mt-0.5">
+              <Wrench className="h-5 w-5 text-amber-400" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-bold text-amber-300">System Under Maintenance</p>
+              <p className="text-xs text-amber-400/80 leading-relaxed">
+                Only administrators can sign in during this period. Regular users please try again later.
+              </p>
+            </div>
+          </div>
+        )}
 
         <Card className="border-white/10 bg-white/5 backdrop-blur-2xl shadow-2xl rounded-3xl overflow-hidden ring-1 ring-white/10">
           <CardHeader className="space-y-1.5 pt-8 pb-6 px-8">

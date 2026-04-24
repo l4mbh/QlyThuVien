@@ -1,10 +1,11 @@
 import prisma from "../../config/db/db";
 import { UserRepository } from "../../repositories/user/user.repository";
 import { CreateUserDTO, UpdateUserDTO, UserEntity } from "../../types/user/user.entity";
-import { ErrorCode } from "@qltv/shared";
+import { ErrorCode, SettingKey } from "@qltv/shared";
 import { AppError } from "../../utils/app-error";
 import { UserStatus } from "@prisma/client";
 import { hashPassword } from "../../utils/hash.util";
+import { settingService } from "../settings/setting.service";
 
 export class UserService {
   private userRepository: UserRepository;
@@ -37,27 +38,33 @@ export class UserService {
     });
 
     const now = new Date();
+    const globalBorrowLimit = await settingService.get<number>(SettingKey.BORROW_LIMIT);
+
     return users.map((user: any) => {
       const hasOverdueBooks = user.borrowRecords.some((record: any) =>
         new Date(record.dueDate) < now
       );
 
-      // Clean up the response (remove the include data if not needed by all callers)
+      // Nếu hạn mức user đang ở mức mặc định (5), ưu tiên dùng giá trị từ Setting mới
+      const effectiveBorrowLimit = user.borrowLimit === 5 ? globalBorrowLimit : user.borrowLimit;
+
       const { borrowRecords, ...userWithoutRecords } = user;
       return {
         ...userWithoutRecords,
+        borrowLimit: effectiveBorrowLimit,
         hasOverdueBooks
       };
     });
   }
-
-
 
   async getUserById(id: string): Promise<any> {
     const user = await this.userRepository.findById(id);
     if (!user) {
       throw new AppError(ErrorCode.USER_NOT_FOUND, "User not found");
     }
+
+    const globalBorrowLimit = await settingService.get<number>(SettingKey.BORROW_LIMIT);
+    const effectiveBorrowLimit = user.borrowLimit === 5 ? globalBorrowLimit : user.borrowLimit;
 
     // Compute dynamic stats
     let totalFine = 0;
@@ -67,12 +74,10 @@ export class UserService {
     user.borrowRecords?.forEach((record: any) => {
       const dueDate = new Date(record.dueDate);
       record.borrowItems?.forEach((item: any) => {
-        // Sum finalized fines from returned items
         if (item.fineAmount) {
           totalFine += item.fineAmount;
         }
 
-        // Count items currently borrowing that are overdue
         if (item.status !== "RETURNED" && now > dueDate) {
           overdueCount++;
         }
@@ -81,6 +86,7 @@ export class UserService {
 
     return {
       ...user,
+      borrowLimit: effectiveBorrowLimit,
       totalFine,
       overdueCount,
     };

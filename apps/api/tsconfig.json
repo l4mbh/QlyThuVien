@@ -7,7 +7,7 @@
       "ES2020"
     ],
     "outDir": "./dist",
-    "rootDir": ".",
+    "rootDir": "../../",
     "strict": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
@@ -18,13 +18,17 @@
     "paths": {
       "@/*": [
         "src/*"
+      ],
+      "@qltv/shared": [
+        "../../packages/shared/src/index"
       ]
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "../../packages/shared/src/**/*"
   ],
   "exclude": [
     "node_modules",

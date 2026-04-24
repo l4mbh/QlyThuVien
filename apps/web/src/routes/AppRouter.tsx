@@ -6,10 +6,13 @@ import { Categories } from "@/pages/Categories";
 import { Readers } from "@/pages/Readers";
 import { Borrow } from "@/pages/Borrow";
 import { Reports } from "@/pages/Reports";
+import { Settings } from "@/pages/Settings";
 import { LoginPage } from "@/features/auth/LoginPage/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage/RegisterPage";
 import { ProtectedRoute } from "@/components/ui/protected-route/protected-route";
 import { UserRole } from "@/types/auth/user.entity";
+
+import { MaintenancePage } from "@/pages/Maintenance";
 
 const router = createBrowserRouter([
   {
@@ -19,6 +22,10 @@ const router = createBrowserRouter([
   {
     path: "/register",
     element: <RegisterPage />,
+  },
+  {
+    path: "/maintenance",
+    element: <MaintenancePage />,
   },
   {
     path: "/",
@@ -83,6 +90,18 @@ const router = createBrowserRouter([
         handle: { 
           crumb: "Reports & Analytics",
           description: "Deep dive into library data, borrowing trends, and financial reports."
+        },
+      },
+      {
+        path: "settings",
+        element: (
+          <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+            <Settings />
+          </ProtectedRoute>
+        ),
+        handle: { 
+          crumb: "System Settings",
+          description: "Configure library rules, fines, and notification routing."
         },
       },
     ],

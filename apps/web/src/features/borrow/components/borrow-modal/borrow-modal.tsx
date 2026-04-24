@@ -31,10 +31,11 @@ import { borrowFormSchema, type BorrowFormValues } from "@/schemas/borrow/borrow
 import { borrowService } from "../../borrow.service";
 import { bookService } from "@/features/books/book.service";
 import { readerService } from "@/features/readers/reader.service";
+import { settingService as uiSettingService } from "@/features/settings/setting.service";
+import { ErrorCode, SettingKey } from "@qltv/shared";
 import type { Reader } from "@/types/reader/reader.entity";
 import type { BookEntity } from "@/types/books/book.entity";
 
-import { ErrorCode } from "@qltv/shared";
 import { runRules } from "@qltv/shared";
 import { borrowRuleSet } from "@qltv/shared";
 import { getErrorMessage } from "@/constants/errors/error-map";
@@ -76,14 +77,22 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
     if (isOpen) {
       const fetchData = async () => {
         try {
-          // Fetch readers and books (limited for search/selection)
-          const [readersRes, booksRes] = await Promise.all([
+          // Fetch readers, books and settings
+          const [readersRes, booksRes, settingsRes] = await Promise.all([
             readerService.getReaders(),
             bookService.getBooks({ limit: 100, available: true }),
+            uiSettingService.getAll()
           ]);
 
           if (readersRes.code === ErrorCode.SUCCESS && readersRes.data) setReaders(readersRes.data as Reader[]);
           if (booksRes.code === ErrorCode.SUCCESS && booksRes.data) setBooks(booksRes.data.items);
+          
+          // Apply dynamic borrow duration
+          if (settingsRes.code === ErrorCode.SUCCESS && settingsRes.data) {
+            const durationSetting = settingsRes.data.find((s: any) => s.key === SettingKey.BORROW_DURATION_DAYS);
+            const days = durationSetting ? Number(durationSetting.value) : 14;
+            form.setValue("dueDate", addDays(new Date(), days));
+          }
         } catch (error) {
           console.error("Failed to fetch data for borrow modal", error);
         }

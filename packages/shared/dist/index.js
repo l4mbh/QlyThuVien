@@ -22,8 +22,15 @@ var index_exports = {};
 __export(index_exports, {
   AuditAction: () => AuditAction,
   AuditEntityType: () => AuditEntityType,
+  DEFAULT_SETTINGS: () => DEFAULT_SETTINGS,
   ErrorCode: () => ErrorCode,
   NotificationType: () => NotificationType,
+  SETTING_CATEGORIES: () => SETTING_CATEGORIES,
+  SettingKey: () => SettingKey,
+  SettingValidationMap: () => SettingValidationMap,
+  UpdateSettingSchema: () => UpdateSettingSchema,
+  UserRole: () => UserRole,
+  UserStatus: () => UserStatus,
   booksAvailable: () => booksAvailable,
   borrowRuleSet: () => borrowRuleSet,
   isUserActive: () => isUserActive,
@@ -42,6 +49,7 @@ var ErrorCode = {
   UNAUTHORIZED: "UNAUTHORIZED",
   FORBIDDEN: "FORBIDDEN",
   NOT_FOUND: "NOT_FOUND",
+  MAINTENANCE_MODE: "MAINTENANCE_MODE",
   // Auth
   INVALID_CREDENTIALS: "INVALID_CREDENTIALS",
   TOKEN_EXPIRED: "TOKEN_EXPIRED",
@@ -80,6 +88,8 @@ var AuditAction = /* @__PURE__ */ ((AuditAction2) => {
   AuditAction2["USER_CREATED"] = "USER_CREATED";
   AuditAction2["USER_UPDATED"] = "USER_UPDATED";
   AuditAction2["USER_BLOCKED"] = "USER_BLOCKED";
+  AuditAction2["SYSTEM_CONFIG_UPDATED"] = "SYSTEM_CONFIG_UPDATED";
+  AuditAction2["NOTIFICATION_CONFIG_UPDATED"] = "NOTIFICATION_CONFIG_UPDATED";
   return AuditAction2;
 })(AuditAction || {});
 var AuditEntityType = /* @__PURE__ */ ((AuditEntityType2) => {
@@ -158,12 +168,81 @@ var runRules = (rules, input) => {
   }
   return { ok: true };
 };
+
+// src/constants/settings.ts
+var SettingKey = /* @__PURE__ */ ((SettingKey2) => {
+  SettingKey2["BORROW_LIMIT"] = "BORROW_LIMIT";
+  SettingKey2["BORROW_DURATION_DAYS"] = "BORROW_DURATION_DAYS";
+  SettingKey2["FINE_PER_DAY"] = "FINE_PER_DAY";
+  SettingKey2["MAX_FINE"] = "MAX_FINE";
+  SettingKey2["DUE_SOON_DAYS"] = "DUE_SOON_DAYS";
+  SettingKey2["OVERDUE_CHECK_TIME"] = "OVERDUE_CHECK_TIME";
+  SettingKey2["ENABLE_FINE"] = "ENABLE_FINE";
+  SettingKey2["ENABLE_NOTIFICATION"] = "ENABLE_NOTIFICATION";
+  SettingKey2["MAINTENANCE_MODE"] = "MAINTENANCE_MODE";
+  return SettingKey2;
+})(SettingKey || {});
+var DEFAULT_SETTINGS = {
+  ["BORROW_LIMIT" /* BORROW_LIMIT */]: 5,
+  ["BORROW_DURATION_DAYS" /* BORROW_DURATION_DAYS */]: 14,
+  ["FINE_PER_DAY" /* FINE_PER_DAY */]: 5e3,
+  ["MAX_FINE" /* MAX_FINE */]: 1e5,
+  ["DUE_SOON_DAYS" /* DUE_SOON_DAYS */]: 2,
+  ["OVERDUE_CHECK_TIME" /* OVERDUE_CHECK_TIME */]: "08:00",
+  ["ENABLE_FINE" /* ENABLE_FINE */]: true,
+  ["ENABLE_NOTIFICATION" /* ENABLE_NOTIFICATION */]: true,
+  ["MAINTENANCE_MODE" /* MAINTENANCE_MODE */]: false
+};
+var SETTING_CATEGORIES = {
+  BORROW: ["BORROW_LIMIT" /* BORROW_LIMIT */, "BORROW_DURATION_DAYS" /* BORROW_DURATION_DAYS */],
+  FINE: ["FINE_PER_DAY" /* FINE_PER_DAY */, "MAX_FINE" /* MAX_FINE */, "ENABLE_FINE" /* ENABLE_FINE */],
+  NOTIFICATION: ["DUE_SOON_DAYS" /* DUE_SOON_DAYS */, "OVERDUE_CHECK_TIME" /* OVERDUE_CHECK_TIME */, "ENABLE_NOTIFICATION" /* ENABLE_NOTIFICATION */],
+  SYSTEM: ["MAINTENANCE_MODE" /* MAINTENANCE_MODE */]
+};
+
+// src/schemas/settings/setting.schema.ts
+var import_zod = require("zod");
+var UpdateSettingSchema = import_zod.z.object({
+  key: import_zod.z.nativeEnum(SettingKey),
+  value: import_zod.z.any()
+});
+var SettingValidationMap = {
+  ["BORROW_LIMIT" /* BORROW_LIMIT */]: import_zod.z.number().min(1, "Borrow limit must be at least 1").max(100),
+  ["BORROW_DURATION_DAYS" /* BORROW_DURATION_DAYS */]: import_zod.z.number().min(1, "Duration must be at least 1 day"),
+  ["FINE_PER_DAY" /* FINE_PER_DAY */]: import_zod.z.number().min(0, "Fine cannot be negative"),
+  ["MAX_FINE" /* MAX_FINE */]: import_zod.z.number().min(0),
+  ["DUE_SOON_DAYS" /* DUE_SOON_DAYS */]: import_zod.z.number().min(1).max(14),
+  ["OVERDUE_CHECK_TIME" /* OVERDUE_CHECK_TIME */]: import_zod.z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:mm)"),
+  ["ENABLE_FINE" /* ENABLE_FINE */]: import_zod.z.boolean(),
+  ["ENABLE_NOTIFICATION" /* ENABLE_NOTIFICATION */]: import_zod.z.boolean(),
+  ["MAINTENANCE_MODE" /* MAINTENANCE_MODE */]: import_zod.z.boolean()
+};
+
+// src/types/user.ts
+var UserRole = /* @__PURE__ */ ((UserRole2) => {
+  UserRole2["ADMIN"] = "ADMIN";
+  UserRole2["STAFF"] = "STAFF";
+  UserRole2["READER"] = "READER";
+  return UserRole2;
+})(UserRole || {});
+var UserStatus = /* @__PURE__ */ ((UserStatus2) => {
+  UserStatus2["ACTIVE"] = "ACTIVE";
+  UserStatus2["BLOCKED"] = "BLOCKED";
+  return UserStatus2;
+})(UserStatus || {});
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   AuditAction,
   AuditEntityType,
+  DEFAULT_SETTINGS,
   ErrorCode,
   NotificationType,
+  SETTING_CATEGORIES,
+  SettingKey,
+  SettingValidationMap,
+  UpdateSettingSchema,
+  UserRole,
+  UserStatus,
   booksAvailable,
   borrowRuleSet,
   isUserActive,

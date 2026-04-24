@@ -34,6 +34,18 @@ api.interceptors.response.use(
     
     if (data && typeof data.code !== "undefined" && !isSuccess) {
 
+      // Handle Maintenance Mode
+      if (data.code === ErrorCode.MAINTENANCE_MODE) {
+        if (window.location.pathname !== "/maintenance") {
+          window.location.href = "/maintenance";
+        }
+        return Promise.reject({
+          response,
+          message: data.error?.msg || "System is under maintenance",
+          code: data.code,
+        });
+      }
+
       // Handle Unauthorized error code (401001)
       if (data.code === ErrorCode.UNAUTHORIZED) {
         localStorage.removeItem("token");

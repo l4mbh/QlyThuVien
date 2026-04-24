@@ -1,6 +1,7 @@
 import app from "./app";
 import { ENV } from "./config/env/env";
 import { initOverdueJob } from "./jobs/overdue-checker.job";
+import { settingService } from "./services/settings/setting.service";
 
 const startServer = async () => {
   try {
@@ -9,6 +10,9 @@ const startServer = async () => {
       console.log(`[Server]: Backend is running at http://localhost:${port}`);
       console.log(`[Server]: Environment: ${ENV.NODE_ENV}`);
       
+      // Initialize settings cache
+      settingService.init();
+
       // Initialize background jobs
       initOverdueJob();
     });

@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { BookOpen, Users, BookCopy, LayoutDashboard, Menu, LogOut, BarChart3, Tags } from "lucide-react";
+import { BookOpen, Users, BookCopy, LayoutDashboard, Menu, LogOut, BarChart3, Tags, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth.hook";
@@ -18,6 +18,7 @@ const navItems = [
   { icon: Users, label: "Readers", href: "/readers" },
   { icon: BookCopy, label: "Borrow", href: "/borrow" },
   { icon: BarChart3, label: "Reports", href: "/reports", roles: [UserRole.ADMIN] },
+  { icon: Settings, label: "Settings", href: "/settings", roles: [UserRole.ADMIN] },
 ];
 
 export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {

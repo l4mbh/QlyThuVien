@@ -2,6 +2,13 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 import dotenv from 'dotenv';
+import { 
+  DEFAULT_SETTINGS, 
+  SettingKey, 
+  SETTING_CATEGORIES,
+  NotificationType,
+  UserRole
+} from '@qltv/shared';
 
 dotenv.config();
 
@@ -14,7 +21,7 @@ async function main() {
 
   // Create default category
   const unknownCategory = await prisma.category.upsert({
-    where: { id: 'unknown-category-id' }, // Using a fixed ID for consistency or just finding by name
+    where: { id: 'unknown-category-id' },
     update: {},
     create: {
       id: 'unknown-category-id',
@@ -53,7 +60,7 @@ async function main() {
   ];
 
   for (const staff of staffUsers) {
-    const user = await prisma.user.upsert({
+    await prisma.user.upsert({
       where: { email: staff.email },
       update: { password: adminPassword, role: 'STAFF' },
       create: {
@@ -64,30 +71,55 @@ async function main() {
         status: 'ACTIVE',
       },
     });
-    console.log('Staff user created/updated:', user.email);
   }
 
-  // Create reader users
-  const readerUsers = [
-    { name: 'Active Reader 1', email: 'reader1@gmail.com', status: 'ACTIVE' as const },
-    { name: 'Active Reader 2', email: 'reader2@gmail.com', status: 'ACTIVE' as const },
-    { name: 'Blocked Reader', email: 'blocked@gmail.com', status: 'BLOCKED' as const },
-  ];
+  // Seed System Settings
+  console.log('Seeding System Settings...');
+  for (const [key, value] of Object.entries(DEFAULT_SETTINGS)) {
+    // Find category
+    let category = 'GENERAL';
+    for (const [catName, keys] of Object.entries(SETTING_CATEGORIES)) {
+      if ((keys as string[]).includes(key)) {
+        category = catName;
+        break;
+      }
+    }
 
-  for (const reader of readerUsers) {
-    const user = await prisma.user.upsert({
-      where: { email: reader.email },
-      update: { password: adminPassword, status: reader.status },
+    await prisma.systemSetting.upsert({
+      where: { key },
+      update: { value: value as any },
       create: {
-        name: reader.name,
-        email: reader.email,
-        password: adminPassword,
-        role: 'READER',
-        status: reader.status,
+        key,
+        value: value as any,
+        category,
+        description: `System configuration for ${key.toLowerCase().replace(/_/g, ' ')}`,
       },
     });
-    console.log(`Reader user (${reader.status}) created/updated:`, user.email);
   }
+
+  // Seed Notification Settings
+  console.log('Seeding Notification Settings...');
+  const defaultNotificationSettings = [
+    { type: NotificationType.OVERDUE, roles: [UserRole.READER, UserRole.ADMIN], isEnabled: true },
+    { type: NotificationType.BORROW_SUCCESS, roles: [UserRole.READER], isEnabled: true },
+    { type: NotificationType.RETURN_SUCCESS, roles: [UserRole.READER], isEnabled: true },
+    { type: NotificationType.FINE_ASSIGNED, roles: [UserRole.READER], isEnabled: true },
+    { type: NotificationType.SYSTEM, roles: [UserRole.ADMIN, UserRole.STAFF], isEnabled: true },
+  ];
+
+  for (const setting of defaultNotificationSettings) {
+    await prisma.notificationSetting.upsert({
+      where: { type: setting.type },
+      update: { roles: setting.roles, isEnabled: setting.isEnabled },
+      create: {
+        type: setting.type,
+        roles: setting.roles,
+        isEnabled: setting.isEnabled,
+      },
+    });
+  }
+
+  console.log('Seeding completed successfully.');
 }
 
 main()

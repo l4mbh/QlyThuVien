@@ -1,9 +1,12 @@
 import { 
   CreateNotificationDto, 
   Notification, 
-  NotificationType 
+  NotificationType,
+  SettingKey
 } from "@qltv/shared";
 import { NotificationRepository } from "../../repositories/notification/notification.repository";
+import { settingService } from "../settings/setting.service";
+import prisma from "../../config/db/db";
 
 export class NotificationService {
   private notificationRepository: NotificationRepository;
@@ -13,10 +16,32 @@ export class NotificationService {
   }
 
   /**
-   * Send a notification to a specific user
+   * Send a notification to a specific user (With Dynamic Routing)
    */
-  async sendNotification(data: CreateNotificationDto): Promise<Notification> {
-    console.log(`[NotificationService] Sending notification to user ${data.userId}:`, data.title);
+  async sendNotification(data: CreateNotificationDto): Promise<Notification | null> {
+    // 1. Check Global Notification Flag
+    const isGlobalEnabled = await settingService.get<boolean>(SettingKey.ENABLE_NOTIFICATION);
+    if (!isGlobalEnabled) return null;
+
+    // 2. Fetch routing settings for this specific type
+    const settings = await settingService.getNotificationSettings();
+    const setting = settings.find(s => s.type === data.type);
+
+    if (setting) {
+      // Check if this type is enabled
+      if (!setting.isEnabled) {
+        return null;
+      }
+
+      // Check if user role is allowed to receive this type
+      const user = await prisma.user.findUnique({ where: { id: data.userId }, select: { role: true } });
+      const allowedRoles = setting.roles as string[];
+      if (user && !allowedRoles.includes(user.role)) {
+        return null;
+      }
+    }
+
+    console.log(`[NotificationService] Sending [${data.type}] to user ${data.userId}`);
     return this.notificationRepository.create(data);
   }
 
@@ -49,7 +74,7 @@ export class NotificationService {
     dueDate: Date;
     bookId: string;
     borrowRecordId: string;
-  }): Promise<Notification> {
+  }): Promise<Notification | null> {
     return this.sendNotification({
       userId,
       type: NotificationType.OVERDUE,
@@ -66,7 +91,7 @@ export class NotificationService {
     dueDate: Date;
     bookId: string;
     borrowRecordId: string;
-  }): Promise<Notification> {
+  }): Promise<Notification | null> {
     return this.sendNotification({
       userId,
       type: NotificationType.BORROW_SUCCESS,
@@ -81,7 +106,7 @@ export class NotificationService {
   async notifyReturnSuccess(userId: string, payload: {
     bookTitle: string;
     bookId: string;
-  }): Promise<Notification> {
+  }): Promise<Notification | null> {
     return this.sendNotification({
       userId,
       type: NotificationType.RETURN_SUCCESS,
