@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Dashboard } from "@/pages/Dashboard";
 import { Books } from "@/pages/Books";
@@ -11,40 +11,88 @@ import { RegisterPage } from "@/features/auth/RegisterPage/RegisterPage";
 import { ProtectedRoute } from "@/components/ui/protected-route/protected-route";
 import { UserRole } from "@/types/auth/user.entity";
 
+const router = createBrowserRouter([
+  {
+    path: "/login",
+    element: <LoginPage />,
+  },
+  {
+    path: "/register",
+    element: <RegisterPage />,
+  },
+  {
+    path: "/",
+    element: (
+      <ProtectedRoute>
+        <MainLayout />
+      </ProtectedRoute>
+    ),
+    handle: { crumb: "Home" },
+    children: [
+      {
+        index: true,
+        element: <Navigate to="/dashboard" replace />,
+      },
+      {
+        path: "dashboard",
+        element: <Dashboard />,
+        handle: { 
+          crumb: "Dashboard",
+          description: "Overview of library activities, statistics, and quick actions."
+        },
+      },
+      {
+        path: "books",
+        element: <Books />,
+        handle: { 
+          crumb: "Books",
+          description: "Manage your library collection, search books, and track inventory."
+        },
+      },
+      {
+        path: "categories",
+        element: <Categories />,
+        handle: { 
+          crumb: "Categories",
+          description: "Organize books into genres, subjects, and custom classifications."
+        },
+      },
+      {
+        path: "readers",
+        element: <Readers />,
+        handle: { 
+          crumb: "Readers",
+          description: "Manage member profiles, registration, and membership status."
+        },
+      },
+      {
+        path: "borrow",
+        element: <Borrow />,
+        handle: { 
+          crumb: "Borrow Records",
+          description: "Track book loans, returns, and manage due dates."
+        },
+      },
+      {
+        path: "reports",
+        element: (
+          <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+            <Reports />
+          </ProtectedRoute>
+        ),
+        handle: { 
+          crumb: "Reports & Analytics",
+          description: "Deep dive into library data, borrowing trends, and financial reports."
+        },
+      },
+    ],
+  },
+  {
+    path: "*",
+    element: <Navigate to="/" replace />,
+  },
+]);
+
 export const AppRouter = () => {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <MainLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="books" element={<Books />} />
-          <Route path="categories" element={<Categories />} />
-          <Route path="readers" element={<Readers />} />
-          <Route path="borrow" element={<Borrow />} />
-          <Route
-            path="reports"
-            element={
-              <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
-                <Reports />
-              </ProtectedRoute>
-            }
-          />
-        </Route>
-
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
-  );
+  return <RouterProvider router={router} />;
 };
-

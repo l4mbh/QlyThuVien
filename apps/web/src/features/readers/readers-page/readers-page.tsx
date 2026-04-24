@@ -13,10 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select/select";
-import { FilterX, RefreshCcw } from "lucide-react";
+import { FilterX, RefreshCcw, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal/confirmation-modal";
 import { ErrorCode } from "@qltv/shared";
+import { PageHeader } from "@/components/ui/page-header/page-header";
 
 
 export const ReadersPage: React.FC = () => {
@@ -46,15 +47,15 @@ export const ReadersPage: React.FC = () => {
       const response = await readerService.getReaders();
       if ((response.code === 0 || response.code === ErrorCode.SUCCESS) && response.data) {
         let filteredData = response.data;
-        
+
         if (statusFilter !== "all") {
           filteredData = filteredData.filter(r => r.status === statusFilter);
         }
-        
+
         if (search) {
           const s = search.toLowerCase();
-          filteredData = filteredData.filter(r => 
-            r.name.toLowerCase().includes(s) || 
+          filteredData = filteredData.filter(r =>
+            r.name.toLowerCase().includes(s) ||
             r.email.toLowerCase().includes(s)
           );
         }
@@ -125,13 +126,8 @@ export const ReadersPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-8 space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Reader Management</h1>
-          <p className="text-muted-foreground">Manage library readers, their membership status, and borrowing limits.</p>
-        </div>
-      </div>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <PageHeader />
 
       <ReaderTable
         readers={readers}

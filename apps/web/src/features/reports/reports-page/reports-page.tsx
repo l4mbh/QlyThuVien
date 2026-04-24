@@ -1,25 +1,28 @@
 import { useState, useEffect } from "react";
-import { 
-  BarChart3, 
-  FileText, 
-  Download, 
-  Calendar, 
-  BookOpen, 
-  Users, 
+import { PageHeader } from "@/components/ui/page-header/page-header";
+import {
+  BarChart3,
+  FileText,
+  Download,
+  Calendar,
+  BookOpen,
+  Users,
   AlertCircle,
   Printer,
-  Banknote
+  Banknote,
+  Loader2,
+  RefreshCcw
 } from "lucide-react";
-import { 
-  Card, 
+import {
+  Card,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs/tabs";
 import { useAuth } from "@/features/auth/auth.hook";
@@ -37,9 +40,9 @@ import { InventoryAudit } from "../components/collection/inventory-audit";
 import { StockRotationTable } from "../components/collection/stock-rotation";
 
 // Export Utils
-import { 
-  exportToCSV, 
-  exportMonthlyToPDF, 
+import {
+  exportToCSV,
+  exportMonthlyToPDF,
   exportDailyOperationsToPDF,
   exportCollectionHealthToPDF
 } from "../utils/export-utils";
@@ -173,52 +176,55 @@ export const ReportsPage = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
-            <BarChart3 className="h-8 w-8 text-primary" />
-            Report Documents
-          </h1>
-          <p className="text-slate-500">Generate and export snapshot reports for library operations.</p>
-        </div>
+      <PageHeader
+        actions={
+          <div className="flex items-center gap-3 no-print">
+            {/* Contextual Filters */}
+            {activeTab === "monthly" && (
+              <Select value={selectedMonth} onValueChange={(val) => { setSelectedMonth(val); setReportData(null); }}>
+                <SelectTrigger className="w-[200px] bg-white border-slate-200">
+                  <Calendar className="mr-2 h-4 w-4 text-slate-400" />
+                  <SelectValue placeholder="Select month" />
+                </SelectTrigger>
+                <SelectContent>
+                  {months.map(m => (
+                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
-        <div className="flex items-center gap-3">
-          {activeTab === "monthly" && (
-            <Select value={selectedMonth} onValueChange={(val) => { setSelectedMonth(val); setReportData(null); }}>
-              <SelectTrigger className="w-[200px] bg-white">
-                <Calendar className="mr-2 h-4 w-4 text-slate-400" />
-                <SelectValue placeholder="Select month" />
-              </SelectTrigger>
-              <SelectContent>
-                {months.map(m => (
-                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          
-          <div className="flex items-center bg-white border rounded-lg p-1 shadow-sm no-print">
-            <Button variant="ghost" size="sm" onClick={handleExportCSV} className="text-xs h-8">
-              <Download className="mr-1.5 h-3.5 w-3.5" />
-              CSV
-            </Button>
-            <div className="w-[1px] h-4 bg-slate-200 mx-1" />
-            <Button variant="ghost" size="sm" onClick={handleExportPDF} className="text-xs h-8">
-              <FileText className="mr-1.5 h-3.5 w-3.5" />
-              PDF
-            </Button>
-            <div className="w-[1px] h-4 bg-slate-200 mx-1" />
-            <Button variant="ghost" size="sm" onClick={() => window.print()} className="text-xs h-8">
-              <Printer className="mr-1.5 h-3.5 w-3.5" />
-              Print
+            {/* Export Actions Group */}
+            <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1 shadow-sm">
+              <Button variant="ghost" size="sm" onClick={handleExportCSV} className="text-xs h-8 px-3 hover:bg-slate-50 text-slate-600">
+                <Download className="mr-1.5 h-3.5 w-3.5" />
+                CSV
+              </Button>
+              <div className="w-[1px] h-4 bg-slate-200 mx-1" />
+              <Button variant="ghost" size="sm" onClick={handleExportPDF} className="text-xs h-8 px-3 hover:bg-slate-50 text-slate-600">
+                <FileText className="mr-1.5 h-3.5 w-3.5" />
+                PDF
+              </Button>
+              <div className="w-[1px] h-4 bg-slate-200 mx-1" />
+              <Button variant="ghost" size="sm" onClick={() => window.print()} className="text-xs h-8 px-3 hover:bg-slate-50 text-slate-600">
+                <Printer className="mr-1.5 h-3.5 w-3.5" />
+                Print
+              </Button>
+            </div>
+
+            <Button
+              variant="default"
+              size="sm"
+              onClick={fetchReport}
+              disabled={isLoading}
+              className="h-10 bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20"
+            >
+              {isLoading ? <RefreshCcw className="mr-2 h-4 w-4 animate-spin disabled:opacity-50 disabled:cursor-not-allowed" /> : <RefreshCcw className="mr-2 h-4 w-4" />}
+              Reload
             </Button>
           </div>
-
-          <Button variant="default" size="sm" onClick={fetchReport} disabled={isLoading} className="h-9 bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20 no-print">
-            Refresh
-          </Button>
-        </div>
-      </div>
+        }
+      />
 
       <Tabs value={activeTab} onValueChange={(val) => { setActiveTab(val); setReportData(null); }} className="w-full">
         <TabsList className="bg-slate-100 p-1 rounded-xl mb-6 flex-wrap h-auto">
@@ -262,34 +268,34 @@ export const ReportsPage = () => {
             <>
               <TabsContent value="daily-ops" className="mt-0 focus-visible:outline-none">
                 <Card className="border-none shadow-md overflow-hidden p-6 bg-white">
-                   <DailyDeskSummary data={reportData} />
+                  <DailyDeskSummary data={reportData} />
                 </Card>
               </TabsContent>
               <TabsContent value="overdue" className="mt-0 focus-visible:outline-none">
                 <Card className="border-none shadow-md overflow-hidden p-6 bg-white">
-                   <OverdueActionTable data={reportData} />
+                  <OverdueActionTable data={reportData} />
                 </Card>
               </TabsContent>
               <TabsContent value="finance" className="mt-0 focus-visible:outline-none">
                 <Card className="border-none shadow-md overflow-hidden p-6 bg-white">
-                   <FinancialLedgerTable data={reportData} />
+                  <FinancialLedgerTable data={reportData} />
                 </Card>
               </TabsContent>
               <TabsContent value="monthly" className="mt-0 focus-visible:outline-none">
                 <Card className="border-none shadow-md overflow-hidden">
-                   <MonthlyPreview data={reportData} />
+                  <MonthlyPreview data={reportData} />
                 </Card>
               </TabsContent>
               <TabsContent value="inventory" className="mt-0 focus-visible:outline-none">
                 <Card className="border-none shadow-md overflow-hidden p-6 bg-white space-y-10">
-                   <InventoryAudit data={reportData} />
-                   <div className="h-[1px] w-full bg-slate-100" />
-                   <StockRotationTable data={reportData} />
+                  <InventoryAudit data={reportData} />
+                  <div className="h-[1px] w-full bg-slate-100" />
+                  <StockRotationTable data={reportData} />
                 </Card>
               </TabsContent>
               <TabsContent value="readers" className="mt-0 focus-visible:outline-none">
                 <Card className="border-none shadow-md overflow-hidden">
-                   <ReaderPreview data={reportData} />
+                  <ReaderPreview data={reportData} />
                 </Card>
               </TabsContent>
             </>

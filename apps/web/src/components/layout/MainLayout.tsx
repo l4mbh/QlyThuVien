@@ -11,11 +11,13 @@ export const MainLayout = () => {
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         <Header />
-        <main className="flex-1 overflow-auto p-8 lg:p-10 scroll-smooth">
-          <Outlet />
+        <main className="flex-1 overflow-auto p-6 lg:p-8 scroll-smooth">
+          <div className="max-w-7xl mx-auto w-full">
+            {/* MainBreadcrumb has been moved inside PageHeader which is used in individual pages */}
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
   );
 };
-

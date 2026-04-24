@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
-import { FilterX, RefreshCcw } from "lucide-react";
+import { FilterX, RefreshCcw, Plus } from "lucide-react";
 import { ErrorCode } from "@qltv/shared";
+import { PageHeader } from "@/components/ui/page-header/page-header";
 
 
 import { BorrowTable } from "../components/borrow-table/borrow-table";
@@ -46,10 +47,10 @@ export const BorrowPage: React.FC = () => {
 
       if ((response.code === 0 || response.code === ErrorCode.SUCCESS) && response.data) {
         let filtered = response.data;
-        
+
         // Simple search filtering on frontend if backend doesn't support yet
         if (search) {
-          filtered = filtered.filter(r => 
+          filtered = filtered.filter(r =>
             r.user?.name.toLowerCase().includes(search.toLowerCase()) ||
             r.user?.email.toLowerCase().includes(search.toLowerCase())
           );
@@ -88,10 +89,10 @@ export const BorrowPage: React.FC = () => {
   // If record updated in drawer, we need to refresh list and selected record
   const handleUpdateRecord = async () => {
     if (!selectedRecord) return;
-    
+
     // Refresh the list
     await fetchData(false);
-    
+
     // Refresh the selected record details
     try {
       const res = await borrowService.getBorrowById(selectedRecord.id);
@@ -104,13 +105,8 @@ export const BorrowPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-8 space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Borrowing Management</h1>
-          <p className="text-muted-foreground">Track book loans, due dates, and returns.</p>
-        </div>
-      </div>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <PageHeader />
 
       <BorrowTable
         borrows={records}

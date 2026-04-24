@@ -15,9 +15,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select/select";
-import { FilterX, RefreshCcw } from "lucide-react";
+import { FilterX, RefreshCcw, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal/confirmation-modal";
+import { PageHeader } from "@/components/ui/page-header/page-header";
 
 export const BooksPage: React.FC = () => {
   const [books, setBooks] = useState<BookEntity[]>([]);
@@ -153,13 +154,9 @@ export const BooksPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-8 space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Book Management</h1>
-          <p className="text-muted-foreground">Manage your library inventory, categories, and shelf locations.</p>
-        </div>
-      </div>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <PageHeader
+      />
 
       <BookTable
         books={books}

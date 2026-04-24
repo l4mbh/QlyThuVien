@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { PageHeader } from "@/components/ui/page-header/page-header";
 import { BookOpen, BookCopy, AlertCircle, Coins, CheckCircle2 } from "lucide-react";
 import { dashboardService } from "../dashboard.service";
 import {
@@ -60,15 +61,10 @@ export const DashboardPage = () => {
 
   return (
     <div className="space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-      {/* Welcome Header */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">
-          Command Center
-        </h1>
-        <p className="text-lg text-slate-500 font-medium italic">
-          "The secret of a library is that it is a city of books." — Welcome back, {user?.name}.
-        </p>
-      </div>
+      <PageHeader 
+        title="Command Center"
+        description={`"The secret of a library is that it is a city of books." — Welcome back, ${user?.name}.`}
+      />
 
       {/* Tầng 1: Summary Cards (Signals) */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

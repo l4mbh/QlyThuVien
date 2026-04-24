@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header/page-header";
 import { CategoryTable } from "../category-table/category-table";
 import { CategoryFormModal } from "../category-form-modal/category-form-modal";
 import { categoryService } from "../category.service";
@@ -26,11 +29,11 @@ export const CategoriesPage: React.FC = () => {
   // Delete State
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<CategoryEntity | null>(null);
-  
+
   // Bulk Delete State
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
   const [idsToDelete, setIdsToDelete] = useState<string[]>([]);
-  
+
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Data Table Hook
@@ -117,13 +120,8 @@ export const CategoriesPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-8 space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Category Management</h1>
-          <p className="text-muted-foreground">Manage book categories and classification codes in the library.</p>
-        </div>
-      </div>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <PageHeader />
 
       <CategoryTable
         categories={categories}
