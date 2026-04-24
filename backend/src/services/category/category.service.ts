@@ -1,7 +1,8 @@
 import { CategoryRepository } from "../../repositories/category/category.repository";
 import { CategoryEntity, CreateCategoryDTO, UpdateCategoryDTO, CategoryFilterDTO } from "../../types/category/category.entity";
-import { ErrorCode } from "../../constants/errors/error.enum";
+import { ErrorCode } from "@shared/constants/error-codes";
 import { PaginatedData } from "../../types/shared/response.type";
+import { AppError } from "../../utils/app-error";
 
 export class CategoryService {
   private categoryRepository: CategoryRepository;
@@ -22,9 +23,7 @@ export class CategoryService {
     const existing = await this.categoryRepository.findByName(data.name);
 
     if (existing) {
-      const error: any = new Error("Category already exists");
-      error.errorCode = ErrorCode.CATEGORY_ALREADY_EXISTS;
-      throw error;
+      throw new AppError(ErrorCode.CATEGORY_ALREADY_EXISTS, "Category already exists");
     }
 
     return this.categoryRepository.create(data);
@@ -33,17 +32,13 @@ export class CategoryService {
   async updateCategory(id: string, data: UpdateCategoryDTO): Promise<CategoryEntity> {
     const category = await this.categoryRepository.findById(id);
     if (!category) {
-      const error: any = new Error("Category not found");
-      error.errorCode = ErrorCode.CATEGORY_NOT_FOUND;
-      throw error;
+      throw new AppError(ErrorCode.CATEGORY_NOT_FOUND, "Category not found");
     }
 
     if (data.name) {
       const existing = await this.categoryRepository.findByNameExcludeId(data.name, id);
       if (existing) {
-        const error: any = new Error("Category name already exists");
-        error.errorCode = ErrorCode.CATEGORY_ALREADY_EXISTS;
-        throw error;
+        throw new AppError(ErrorCode.CATEGORY_ALREADY_EXISTS, "Category name already exists");
       }
     }
 
@@ -54,15 +49,11 @@ export class CategoryService {
     const category = await this.categoryRepository.findByIdWithCount(id);
 
     if (!category) {
-      const error: any = new Error("Category not found");
-      error.errorCode = ErrorCode.CATEGORY_NOT_FOUND;
-      throw error;
+      throw new AppError(ErrorCode.CATEGORY_NOT_FOUND, "Category not found");
     }
 
     if (category._count.books > 0) {
-      const error: any = new Error("Cannot delete category because it contains books");
-      error.errorCode = ErrorCode.CATEGORY_HAS_BOOKS;
-      throw error;
+      throw new AppError(ErrorCode.CATEGORY_HAS_BOOKS, "Cannot delete category because it contains books");
     }
 
     await this.categoryRepository.delete(id);
@@ -72,17 +63,13 @@ export class CategoryService {
     const categories = await this.categoryRepository.findByIdsWithCount(ids);
 
     if (categories.length === 0) {
-      const error: any = new Error("Categories not found");
-      error.errorCode = ErrorCode.CATEGORY_NOT_FOUND;
-      throw error;
+      throw new AppError(ErrorCode.CATEGORY_NOT_FOUND, "Categories not found");
     }
 
     const categoriesWithBooks = categories.filter(c => c._count.books > 0);
     if (categoriesWithBooks.length > 0) {
       const names = categoriesWithBooks.map(c => c.name).join(", ");
-      const error: any = new Error(`Cannot delete categories [${names}] because they contain books`);
-      error.errorCode = ErrorCode.CATEGORY_HAS_BOOKS;
-      throw error;
+      throw new AppError(ErrorCode.CATEGORY_HAS_BOOKS, `Cannot delete categories [${names}] because they contain books`);
     }
 
     await this.categoryRepository.deleteMany(ids);

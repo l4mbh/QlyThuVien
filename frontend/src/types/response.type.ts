@@ -12,7 +12,8 @@ export interface PaginatedData<T> {
 
 export interface ApiResponse<T = any> {
   data?: T;
-  code: number;
+  code: string | number;
+
   error?: {
     msg: string;
   };

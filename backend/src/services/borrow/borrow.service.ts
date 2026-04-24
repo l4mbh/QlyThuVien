@@ -1,8 +1,11 @@
 import prisma from "../../config/db/db";
 import { BorrowRepository } from "../../repositories/borrow/borrow.repository";
 import { CreateBorrowDTO, ReturnBookDTO } from "../../types/borrow/borrow.entity";
-import { ErrorCode } from "../../constants/errors/error.enum";
+import { ErrorCode } from "@shared/constants/error-codes";
 import { BorrowItemStatus, UserStatus, Prisma } from "@prisma/client";
+import { AppError } from "../../utils/app-error";
+import { runRules } from "@shared/engine/rule-runner";
+import { borrowRuleSet } from "@shared/rules/borrow.rules";
 
 export class BorrowService {
   private borrowRepository: BorrowRepository;
@@ -18,9 +21,7 @@ export class BorrowService {
   async getBorrowById(id: string) {
     const record = await this.borrowRepository.findRecordById(id);
     if (!record) {
-      const error = new Error("Borrow record not found") as any;
-      error.errorCode = ErrorCode.BORROW_RECORD_NOT_FOUND;
-      throw error;
+      throw new AppError(ErrorCode.BORROW_RECORD_NOT_FOUND, "Borrow record not found");
     }
     return record;
   }
@@ -29,19 +30,12 @@ export class BorrowService {
     const { userId, bookIds, dueDate } = data;
 
     return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // 1. Validate User
+      // 1. Fetch required data for rules
       const user = await tx.user.findUnique({ where: { id: userId } });
       if (!user) {
-        throw this.createError("User not found", ErrorCode.USER_NOT_FOUND);
-      }
-      if (user.status === UserStatus.BLOCKED) {
-        throw this.createError("User is blocked", ErrorCode.USER_BLOCKED);
-      }
-      if (user.currentBorrowCount + bookIds.length > user.borrowLimit) {
-        throw this.createError("Borrow limit exceeded", ErrorCode.USER_BORROW_LIMIT_EXCEEDED);
+        throw new AppError(ErrorCode.USER_NOT_FOUND, "User not found");
       }
 
-      // 2. Validate Books
       const books = await tx.book.findMany({
         where: {
           id: { in: bookIds },
@@ -50,16 +44,42 @@ export class BorrowService {
       });
 
       if (books.length !== bookIds.length) {
-        throw this.createError("One or more books not found", ErrorCode.BOOK_NOT_FOUND);
+        throw new AppError(ErrorCode.BOOK_NOT_FOUND, "One or more books not found");
       }
 
-      for (const book of books) {
-        if (book.availableQuantity <= 0) {
-          throw this.createError(`Book ${book.title} is not available`, ErrorCode.BOOK_NOT_AVAILABLE);
+      // 2. Check for overdue books
+      const overdueItem = await tx.borrowItem.findFirst({
+        where: {
+          status: BorrowItemStatus.BORROWING,
+          borrowRecord: {
+            userId,
+            dueDate: { lt: new Date() }
+          }
         }
+      });
+
+
+      // 3. Run Centralized Rules
+      const ruleResult = runRules(borrowRuleSet, {
+        user: {
+          id: user.id,
+          status: user.status,
+          currentBorrowCount: user.currentBorrowCount,
+          borrowLimit: user.borrowLimit
+        },
+        books: books.map(b => ({
+          id: b.id,
+          title: b.title,
+          availableQuantity: b.availableQuantity
+        })),
+        hasOverdueBooks: !!overdueItem
+      });
+
+      if (!ruleResult.ok) {
+        throw new AppError(ruleResult.code, ruleResult.details?.message || "Borrowing rule violation");
       }
 
-      // 3. Create Borrow Record
+      // 4. Create Borrow Record
       const borrowRecord = await tx.borrowRecord.create({
         data: {
           userId,
@@ -76,7 +96,7 @@ export class BorrowService {
         },
       });
 
-      // 4. Update Book availableQuantity (-1)
+      // 5. Update Book availableQuantity (-1)
       await Promise.all(
         bookIds.map((bookId) =>
           tx.book.update({
@@ -86,7 +106,7 @@ export class BorrowService {
         )
       );
 
-      // 5. Update User currentBorrowCount (+ bookIds.length)
+      // 6. Update User currentBorrowCount (+ bookIds.length)
       await tx.user.update({
         where: { id: userId },
         data: { currentBorrowCount: { increment: bookIds.length } },
@@ -111,7 +131,7 @@ export class BorrowService {
         });
 
         if (!item) {
-          throw this.createError(`Borrow item ${borrowItemId} not found`, ErrorCode.BORROW_RECORD_NOT_FOUND);
+          throw new AppError(ErrorCode.BORROW_RECORD_NOT_FOUND, `Borrow item ${borrowItemId} not found`);
         }
 
         if (item.status === BorrowItemStatus.RETURNED) {
@@ -171,11 +191,5 @@ export class BorrowService {
     // Calculate days overdue (any part of a day counts as 1 day)
     const overdueDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return overdueDays * 5000;
-  }
-
-  private createError(message: string, errorCode: ErrorCode) {
-    const error = new Error(message) as any;
-    error.errorCode = errorCode;
-    return error;
   }
 }

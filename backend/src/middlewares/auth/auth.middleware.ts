@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import { ErrorCode } from "../../constants/errors/error.enum";
+import { ErrorCode } from "@shared/constants/error-codes";
 import { verifyToken } from "../../utils/jwt.util";
 import { UserRole } from "@prisma/client";
+import { AppError } from "../../utils/app-error";
 
 export const authMiddleware = (
   req: any, // Use any to attach user property
@@ -11,9 +12,7 @@ export const authMiddleware = (
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      const error = new Error("No token provided") as any;
-      error.errorCode = ErrorCode.UNAUTHORIZED;
-      throw error;
+      throw new AppError(ErrorCode.UNAUTHORIZED, "No token provided");
     }
 
     const token = authHeader.split(" ")[1];
@@ -21,24 +20,32 @@ export const authMiddleware = (
     req.user = decoded;
     next();
   } catch (error: any) {
-    if (error.name === "TokenExpiredError") {
-      error.errorCode = ErrorCode.TOKEN_EXPIRED;
-    } else if (error.name === "JsonWebTokenError") {
-      error.errorCode = ErrorCode.TOKEN_INVALID;
-    } else if (!error.errorCode) {
-      error.errorCode = ErrorCode.UNAUTHORIZED;
+    if (error instanceof AppError) {
+      return next(error);
     }
-    next(error);
+
+    let code: string = ErrorCode.UNAUTHORIZED;
+    let message = error.message;
+
+    if (error.name === "TokenExpiredError") {
+      code = ErrorCode.TOKEN_EXPIRED;
+      message = "Session expired";
+    } else if (error.name === "JsonWebTokenError") {
+      code = ErrorCode.TOKEN_INVALID;
+      message = "Invalid token";
+    }
+
+    
+    next(new AppError(code, message));
   }
 };
 
 export const roleMiddleware = (allowedRoles: UserRole[]) => {
   return (req: any, res: Response, next: NextFunction) => {
     if (!req.user || !allowedRoles.includes(req.user.role)) {
-      const error = new Error("Forbidden: Insufficient permissions") as any;
-      error.errorCode = ErrorCode.FORBIDDEN;
-      return next(error);
+      return next(new AppError(ErrorCode.FORBIDDEN, "Forbidden: Insufficient permissions"));
     }
     next();
   };
 };
+

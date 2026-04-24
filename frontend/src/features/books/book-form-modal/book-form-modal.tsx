@@ -28,6 +28,8 @@ import { bookService } from "../book.service";
 import { toast } from "sonner";
 import { Loader2, Search, Info } from "lucide-react";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal/confirmation-modal";
+import { ErrorCode } from "@shared/constants/error-codes";
+
 
 interface BookFormModalProps {
   isOpen: boolean;
@@ -141,7 +143,7 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
     setIsFetchingIsbn(true);
     try {
       const response = await bookService.fetchISBN(isbnInput);
-      if (response.code === 0 && response.data) {
+      if ((response.code === 0 || response.code === ErrorCode.SUCCESS) && response.data) {
         const { title, author, coverUrl, category: categoryName } = response.data;
         form.setValue("title", title, { shouldDirty: true });
         form.setValue("author", author, { shouldDirty: true });
@@ -179,7 +181,7 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
         }
 
         const response = await bookService.updateBook(selectedBook.id, data);
-        if (response.code === 0) {
+        if (response.code === 0 || response.code === ErrorCode.SUCCESS) {
           toast.success("Book updated successfully");
           onSuccess();
         }
@@ -188,7 +190,7 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
           ...data,
           publishedYear: new Date().getFullYear(),
         });
-        if (response.code === 0) {
+        if (response.code === 0 || response.code === ErrorCode.SUCCESS) {
           toast.success("Book created successfully");
           onSuccess();
         }

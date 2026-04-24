@@ -27,8 +27,13 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response: AxiosResponse) => {
     const { data } = response;
-    // Check for custom success code (0)
-    if (data && typeof data.code !== "undefined" && data.code !== 0) {
+    // console.log(`[API Response] URL: ${response.config.url}, Code:`, data?.code);
+    
+    // Check for custom success code (0 or "SUCCESS")
+    const isSuccess = data && (data.code === 0 || data.code === "SUCCESS" || data.code === ErrorCode.SUCCESS);
+    
+    if (data && typeof data.code !== "undefined" && !isSuccess) {
+
       // Handle Unauthorized error code (401001)
       if (data.code === ErrorCode.UNAUTHORIZED) {
         localStorage.removeItem("token");

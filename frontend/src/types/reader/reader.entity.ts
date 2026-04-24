@@ -17,9 +17,11 @@ export interface Reader {
   status: ReaderStatus;
   borrowLimit: number;
   currentBorrowCount: number;
+  hasOverdueBooks?: boolean;
   createdAt: string;
   updatedAt: string;
 }
+
 
 export interface CreateReaderDto {
   name: string;

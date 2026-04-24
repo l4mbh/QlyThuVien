@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { BorrowService } from "../../services/borrow/borrow.service";
-import { ErrorCode } from "../../constants/errors/error.enum";
+import { ErrorCode } from "@shared/constants/error-codes";
 import { ApiResponse } from "../../types/shared/response.type";
 
 export class BorrowController {

@@ -1,8 +1,8 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { CategoryService } from "../../services/category/category.service";
-import { ErrorCode } from "../../constants/errors/error.enum";
-import { ErrorMessages } from "../../constants/errors/error.messages";
+import { ErrorCode } from "@shared/constants/error-codes";
 import { createCategorySchema, updateCategorySchema } from "../../schemas/category/category.schema";
+import { AppError } from "../../utils/app-error";
 
 export class CategoryController {
   private categoryService: CategoryService;
@@ -11,7 +11,7 @@ export class CategoryController {
     this.categoryService = new CategoryService();
   }
 
-  getAllCategories = async (req: Request, res: Response) => {
+  getAllCategories = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { search, page, limit } = req.query;
       const categories = await this.categoryService.getAllCategories({
@@ -21,84 +21,61 @@ export class CategoryController {
       });
       res.json({ data: categories, code: ErrorCode.SUCCESS });
     } catch (error: any) {
-      res.json({
-        error: { msg: error.message || ErrorMessages[ErrorCode.INTERNAL_SERVER_ERROR] },
-        code: error.errorCode || ErrorCode.INTERNAL_SERVER_ERROR,
-      });
+      next(error);
     }
   };
 
-  createCategory = async (req: Request, res: Response) => {
+  createCategory = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const validation = createCategorySchema.safeParse(req.body);
       if (!validation.success) {
-        return res.json({
-          error: { msg: validation.error.issues[0].message },
-          code: ErrorCode.VALIDATION_ERROR,
-        });
+        throw new AppError(ErrorCode.VALIDATION_ERROR, validation.error.issues[0].message);
       }
 
       const category = await this.categoryService.createCategory(validation.data);
       res.json({ data: category, code: ErrorCode.SUCCESS });
     } catch (error: any) {
-      res.json({
-        error: { msg: error.message || ErrorMessages[ErrorCode.INTERNAL_SERVER_ERROR] },
-        code: error.errorCode || ErrorCode.INTERNAL_SERVER_ERROR,
-      });
+      next(error);
     }
   };
 
-  updateCategory = async (req: Request, res: Response) => {
+  updateCategory = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const id = req.params.id as string;
       const validation = updateCategorySchema.safeParse(req.body);
       if (!validation.success) {
-        return res.json({
-          error: { msg: validation.error.issues[0].message },
-          code: ErrorCode.VALIDATION_ERROR,
-        });
+        throw new AppError(ErrorCode.VALIDATION_ERROR, validation.error.issues[0].message);
       }
 
       const category = await this.categoryService.updateCategory(id, validation.data);
       res.json({ data: category, code: ErrorCode.SUCCESS });
     } catch (error: any) {
-      res.json({
-        error: { msg: error.message || ErrorMessages[ErrorCode.INTERNAL_SERVER_ERROR] },
-        code: error.errorCode || ErrorCode.INTERNAL_SERVER_ERROR,
-      });
+      next(error);
     }
   };
 
-  deleteCategory = async (req: Request, res: Response) => {
+  deleteCategory = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const id = req.params.id as string;
       await this.categoryService.deleteCategory(id);
       res.json({ data: { success: true }, code: ErrorCode.SUCCESS });
     } catch (error: any) {
-      res.json({
-        error: { msg: error.message || ErrorMessages[ErrorCode.INTERNAL_SERVER_ERROR] },
-        code: error.errorCode || ErrorCode.INTERNAL_SERVER_ERROR,
-      });
+      next(error);
     }
   };
 
-  bulkDelete = async (req: Request, res: Response) => {
+  bulkDelete = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { ids } = req.body;
       if (!ids || !Array.isArray(ids) || ids.length === 0) {
-        return res.json({
-          error: { msg: "Invalid or empty IDs list" },
-          code: ErrorCode.VALIDATION_ERROR,
-        });
+        throw new AppError(ErrorCode.VALIDATION_ERROR, "Invalid or empty IDs list");
       }
 
       await this.categoryService.deleteCategories(ids);
       res.json({ data: { success: true }, code: ErrorCode.SUCCESS });
     } catch (error: any) {
-      res.json({
-        error: { msg: error.message || ErrorMessages[ErrorCode.INTERNAL_SERVER_ERROR] },
-        code: error.errorCode || ErrorCode.INTERNAL_SERVER_ERROR,
-      });
+      next(error);
     }
   };
 }
+

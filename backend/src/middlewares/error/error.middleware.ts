@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import { ErrorCode } from "../../constants/errors/error.enum";
-import { ErrorMessages } from "../../constants/errors/error.messages";
+import { ErrorCode } from "@shared/constants/error-codes";
 import { ApiResponse } from "../../types/shared/response.type";
+import { AppError } from "../../utils/app-error";
 
 export const errorMiddleware = (
   err: any,
@@ -11,15 +11,30 @@ export const errorMiddleware = (
 ) => {
   console.error("Error caught by global handler:", err);
 
-  const errorCode = err.errorCode || ErrorCode.INTERNAL_SERVER_ERROR;
-  const status = 200; // Always return 200 as per project rule
+  // Default to system error
+  let code: string = ErrorCode.INTERNAL_SERVER_ERROR;
+  let message: string = "Internal server error";
+
+  // If it's a new AppError
+  if (err instanceof AppError) {
+    code = err.code;
+    message = err.message || "Operation failed";
+  } 
+  // For other unexpected errors
+  else {
+    message = err.message || "An unexpected error occurred";
+  }
 
   const response: ApiResponse = {
-    code: errorCode,
+    code: code,
     error: {
-      msg: err.message || ErrorMessages[errorCode as ErrorCode] || "Internal server error",
+      msg: message,
     },
   };
 
-  res.status(status).json(response);
+  // Always return HTTP 200 per project rules
+  res.status(200).json(response);
+
 };
+
+

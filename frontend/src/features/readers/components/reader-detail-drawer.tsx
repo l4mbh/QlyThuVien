@@ -43,6 +43,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ErrorCode } from "@shared/constants/error-codes";
+
 
 interface ReaderDetailDrawerProps {
   isOpen: boolean;
@@ -68,7 +70,7 @@ export const ReaderDetailDrawer: React.FC<ReaderDetailDrawerProps> = ({
     setIsLoading(true);
     try {
       const response = await borrowService.getAllBorrows({ userId: reader.id });
-      if (response.code === 0 && response.data) {
+      if ((response.code === 0 || response.code === ErrorCode.SUCCESS) && response.data) {
         // Flatten all items from all records for this user
         const allItems = response.data.flatMap(record => 
           record.borrowItems.map(item => ({
@@ -104,7 +106,7 @@ export const ReaderDetailDrawer: React.FC<ReaderDetailDrawerProps> = ({
     setIsProcessing(true);
     try {
       const response = await borrowService.returnBook({ borrowItemIds: selectedItems });
-      if (response.code === 0) {
+      if (response.code === 0 || response.code === ErrorCode.SUCCESS) {
         toast.success(`${selectedItems.length} book(s) returned successfully`);
         setSelectedItems([]);
         fetchBorrowings();

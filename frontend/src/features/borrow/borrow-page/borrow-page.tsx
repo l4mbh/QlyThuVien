@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { FilterX, RefreshCcw } from "lucide-react";
+import { ErrorCode } from "@shared/constants/error-codes";
+
 
 import { BorrowTable } from "../components/borrow-table/borrow-table";
 import { BorrowModal } from "../components/borrow-modal/borrow-modal";
@@ -42,7 +44,7 @@ export const BorrowPage: React.FC = () => {
         status: status === "all" ? undefined : status,
       });
 
-      if (response.code === 0 && response.data) {
+      if ((response.code === 0 || response.code === ErrorCode.SUCCESS) && response.data) {
         let filtered = response.data;
         
         // Simple search filtering on frontend if backend doesn't support yet
@@ -93,8 +95,8 @@ export const BorrowPage: React.FC = () => {
     // Refresh the selected record details
     try {
       const res = await borrowService.getBorrowById(selectedRecord.id);
-      if (res.code === 0 && res.data) {
-        setSelectedRecord(res.data);
+      if (res.code === 0 || res.code === ErrorCode.SUCCESS) {
+        setSelectedRecord(res.data ?? null);
       }
     } catch (error) {
       console.error("Failed to refresh record details");

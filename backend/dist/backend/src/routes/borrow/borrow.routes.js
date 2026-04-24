@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const borrow_controller_1 = require("../../controllers/borrow/borrow.controller");
+const auth_middleware_1 = require("../../middlewares/auth/auth.middleware");
+const client_1 = require("@prisma/client");
+const router = (0, express_1.Router)();
+const borrowController = new borrow_controller_1.BorrowController();
+router.get("/", auth_middleware_1.authMiddleware, borrowController.getAllBorrows);
+router.post("/", auth_middleware_1.authMiddleware, (0, auth_middleware_1.roleMiddleware)([client_1.UserRole.STAFF, client_1.UserRole.ADMIN]), borrowController.createBorrow);
+router.post("/return", auth_middleware_1.authMiddleware, (0, auth_middleware_1.roleMiddleware)([client_1.UserRole.STAFF, client_1.UserRole.ADMIN]), borrowController.returnBook);
+router.get("/:id", auth_middleware_1.authMiddleware, borrowController.getBorrowById);
+exports.default = router;

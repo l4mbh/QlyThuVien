@@ -19,6 +19,8 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge/badge";
 import { format } from "date-fns";
 import { PackageOpen, ArrowRight, Save, History, SlidersHorizontal, Plus, Minus } from "lucide-react";
+import { ErrorCode } from "@shared/constants/error-codes";
+
 
 interface InventoryManagementModalProps {
   isOpen: boolean;
@@ -91,7 +93,7 @@ export const InventoryManagementModal: React.FC<InventoryManagementModalProps> =
     setIsLoadingLogs(true);
     try {
       const res = await bookService.getInventoryLogs(book.id);
-      if (res.code === 0) {
+      if (res.code === 0 || res.code === ErrorCode.SUCCESS) {
         setLogs(res.data || []);
       }
     } catch (error: any) {
@@ -118,7 +120,7 @@ export const InventoryManagementModal: React.FC<InventoryManagementModalProps> =
         reason,
         note
       });
-      if (res.code === 0) {
+      if (res.code === 0 || res.code === ErrorCode.SUCCESS) {
         toast.success("Inventory adjusted successfully");
         onSuccess();
       }

@@ -1,9 +1,9 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { IsbnService } from "./isbn.service";
 import { mapCategory } from "../../utils/mapCategory";
 import { generateCallNumber } from "../../utils/generateCallNumber";
-import { ErrorCode } from "../../constants/errors/error.enum";
-import { ErrorMessages } from "../../constants/errors/error.messages";
+import { ErrorCode } from "@shared/constants/error-codes";
+import { AppError } from "../../utils/app-error";
 
 
 export class IsbnController {
@@ -13,14 +13,11 @@ export class IsbnController {
     this.isbnService = new IsbnService();
   }
 
-  fetchBookByIsbn = async (req: Request, res: Response) => {
+  fetchBookByIsbn = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { isbn } = req.body;
       if (!isbn) {
-        return res.json({ 
-          error: { msg: ErrorMessages[ErrorCode.VALIDATION_ERROR] }, 
-          code: ErrorCode.VALIDATION_ERROR 
-        });
+        throw new AppError(ErrorCode.VALIDATION_ERROR, "ISBN is required");
       }
 
       const bookInfo = await this.isbnService.fetchBookByIsbn(isbn);
@@ -31,7 +28,7 @@ export class IsbnController {
       // Auto-generate call number (mocking for suggest)
       const callNumber = await generateCallNumber(
         bookInfo.author,
-        bookInfo.publishedYear,
+        bookInfo.publishedYear as number,
         suggestedCategory.code
       );
 
@@ -41,13 +38,11 @@ export class IsbnController {
           suggestedCategory,
           callNumber
         },
-        code: 0
+        code: ErrorCode.SUCCESS
       });
     } catch (error: any) {
-      res.json({ 
-        error: { msg: error.message || ErrorMessages[ErrorCode.ISBN_FETCH_FAILED] }, 
-        code: error.errorCode || ErrorCode.ISBN_FETCH_FAILED 
-      });
+      next(error);
     }
   };
 }
+

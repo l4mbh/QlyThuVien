@@ -1,4 +1,4 @@
-import { ErrorCode } from "../../constants/errors/error.enum";
+import { ErrorCode } from "@shared/constants/error-codes";
 
 export interface PaginationMeta {
   total: number;
@@ -14,8 +14,10 @@ export interface PaginatedData<T> {
 
 export interface ApiResponse<T = any> {
   data?: T;
-  code: number | ErrorCode;
+  code: string | number;
   error?: {
     msg: string;
   };
 }
+
+

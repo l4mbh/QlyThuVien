@@ -6,6 +6,8 @@ import { bookService } from "../book.service";
 import type { BookEntity } from "@/types/books/book.entity";
 import type { CategoryEntity } from "@/types/category/category.entity";
 import { Button } from "@/components/ui/button";
+import { ErrorCode } from "@shared/constants/error-codes";
+
 import {
   Select,
   SelectContent,
@@ -67,12 +69,12 @@ export const BooksPage: React.FC = () => {
         bookService.getCategories({ limit: 100 }),
       ]);
 
-      if (booksRes.code === 0 && booksRes.data) {
+      if ((booksRes.code === 0 || booksRes.code === ErrorCode.SUCCESS) && booksRes.data) {
         setBooks(booksRes.data.items);
         setTotal(booksRes.data.meta.total);
         setTotalPages(booksRes.data.meta.totalPages);
       }
-      if (categoriesRes.code === 0 && categoriesRes.data) {
+      if ((categoriesRes.code === 0 || categoriesRes.code === ErrorCode.SUCCESS) && categoriesRes.data) {
         const categoriesData = categoriesRes.data;
         if (Array.isArray(categoriesData)) {
           setCategories(categoriesData);
@@ -132,7 +134,7 @@ export const BooksPage: React.FC = () => {
     setIsDeleting(true);
     try {
       const response = await bookService.deleteBook(bookToDelete.id);
-      if (response.code === 0) {
+      if (response.code === 0 || response.code === ErrorCode.SUCCESS) {
         toast.success("Book deleted successfully");
         setIsDeleteModalOpen(false);
         fetchData(false);
@@ -263,7 +265,7 @@ export const BooksPage: React.FC = () => {
         onConfirm={async () => {
           try {
             const response = await bookService.bulkDeleteBooks(selectedIds);
-            if (response.code === 0) {
+            if (response.code === 0 || response.code === ErrorCode.SUCCESS) {
               toast.success(`Successfully deleted ${selectedIds.length} books`);
               setIsBulkDeleteModalOpen(false);
               setSelectedIds([]);

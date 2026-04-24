@@ -2,10 +2,11 @@ import axios from "axios";
 import prisma from "../../config/db/db";
 import { BookRepository } from "../../repositories/book/book.repository";
 import { CreateBookDTO, UpdateBookDTO, BookEntity, BookFilterDTO, AdjustInventoryDTO, InventoryLogEntity, InventoryLogReason } from "../../types/book/book.entity";
-import { ErrorCode } from "../../constants/errors/error.enum";
+import { ErrorCode } from "@shared/constants/error-codes";
 import { CategoryService } from "../category/category.service";
 import { generateCallNumber } from "../../utils/generateCallNumber";
 import { PaginatedData } from "../../types/shared/response.type";
+import { AppError } from "../../utils/app-error";
 
 export class BookService {
   private bookRepository: BookRepository;
@@ -23,9 +24,7 @@ export class BookService {
   async getBookById(id: string): Promise<BookEntity> {
     const book = await this.bookRepository.findById(id);
     if (!book) {
-      const error = new Error("Book not found") as any;
-      error.errorCode = ErrorCode.BOOK_NOT_FOUND;
-      throw error;
+      throw new AppError(ErrorCode.BOOK_NOT_FOUND, "Book not found");
     }
     return book;
   }
@@ -33,9 +32,7 @@ export class BookService {
   async createBook(data: CreateBookDTO): Promise<BookEntity> {
     const existingBook = await this.bookRepository.findByIsbn(data.isbn);
     if (existingBook) {
-      const error = new Error("Book with this ISBN already exists") as any;
-      error.errorCode = ErrorCode.BOOK_ALREADY_EXISTS;
-      throw error;
+      throw new AppError(ErrorCode.BOOK_ALREADY_EXISTS, "Book with this ISBN already exists");
     }
 
     // Handle Category
@@ -47,9 +44,7 @@ export class BookService {
     } else {
       category = await this.categoryService.getCategoryById(categoryId);
       if (!category) {
-        const error = new Error("Category not found") as any;
-        error.errorCode = ErrorCode.CATEGORY_NOT_FOUND;
-        throw error;
+        throw new AppError(ErrorCode.CATEGORY_NOT_FOUND, "Category not found");
       }
     }
 
@@ -87,9 +82,7 @@ export class BookService {
 
     const newAvailable = book.availableQuantity + data.change;
     if (newAvailable < 0) {
-      const error = new Error("Số lượng khả dụng không đủ (không thể giảm xuống dưới 0).") as any;
-      error.errorCode = ErrorCode.VALIDATION_ERROR;
-      throw error;
+      throw new AppError(ErrorCode.VALIDATION_ERROR, "Insufficient available quantity (cannot decrease below 0).");
     }
 
     let newTotal = book.totalQuantity;
@@ -101,10 +94,9 @@ export class BookService {
 
     const borrowedCount = book.totalQuantity - book.availableQuantity;
     if (newTotal < borrowedCount) {
-      const error = new Error("Tổng số sách không thể nhỏ hơn số lượng sách đang cho mượn.") as any;
-      error.errorCode = ErrorCode.VALIDATION_ERROR;
-      throw error;
+      throw new AppError(ErrorCode.VALIDATION_ERROR, "Total quantity cannot be less than the number of books currently borrowed.");
     }
+
 
     return prisma.$transaction(async (tx) => {
       const updatedBook = await tx.book.update({
@@ -183,8 +175,7 @@ export class IsbnService {
     }
 
     // 3. If both fail
-    const error = new Error("Could not find book info from any source") as any;
-    error.errorCode = ErrorCode.ISBN_NOT_FOUND;
-    throw error;
+    throw new AppError(ErrorCode.BOOK_NOT_FOUND, "Could not find book info from any source");
   }
 }
+

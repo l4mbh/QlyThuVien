@@ -35,6 +35,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ErrorCode } from "@shared/constants/error-codes";
+
 
 import type { BorrowRecord, BorrowItem } from "@/types/borrow/borrow.entity";
 import { BorrowRecordStatus, BorrowItemStatus } from "@/types/borrow/borrow.entity";
@@ -72,7 +74,7 @@ export const BorrowDetailDrawer: React.FC<BorrowDetailDrawerProps> = ({
     setIsProcessing(true);
     try {
       const response = await borrowService.returnBook({ borrowItemIds: selectedItems });
-      if (response.code === 0) {
+      if (response.code === 0 || response.code === ErrorCode.SUCCESS) {
         toast.success(`${selectedItems.length} book(s) returned successfully`);
         setSelectedItems([]);
         onUpdate();

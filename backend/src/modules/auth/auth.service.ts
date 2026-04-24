@@ -2,7 +2,8 @@ import { AuthRepository } from "./auth.repository";
 import { LoginDTO, RegisterDTO, AuthResponse, AuthUser } from "./auth.types";
 import { hashPassword, comparePassword } from "../../utils/hash.util";
 import { generateToken } from "../../utils/jwt.util";
-import { ErrorCode } from "../../constants/errors/error.enum";
+import { ErrorCode } from "@shared/constants/error-codes";
+import { AppError } from "../../utils/app-error";
 
 export class AuthService {
   private authRepository: AuthRepository;
@@ -14,9 +15,7 @@ export class AuthService {
   async register(data: RegisterDTO): Promise<AuthResponse> {
     const existingUser = await this.authRepository.findByEmail(data.email);
     if (existingUser) {
-      const error = new Error("Email already registered") as any;
-      error.errorCode = ErrorCode.USER_ALREADY_EXISTS;
-      throw error;
+      throw new AppError(ErrorCode.USER_ALREADY_EXISTS, "Email already registered");
     }
 
     const hashedPassword = await hashPassword(data.password);
@@ -40,16 +39,12 @@ export class AuthService {
   async login(data: LoginDTO): Promise<AuthResponse> {
     const user = await this.authRepository.findByEmail(data.email);
     if (!user) {
-      const error = new Error("Invalid credentials") as any;
-      error.errorCode = ErrorCode.INVALID_CREDENTIALS;
-      throw error;
+      throw new AppError(ErrorCode.INVALID_CREDENTIALS, "Invalid credentials");
     }
 
     const isPasswordValid = await comparePassword(data.password, user.password);
     if (!isPasswordValid) {
-      const error = new Error("Invalid credentials") as any;
-      error.errorCode = ErrorCode.INVALID_CREDENTIALS;
-      throw error;
+      throw new AppError(ErrorCode.INVALID_CREDENTIALS, "Invalid credentials");
     }
 
     const authUser: AuthUser = {
@@ -67,9 +62,7 @@ export class AuthService {
   async getMe(userId: string): Promise<AuthUser> {
     const user = await this.authRepository.findById(userId);
     if (!user) {
-      const error = new Error("User not found") as any;
-      error.errorCode = ErrorCode.USER_NOT_FOUND;
-      throw error;
+      throw new AppError(ErrorCode.USER_NOT_FOUND, "User not found");
     }
 
     return {
@@ -80,3 +73,4 @@ export class AuthService {
     };
   }
 }
+

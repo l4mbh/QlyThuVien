@@ -1,15 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
-import type { PaginatedData } from "../types/response.type";
+import type { PaginatedData, ApiResponse } from "../types/response.type";
 import { useDebounce } from "./use-debounce";
+import { ErrorCode } from "@shared/constants/error-codes";
 
 interface UseDataTableProps<T> {
   fetchData: (params: {
     page: number;
     limit: number;
     search?: string;
-  }) => Promise<{ data?: PaginatedData<T>; code: number }>;
+  }) => Promise<ApiResponse<PaginatedData<T>>>;
   initialLimit?: number;
 }
+
 
 export function useDataTable<T>({ fetchData, initialLimit = 10 }: UseDataTableProps<T>) {
   const [data, setData] = useState<T[]>([]);
@@ -32,7 +34,7 @@ export function useDataTable<T>({ fetchData, initialLimit = 10 }: UseDataTablePr
         search: debouncedSearch,
       });
 
-      if (response.code === 0 && response.data) {
+      if ((response.code === 0 || response.code === ErrorCode.SUCCESS) && response.data) {
         setData(response.data.items);
         setTotal(response.data.meta.total);
         setTotalPages(response.data.meta.totalPages);

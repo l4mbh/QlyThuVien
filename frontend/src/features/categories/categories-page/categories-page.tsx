@@ -4,6 +4,8 @@ import { CategoryFormModal } from "../category-form-modal/category-form-modal";
 import { categoryService } from "../category.service";
 import type { CategoryEntity } from "@/types/category/category.entity";
 import { toast } from "sonner";
+import { ErrorCode } from "@shared/constants/error-codes";
+
 import { useDataTable } from "@/hooks/use-data-table";
 import {
   AlertDialog,
@@ -74,7 +76,7 @@ export const CategoriesPage: React.FC = () => {
     setIsDeleting(true);
     try {
       const response = await categoryService.deleteCategory(categoryToDelete.id);
-      if (response.code === 0) {
+      if (response.code === 0 || response.code === ErrorCode.SUCCESS) {
         toast.success("Category deleted successfully");
         setIsDeleteAlertOpen(false);
         refresh();
@@ -97,7 +99,7 @@ export const CategoriesPage: React.FC = () => {
     setIsDeleting(true);
     try {
       const response = await categoryService.bulkDeleteCategories(idsToDelete);
-      if (response.code === 0) {
+      if (response.code === 0 || response.code === ErrorCode.SUCCESS) {
         toast.success(`Successfully deleted ${idsToDelete.length} categories`);
         setIsBulkDeleteAlertOpen(false);
         refresh();

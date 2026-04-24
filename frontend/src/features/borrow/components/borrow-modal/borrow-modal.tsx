@@ -33,7 +33,11 @@ import { bookService } from "@/features/books/book.service";
 import { readerService } from "@/features/readers/reader.service";
 import type { Reader } from "@/types/reader/reader.entity";
 import type { BookEntity } from "@/types/books/book.entity";
-import { ReaderStatus } from "@/types/reader/reader.entity";
+
+import { ErrorCode } from "@shared/constants/error-codes";
+import { runRules } from "@shared/engine/rule-runner.ts";
+import { borrowRuleSet } from "@shared/rules/borrow.rules";
+import { getErrorMessage } from "@/constants/errors/error-map";
 
 interface BorrowModalProps {
   isOpen: boolean;
@@ -49,11 +53,11 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [readers, setReaders] = useState<Reader[]>([]);
   const [books, setBooks] = useState<BookEntity[]>([]);
-  
+
   // Search states
   const [readerSearch, setReaderSearch] = useState("");
   const [bookSearch, setBookSearch] = useState("");
-  
+
   // Selections
   const [selectedReader, setSelectedReader] = useState<Reader | null>(null);
   const [cart, setCart] = useState<BookEntity[]>([]);
@@ -77,9 +81,9 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
             readerService.getReaders(),
             bookService.getBooks({ limit: 100, available: true }),
           ]);
-          
-          if (readersRes.code === 0 && readersRes.data) setReaders(readersRes.data as Reader[]);
-          if (booksRes.code === 0 && booksRes.data) setBooks(booksRes.data.items);
+
+          if (readersRes.code === ErrorCode.SUCCESS && readersRes.data) setReaders(readersRes.data as Reader[]);
+          if (booksRes.code === ErrorCode.SUCCESS && booksRes.data) setBooks(booksRes.data.items);
         } catch (error) {
           console.error("Failed to fetch data for borrow modal", error);
         }
@@ -98,24 +102,48 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
   // Filtered lists
   const filteredReaders = useMemo(() => {
     if (!readerSearch) return [];
-    return readers.filter(r => 
-      r.name.toLowerCase().includes(readerSearch.toLowerCase()) || 
+    return readers.filter(r =>
+      r.name.toLowerCase().includes(readerSearch.toLowerCase()) ||
       r.email.toLowerCase().includes(readerSearch.toLowerCase())
     ).slice(0, 5);
   }, [readers, readerSearch]);
 
   const filteredBooks = useMemo(() => {
     if (!bookSearch) return [];
-    return books.filter(b => 
-      (b.title.toLowerCase().includes(bookSearch.toLowerCase()) || 
-       b.callNumber?.toLowerCase().includes(bookSearch.toLowerCase())) &&
+    return books.filter(b =>
+      (b.title.toLowerCase().includes(bookSearch.toLowerCase()) ||
+        b.callNumber?.toLowerCase().includes(bookSearch.toLowerCase())) &&
       !cart.some(item => item.id === b.id)
     ).slice(0, 5);
   }, [books, bookSearch, cart]);
 
+  const validateBorrow = (reader: Reader, currentCart: BookEntity[], nextBook?: BookEntity) => {
+    const nextCart = nextBook ? [...currentCart, nextBook] : currentCart;
+
+    const result = runRules(borrowRuleSet, {
+      user: {
+        id: reader.id,
+        status: reader.status,
+        currentBorrowCount: reader.currentBorrowCount,
+        borrowLimit: reader.borrowLimit
+      },
+      books: nextCart.map(b => ({
+        id: b.id,
+        title: b.title,
+        availableQuantity: b.availableQuantity
+      })),
+      hasOverdueBooks: reader.hasOverdueBooks
+    });
+
+    if (!result.ok) {
+      toast.error(getErrorMessage(result.code));
+      return false;
+    }
+    return true;
+  };
+
   const handleSelectReader = (reader: Reader) => {
-    if (reader.status === ReaderStatus.BLOCKED) {
-      toast.error("This reader is currently blocked");
+    if (!validateBorrow(reader, [])) {
       return;
     }
     setSelectedReader(reader);
@@ -124,14 +152,12 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
   };
 
   const handleAddToCart = (book: BookEntity) => {
-    if (selectedReader) {
-      const totalRequested = cart.length + selectedReader.currentBorrowCount + 1;
-      if (totalRequested > selectedReader.borrowLimit) {
-        toast.error(`Borrow limit reached (${selectedReader.borrowLimit} books max)`);
-        return;
-      }
+    if (!selectedReader) return;
+
+    if (!validateBorrow(selectedReader, cart, book)) {
+      return;
     }
-    
+
     const newCart = [...cart, book];
     setCart(newCart);
     form.setValue("bookIds", newCart.map(b => b.id));
@@ -145,13 +171,22 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
   };
 
   const onSubmit = async (values: BorrowFormValues) => {
+    if (!selectedReader) return;
+
+    // Final client-side validation
+    if (!validateBorrow(selectedReader, cart)) {
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const response = await borrowService.createBorrow(values);
-      if (response.code === 0) {
+      if (response.code === ErrorCode.SUCCESS) {
         toast.success("Borrow record created successfully");
         onSuccess();
         onClose();
+      } else {
+        toast.error(getErrorMessage(response.code));
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to create borrow record");
@@ -180,7 +215,7 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
                   <FormLabel className="text-sm font-semibold flex items-center gap-2">
                     <User className="h-4 w-4" /> 1. Select Reader
                   </FormLabel>
-                  
+
                   {!selectedReader ? (
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -202,9 +237,14 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
                                 <span className="font-medium text-sm">{r.name}</span>
                                 <span className="text-xs text-muted-foreground">{r.email}</span>
                               </div>
-                              <Badge variant="outline" className="text-[10px]">
-                                {r.currentBorrowCount}/{r.borrowLimit}
-                              </Badge>
+                              <div className="flex items-center gap-2">
+                                {r.hasOverdueBooks && (
+                                  <Badge variant="destructive" className="text-[8px] uppercase">Overdue</Badge>
+                                )}
+                                <Badge variant="outline" className="text-[10px]">
+                                  {r.currentBorrowCount}/{r.borrowLimit}
+                                </Badge>
+                              </div>
                             </div>
                           ))}
                         </Card>
@@ -222,13 +262,13 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
-                         <div className="flex flex-col items-end">
-                            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Limit</span>
-                            <span className="text-sm font-bold">{selectedReader.currentBorrowCount} / {selectedReader.borrowLimit}</span>
-                         </div>
-                         <Button variant="ghost" size="icon" onClick={() => setSelectedReader(null)} className="h-8 w-8 text-muted-foreground hover:text-destructive">
-                           <X className="h-4 w-4" />
-                         </Button>
+                        <div className="flex flex-col items-end">
+                          <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Limit</span>
+                          <span className="text-sm font-bold">{selectedReader.currentBorrowCount} / {selectedReader.borrowLimit}</span>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => setSelectedReader(null)} className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
                     </Card>
                   )}
@@ -335,19 +375,19 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
                 </ScrollArea>
 
                 <div className="mt-4 pt-4 border-t border-accent-foreground/10 space-y-3">
-                   <div className="flex justify-between text-xs">
-                     <span className="text-muted-foreground">Borrow Date:</span>
-                     <span className="font-medium">{format(new Date(), "dd MMM yyyy")}</span>
-                   </div>
-                   <div className="flex justify-between text-xs">
-                     <span className="text-muted-foreground">Due Date:</span>
-                     <span className="font-bold text-primary">{format(form.watch("dueDate"), "dd MMM yyyy")}</span>
-                   </div>
-                   <Separator className="my-2 bg-accent-foreground/5" />
-                   <div className="flex justify-between items-end">
-                     <span className="text-sm font-bold">Total Books:</span>
-                     <span className="text-xl font-black text-primary">{cart.length}</span>
-                   </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Borrow Date:</span>
+                    <span className="font-medium">{format(new Date(), "dd MMM yyyy")}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Due Date:</span>
+                    <span className="font-bold text-primary">{format(form.watch("dueDate"), "dd MMM yyyy")}</span>
+                  </div>
+                  <Separator className="my-2 bg-accent-foreground/5" />
+                  <div className="flex justify-between items-end">
+                    <span className="text-sm font-bold">Total Books:</span>
+                    <span className="text-xl font-black text-primary">{cart.length}</span>
+                  </div>
                 </div>
               </div>
             </div>

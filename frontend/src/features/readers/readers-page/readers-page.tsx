@@ -16,6 +16,8 @@ import {
 import { FilterX, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal/confirmation-modal";
+import { ErrorCode } from "@shared/constants/error-codes";
+
 
 export const ReadersPage: React.FC = () => {
   const [readers, setReaders] = useState<Reader[]>([]);
@@ -42,7 +44,7 @@ export const ReadersPage: React.FC = () => {
     if (showLoading) setIsLoading(true);
     try {
       const response = await readerService.getReaders();
-      if (response.code === 0 && response.data) {
+      if ((response.code === 0 || response.code === ErrorCode.SUCCESS) && response.data) {
         let filteredData = response.data;
         
         if (statusFilter !== "all") {
@@ -109,7 +111,7 @@ export const ReadersPage: React.FC = () => {
     setIsBlocking(true);
     try {
       const response = await readerService.toggleBlockReader(selectedReader.id);
-      if (response.code === 0) {
+      if (response.code === 0 || response.code === ErrorCode.SUCCESS) {
         toast.success(`${selectedReader.status === ReaderStatus.ACTIVE ? "Blocked" : "Unblocked"} successfully`);
         setIsBlockModalOpen(false);
         fetchData(false);
