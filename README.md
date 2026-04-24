@@ -1,103 +1,123 @@
 # LibMgnt - Enterprise-Grade Library Management System
 
-A high-performance, full-stack Monorepo application built with **pnpm**, **React 19**, and **Node.js**. This project serves as a showcase for advanced software architecture, featuring a centralized rule engine, atomic transaction handling, and a unified type system.
+LibMgnt is a high-performance, full-stack monorepo application designed to manage modern library operations with precision. Built using a robust technical stack including Node.js, Express, React 19, and Prisma, the system demonstrates advanced software engineering principles such as centralized rule orchestration, atomic transaction handling, and a unified type system.
 
-## 🌟 Modern Monorepo Infrastructure
+## Core Architecture
 
-We transitioned from a legacy monolithic structure to a high-efficiency **pnpm Workspace**:
-- **Zero-Dependency Hoisting**: Optimized `node_modules` using pnpm's content-addressable store.
-- **Cross-Package Orchestration**: Managed via `pnpm-workspace.yaml`, allowing seamless internal linking between `@qltv/shared`, `@qltv/api`, and `@qltv/web`.
-- **Hybrid Build Pipeline**: Utilizing `tsup` for lightning-fast library bundling (ESM/CJS) and `tsc` for robust type-checking.
+The system is built on a foundation of scalability and maintainability, utilizing the following architectural patterns:
 
-## 🧠 Core Architectural Patterns (The "Daily" Engineering)
+### 1. Monorepo Infrastructure
+Managed via pnpm Workspaces, the project maintains a clear separation between the API, Web frontend, and Shared packages. This ensures zero-dependency hoisting and seamless internal linking, allowing the shared brain of the system to be utilized by both the frontend and backend without duplication.
 
-### 1. Centralized Business Rule Engine (`@qltv/shared`)
-One of the most critical parts of the system. We extracted complex logic into a dedicated, pure TypeScript engine:
-- **Decoupled Logic**: Rules like `maxBooksPerUser` or `overdueCheck` are isolated from database concerns.
-- **Universal Validation**: The same logic is imported by the **Backend** (for authority) and the **Frontend** (for instant UX feedback), ensuring zero logic drift.
-- **Functional Composition**: Rules are written as atomic functions, making them 100% unit-testable.
+### 2. Backend MVC Pattern
+The backend (apps/api) strictly follows the Model-View-Controller architecture:
+- Models: Defined via Prisma for type-safe database interactions.
+- Controllers: Handle incoming HTTP requests, input normalization, and response orchestration.
+- Services: Encapsulate the core business logic and external integrations, ensuring controllers remain lean.
+- Middleware: Implemented inline within route definitions for maximum traceability of the request flow.
 
-### 2. Service-Layer Pattern & Atomic Transactions
-The Backend is built with a strict **Controller-Service-Model** separation:
-- **Service-Oriented Logic**: Controllers only handle HTTP concerns; all business orchestration lives in `services/`.
-- **Atomic Workflows**: Operations like "Borrowing a Book" involve multiple steps (creating records, updating stock, checking user status). These are wrapped in **Prisma Transactions** to ensure a "All-or-Nothing" data integrity.
-- **Race Condition Safety**: Implemented row-level consistency checks within transaction blocks.
+### 3. Type-First Development
+The system enforces 100% Type-Safety across the entire stack. All interfaces, types, and enums reside in the root types directory within the shared package. This "Single Source of Truth" approach eliminates "any" types and ensures that API contract changes are immediately caught during development.
 
-### 3. Type-First Development (Shared Contracts)
-We eliminated "Any" and manual interface duplication:
-- **Shared API Contracts**: All request/response structures are defined in `@qltv/shared`.
-- **Automated Type Propagation**: Changes in the shared package immediately trigger type errors in both FE and BE if they break the contract, preventing runtime bugs.
+### 4. HTTP 200 Always Success Strategy
+To simplify frontend error handling and maintain a consistent communication protocol, the backend always returns an HTTP 200 status code. Success or failure is handled within the response body:
+- Success: { "data": [...], "code": 0 }
+- Error: { "error": { "msg": "Detailed error message" }, "code": 1001 }
 
-### 4. Advanced Frontend Architecture (`apps/web`)
-The frontend is not just a UI; it's a robust **Data Management System (DMS)**:
-- **DMS Data-Table Pattern**: Standardized usage of `shadcn/ui` and `TanStack Table` for all management modules (Books, Readers, Borrowing). This includes built-in pagination, advanced filtering, and high-performance rendering.
-- **Centralized Axios Instance**: A specialized API client featuring:
-    - **Request Interceptors**: Automatic JWT injection for authenticated requests.
-    - **Response Interceptors**: Global handling of 401/403 status codes and seamless session management.
-- **Unified Error Mapping**: Instead of hardcoded strings, the UI utilizes a global mapping system that translates `ErrorCode` constants (from `@qltv/shared`) into user-friendly notifications (via `sonner`).
-- **Feature-Based Folder Structure**: Organized by business domains (`features/auth`, `features/books`, etc.) to ensure high maintainability and prevent circular dependencies.
+## Key Features and Functionalities
 
-## 📁 Directory Overview
+### 1. Authentication and RBAC
+A secure, JWT-based authentication system with persistent session management.
+- Role-Based Access Control (RBAC): Differentiates between Admin, Staff, and Reader roles.
+- Protected Routes: Guards both backend endpoints and frontend navigation based on user permissions.
+
+### 2. Book and Category Management
+Comprehensive cataloging system for library assets.
+- Metadata Integration: Supports ISBN-based automated book metadata fetching.
+- Asset Tracking: Manages book stock, cover images, and availability status in real-time.
+- Standardized Categories: Hierarchical organization of books for efficient searching.
+
+### 3. Reader Management
+A dedicated module for managing library members.
+- Profile Management: Detailed reader records with activity history.
+- Status Control: Ability to block/active readers based on compliance with library rules.
+- Drawer-Based UI: High-density data viewing using modern drawer components.
+
+### 4. Borrowing and Returning System
+The core engine of the library, managing the lifecycle of book loans.
+- Atomic Transactions: Uses Prisma transactions to ensure that borrowing a book (updating stock, creating records, checking limits) is an "all-or-nothing" operation.
+- Real-Time Availability: Automatically updates book status and stock levels upon borrow/return.
+
+### 5. Fine and Overdue Management
+Automated compliance and financial tracking.
+- Compute-on-Read Logic: Fines are dynamically calculated based on overdue days and system-wide fine rates.
+- Financial Records: Tracks paid and unpaid fines with atomic return-and-fine workflows.
+
+### 6. Event-Driven Notification System
+An asynchronous messaging architecture for system updates.
+- Metadata-Based Rendering: Notifications are stored with structured data, allowing the frontend to render dynamic content and deep-links.
+- Real-Time Updates: Informs users about overdue books, fine status, and system announcements.
+
+### 7. Dynamic System Settings
+Runtime configuration management for system behavior.
+- Business Rule Toggles: Admins can adjust borrow limits, overdue fine rates, and notification preferences without code changes.
+- Maintenance Mode: Global system barrier to protect data during updates.
+
+## Technical Solutions
+
+### Centralized Business Rule Engine
+Complex logic such as max books per user or overdue threshold calculation is extracted into @qltv/shared. This prevents "Logic Drift" where the frontend and backend might otherwise calculate rules differently.
+
+### Standardized Form Validation
+Every form in the system utilizes Zod for schema validation. Schemas are shared between the frontend (for instant UX feedback) and the backend (for authoritative validation), ensuring data integrity.
+
+### Centralized Axios Instance
+The frontend utilizes a custom Axios instance with interceptors:
+- Request Interceptor: Automatically injects authorization headers.
+- Response Interceptor: Globally handles standardized error codes and session expirations.
+
+### DMS Data-Table Pattern
+High-performance management interfaces built using TanStack Table and shadcn/ui, supporting advanced filtering, pagination, and multi-select actions.
+
+## Project Structure
 
 ```text
 ├── apps/
 │   ├── api/                # Backend API (Node.js, Prisma, Express)
 │   └── web/                # Frontend Web (React 19, Vite, shadcn/ui)
 ├── packages/
-│   └── shared/             # The "Brain" (Rules, Types, Constants, Helpers)
-├── pnpm-workspace.yaml     # Workspace configuration
-└── package.json            # Global scripts & dev orchestration
+│   └── shared/             # Shared Types, Schemas, and Business Rules
+├── pnpm-workspace.yaml     # Monorepo configuration
+└── package.json            # Global dev orchestration
 ```
 
-## 🛠️ Usage & Workflow
+## Getting Started
 
 ### Prerequisites
-- [pnpm](https://pnpm.io/) installed.
-- Node.js v18+.
-- PostgreSQL Instance.
+- pnpm installed globally
+- Node.js v18 or higher
+- PostgreSQL instance
 
-### 1. Installation & Environment
-```powershell
-pnpm install                     # Install all dependencies
-cp apps/api/.env.example apps/api/.env   # Setup backend environment
-```
+### Installation
+1. Install dependencies: pnpm install
+2. Setup environment: cp apps/api/.env.example apps/api/.env
+3. Initialize database: pnpm db:push
+4. Seed initial data: pnpm --filter @qltv/api run seed
 
-### 2. Database Setup
-Configure your `DATABASE_URL` in `apps/api/.env`, then run:
-```powershell
-pnpm db:push                     # Sync Prisma schema with database
-pnpm --filter @qltv/api run seed # Populate initial data & test accounts
-```
+### Development
+Run the full system in development mode:
+pnpm dev
 
-### 🧪 Test Accounts & Seeding
-The system includes a seeding script that generates a standard set of accounts for development and testing. 
+## Test Accounts
+All test accounts use the default password: 123456
 
-To populate the database with these accounts, run:
-```powershell
-pnpm --filter @qltv/api run seed
-```
-
-All test accounts use the default password: **`123456`**.
-
-| Role | Email | Status | Purpose |
-| :--- | :--- | :--- | :--- |
-| **Admin** | `admin@admin.com` | ✅ Active | Full system access & reports |
-| **Staff** | `staff1@lib.com` | ✅ Active | Staff management access |
-| **Staff** | `staff2@lib.com` | ✅ Active | Staff management access |
-| **Reader** | `reader1@gmail.com` | ✅ Active | Regular reader testing |
-| **Reader** | `reader2@gmail.com` | ✅ Active | Regular reader testing |
-| **Reader** | `blocked@gmail.com` | 🚫 **Blocked** | **Testing access restriction logic** |
-
-### 3. Development
-Start the entire system (Frontend + Backend + Shared Watch Mode):
-```powershell
-pnpm dev                         # Access Web at http://localhost:5173
-```
-
-## 📜 Utility Scripts
-- `pnpm build`: Production build for all packages.
-- `pnpm db:studio`: Open Prisma Studio to manage data visually.
-- `pnpm clean`: Wipe all `node_modules` and `dist` for a fresh start.
+| Role | Email | Status |
+| :--- | :--- | :--- |
+| Admin | admin@admin.com | Active |
+| Staff | staff1@lib.com | Active |
+| Reader | reader1@gmail.com | Active |
+| Blocked Reader | blocked@gmail.com | Blocked |
 
 ---
-**Crafted with precision to demonstrate scalable software engineering principles.**
+**Designed with precision for enterprise scalability and architectural excellence.**
+
