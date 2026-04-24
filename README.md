@@ -66,7 +66,6 @@ cp apps/api/.env.example apps/api/.env   # Setup backend environment
 Configure your `DATABASE_URL` in `apps/api/.env`, then run:
 ```powershell
 pnpm db:push                     # Sync Prisma schema with database
-pnpm --filter @qltv/api run seed # Populate initial data & test accounts
 ```
 
 ### 🧪 Test Accounts & Seeding
