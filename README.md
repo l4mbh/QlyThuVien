@@ -104,9 +104,17 @@ High-performance management interfaces built using TanStack Table and shadcn/ui,
 3. Initialize database: pnpm db:push
 4. Seed initial data: pnpm --filter @qltv/api run seed
 
+<<<<<<< HEAD
 ### Development
 Run the full system in development mode:
 pnpm dev
+=======
+### 2. Database Setup
+Configure your `DATABASE_URL` in `apps/api/.env`, then run:
+```powershell
+pnpm db:push                     # Sync Prisma schema with database
+```
+>>>>>>> 5931ce8ea02b055b05133f084132fa9427e9bf0b
 
 ## Test Accounts
 All test accounts use the default password: 123456
