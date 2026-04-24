@@ -2,11 +2,12 @@ import axios from "axios";
 import prisma from "../../config/db/db";
 import { BookRepository } from "../../repositories/book/book.repository";
 import { CreateBookDTO, UpdateBookDTO, BookEntity, BookFilterDTO, AdjustInventoryDTO, InventoryLogEntity, InventoryLogReason } from "../../types/book/book.entity";
-import { ErrorCode } from "@qltv/shared";
+import { ErrorCode, AuditAction, AuditEntityType } from "@qltv/shared";
 import { CategoryService } from "../category/category.service";
 import { generateCallNumber } from "../../utils/generateCallNumber";
 import { PaginatedData } from "@qltv/shared";
 import { AppError } from "../../utils/app-error";
+import { auditService } from "../audit/audit.service";
 
 export class BookService {
   private bookRepository: BookRepository;
@@ -29,7 +30,7 @@ export class BookService {
     return book;
   }
 
-  async createBook(data: CreateBookDTO): Promise<BookEntity> {
+  async createBook(data: CreateBookDTO, userId: string): Promise<BookEntity> {
     const existingBook = await this.bookRepository.findByIsbn(data.isbn);
     if (existingBook) {
       throw new AppError(ErrorCode.BOOK_ALREADY_EXISTS, "Book with this ISBN already exists");
@@ -39,7 +40,7 @@ export class BookService {
     let categoryId = data.categoryId;
     let category;
     if (!categoryId) {
-      category = await this.categoryService.getOrCreateCategory("Unknown", "000");
+      category = await this.categoryService.getOrCreateCategory("Unknown", "000", userId);
       categoryId = category.id;
     } else {
       category = await this.categoryService.getCategoryById(categoryId);
@@ -57,20 +58,53 @@ export class BookService {
       );
     }
 
-    return this.bookRepository.create({
+    const book = await this.bookRepository.create({
       ...data,
       categoryId
     });
+
+    // Log Event
+    await auditService.logEvent({
+      action: AuditAction.CREATE_BOOK,
+      entityType: AuditEntityType.BOOK,
+      entityId: book.id,
+      userId,
+      metadata: { title: book.title, isbn: book.isbn }
+    });
+
+    return book;
   }
 
-  async updateBook(id: string, data: UpdateBookDTO): Promise<BookEntity> {
+  async updateBook(id: string, data: UpdateBookDTO, userId: string): Promise<BookEntity> {
     await this.getBookById(id);
-    return this.bookRepository.update(id, data);
+    const book = await this.bookRepository.update(id, data);
+
+    // Log Event
+    await auditService.logEvent({
+      action: AuditAction.UPDATE_BOOK,
+      entityType: AuditEntityType.BOOK,
+      entityId: book.id,
+      userId,
+      metadata: { title: book.title, changes: data }
+    });
+
+    return book;
   }
 
-  async deleteBook(id: string): Promise<BookEntity> {
+  async deleteBook(id: string, userId: string): Promise<BookEntity> {
     await this.getBookById(id);
-    return this.bookRepository.softDelete(id);
+    const book = await this.bookRepository.softDelete(id);
+
+    // Log Event
+    await auditService.logEvent({
+      action: AuditAction.DELETE_BOOK,
+      entityType: AuditEntityType.BOOK,
+      entityId: book.id,
+      userId,
+      metadata: { title: book.title }
+    });
+
+    return book;
   }
 
   async bulkDeleteBooks(ids: string[]): Promise<{ count: number }> {
@@ -115,6 +149,20 @@ export class BookService {
           change: data.change,
           reason: data.reason,
           note: data.note || null
+        }
+      });
+
+      // Log Audit Event
+      await auditService.logEvent({
+        action: AuditAction.INVENTORY_ADJUSTED,
+        entityType: AuditEntityType.BOOK,
+        entityId: bookId,
+        userId,
+        metadata: { 
+          title: updatedBook.title, 
+          change: data.change, 
+          reason: data.reason,
+          newAvailable: updatedBook.availableQuantity
         }
       });
 

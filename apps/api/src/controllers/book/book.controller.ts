@@ -42,7 +42,8 @@ export class BookController {
 
   createBook = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const book = await this.bookService.createBook(req.body);
+      const userId = (req as any).user.userId;
+      const book = await this.bookService.createBook(req.body, userId);
       const response: ApiResponse = { data: book, code: ErrorCode.SUCCESS };
       res.json(response);
     } catch (error) {
@@ -52,7 +53,8 @@ export class BookController {
 
   updateBook = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const book = await this.bookService.updateBook(req.params.id as string, req.body);
+      const userId = (req as any).user.userId;
+      const book = await this.bookService.updateBook(req.params.id as string, req.body, userId);
       const response: ApiResponse = { data: book, code: ErrorCode.SUCCESS };
       res.json(response);
     } catch (error) {
@@ -62,7 +64,8 @@ export class BookController {
 
   deleteBook = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const book = await this.bookService.deleteBook(req.params.id as string);
+      const userId = (req as any).user.userId;
+      const book = await this.bookService.deleteBook(req.params.id as string, userId);
       const response: ApiResponse = { data: book, code: ErrorCode.SUCCESS };
       res.json(response);
     } catch (error) {

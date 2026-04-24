@@ -11,6 +11,8 @@ const auth_routes_1 = __importDefault(require("../modules/auth/auth.routes"));
 const category_routes_1 = __importDefault(require("./category/category.routes"));
 const isbn_routes_1 = __importDefault(require("../modules/isbn/isbn.routes"));
 const report_routes_1 = __importDefault(require("./report/report.routes"));
+const audit_routes_1 = __importDefault(require("./audit/audit.routes"));
+const notification_routes_1 = __importDefault(require("./notification/notification.routes"));
 const router = (0, express_1.Router)();
 router.use("/auth", auth_routes_1.default);
 router.use("/users", user_routes_1.default);
@@ -19,4 +21,6 @@ router.use("/books", isbn_routes_1.default); // Mount isbn routes under /books t
 router.use("/categories", category_routes_1.default);
 router.use("/borrow", borrow_routes_1.default);
 router.use("/reports", report_routes_1.default);
+router.use("/audit-logs", audit_routes_1.default);
+router.use("/notifications", notification_routes_1.default);
 exports.default = router;

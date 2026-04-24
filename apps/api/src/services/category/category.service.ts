@@ -1,8 +1,9 @@
 import { CategoryRepository } from "../../repositories/category/category.repository";
 import { CategoryEntity, CreateCategoryDTO, UpdateCategoryDTO, CategoryFilterDTO } from "../../types/category/category.entity";
-import { ErrorCode } from "@qltv/shared";
+import { ErrorCode, AuditAction, AuditEntityType } from "@qltv/shared";
 import { PaginatedData } from "@qltv/shared";
 import { AppError } from "../../utils/app-error";
+import { auditService } from "../audit/audit.service";
 
 export class CategoryService {
   private categoryRepository: CategoryRepository;
@@ -19,17 +20,28 @@ export class CategoryService {
     return this.categoryRepository.findById(id);
   }
 
-  async createCategory(data: CreateCategoryDTO): Promise<CategoryEntity> {
+  async createCategory(data: CreateCategoryDTO, userId: string): Promise<CategoryEntity> {
     const existing = await this.categoryRepository.findByName(data.name);
 
     if (existing) {
       throw new AppError(ErrorCode.CATEGORY_ALREADY_EXISTS, "Category already exists");
     }
 
-    return this.categoryRepository.create(data);
+    const category = await this.categoryRepository.create(data);
+
+    // Log Event
+    await auditService.logEvent({
+      action: AuditAction.CREATE_CATEGORY,
+      entityType: AuditEntityType.CATEGORY,
+      entityId: category.id,
+      userId,
+      metadata: { name: category.name, code: category.code }
+    });
+
+    return category;
   }
 
-  async updateCategory(id: string, data: UpdateCategoryDTO): Promise<CategoryEntity> {
+  async updateCategory(id: string, data: UpdateCategoryDTO, userId: string): Promise<CategoryEntity> {
     const category = await this.categoryRepository.findById(id);
     if (!category) {
       throw new AppError(ErrorCode.CATEGORY_NOT_FOUND, "Category not found");
@@ -42,10 +54,21 @@ export class CategoryService {
       }
     }
 
-    return this.categoryRepository.update(id, data);
+    const updatedCategory = await this.categoryRepository.update(id, data);
+
+    // Log Event
+    await auditService.logEvent({
+      action: AuditAction.UPDATE_CATEGORY,
+      entityType: AuditEntityType.CATEGORY,
+      entityId: updatedCategory.id,
+      userId,
+      metadata: { name: updatedCategory.name, changes: data }
+    });
+
+    return updatedCategory;
   }
 
-  async deleteCategory(id: string): Promise<void> {
+  async deleteCategory(id: string, userId: string): Promise<void> {
     const category = await this.categoryRepository.findByIdWithCount(id);
 
     if (!category) {
@@ -57,9 +80,18 @@ export class CategoryService {
     }
 
     await this.categoryRepository.delete(id);
+
+    // Log Event
+    await auditService.logEvent({
+      action: AuditAction.DELETE_CATEGORY,
+      entityType: AuditEntityType.CATEGORY,
+      entityId: id,
+      userId,
+      metadata: { name: category.name }
+    });
   }
 
-  async deleteCategories(ids: string[]): Promise<void> {
+  async deleteCategories(ids: string[], userId: string): Promise<void> {
     const categories = await this.categoryRepository.findByIdsWithCount(ids);
 
     if (categories.length === 0) {
@@ -73,13 +105,24 @@ export class CategoryService {
     }
 
     await this.categoryRepository.deleteMany(ids);
+
+    // Log Event for each
+    for (const category of categories) {
+      await auditService.logEvent({
+        action: AuditAction.DELETE_CATEGORY,
+        entityType: AuditEntityType.CATEGORY,
+        entityId: category.id,
+        userId,
+        metadata: { name: category.name, bulk: true }
+      });
+    }
   }
 
-  async getOrCreateCategory(name: string, code: string): Promise<CategoryEntity> {
+  async getOrCreateCategory(name: string, code: string, userId: string): Promise<CategoryEntity> {
     const existing = await this.categoryRepository.findByName(name);
     if (existing) return existing;
 
-    return this.createCategory({ name, code });
+    return this.createCategory({ name, code }, userId);
   }
 }
 

@@ -27,7 +27,8 @@ class CategoryController {
                 if (!validation.success) {
                     throw new app_error_1.AppError(shared_1.ErrorCode.VALIDATION_ERROR, validation.error.issues[0].message);
                 }
-                const category = await this.categoryService.createCategory(validation.data);
+                const userId = req.user.userId;
+                const category = await this.categoryService.createCategory(validation.data, userId);
                 res.json({ data: category, code: shared_1.ErrorCode.SUCCESS });
             }
             catch (error) {
@@ -41,7 +42,8 @@ class CategoryController {
                 if (!validation.success) {
                     throw new app_error_1.AppError(shared_1.ErrorCode.VALIDATION_ERROR, validation.error.issues[0].message);
                 }
-                const category = await this.categoryService.updateCategory(id, validation.data);
+                const userId = req.user.userId;
+                const category = await this.categoryService.updateCategory(id, validation.data, userId);
                 res.json({ data: category, code: shared_1.ErrorCode.SUCCESS });
             }
             catch (error) {
@@ -51,7 +53,8 @@ class CategoryController {
         this.deleteCategory = async (req, res, next) => {
             try {
                 const id = req.params.id;
-                await this.categoryService.deleteCategory(id);
+                const userId = req.user.userId;
+                await this.categoryService.deleteCategory(id, userId);
                 res.json({ data: { success: true }, code: shared_1.ErrorCode.SUCCESS });
             }
             catch (error) {
@@ -64,7 +67,8 @@ class CategoryController {
                 if (!ids || !Array.isArray(ids) || ids.length === 0) {
                     throw new app_error_1.AppError(shared_1.ErrorCode.VALIDATION_ERROR, "Invalid or empty IDs list");
                 }
-                await this.categoryService.deleteCategories(ids);
+                const userId = req.user.userId;
+                await this.categoryService.deleteCategories(ids, userId);
                 res.json({ data: { success: true }, code: shared_1.ErrorCode.SUCCESS });
             }
             catch (error) {

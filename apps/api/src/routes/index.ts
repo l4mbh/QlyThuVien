@@ -6,6 +6,8 @@ import authRoutes from "../modules/auth/auth.routes";
 import categoryRoutes from "./category/category.routes";
 import isbnRoutes from "../modules/isbn/isbn.routes";
 import reportRoutes from "./report/report.routes";
+import auditRoutes from "./audit/audit.routes";
+import notificationRoutes from "./notification/notification.routes";
 
 const router = Router();
 
@@ -16,6 +18,8 @@ router.use("/books", isbnRoutes); // Mount isbn routes under /books to get /book
 router.use("/categories", categoryRoutes);
 router.use("/borrow", borrowRoutes);
 router.use("/reports", reportRoutes);
+router.use("/audit-logs", auditRoutes);
+router.use("/notifications", notificationRoutes);
 
 export default router;
 

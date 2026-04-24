@@ -11,6 +11,8 @@ const client_1 = require("@prisma/client");
 const app_error_1 = require("../../utils/app-error");
 const shared_2 = require("@qltv/shared");
 const shared_3 = require("@qltv/shared");
+const audit_service_1 = require("../audit/audit.service");
+const notification_service_1 = require("../notification/notification.service");
 class BorrowService {
     constructor() {
         this.borrowRepository = new borrow_repository_1.BorrowRepository();
@@ -25,7 +27,7 @@ class BorrowService {
         }
         return record;
     }
-    async createBorrow(data) {
+    async createBorrow(data, performerId) {
         const { userId, bookIds, dueDate } = data;
         return await db_1.default.$transaction(async (tx) => {
             // 1. Fetch required data for rules
@@ -96,10 +98,29 @@ class BorrowService {
                 where: { id: userId },
                 data: { currentBorrowCount: { increment: bookIds.length } },
             });
+            // Log Audit Event
+            await audit_service_1.auditService.logEvent({
+                action: shared_1.AuditAction.BORROW_CREATED,
+                entityType: shared_1.AuditEntityType.BORROW,
+                entityId: borrowRecord.id,
+                userId: performerId,
+                metadata: {
+                    readerId: userId,
+                    bookCount: bookIds.length,
+                    dueDate: dueDate
+                }
+            });
+            // Send Notification to Reader
+            await notification_service_1.notificationService.notifyBorrowSuccess(userId, {
+                bookTitle: books.map(b => b.title).join(", "),
+                dueDate: new Date(dueDate),
+                bookId: bookIds[0], // Simplified for now
+                borrowRecordId: borrowRecord.id
+            });
             return borrowRecord;
         });
     }
-    async returnBook(data) {
+    async returnBook(data, performerId) {
         const { borrowItemIds } = data;
         return await db_1.default.$transaction(async (tx) => {
             const results = [];
@@ -150,6 +171,24 @@ class BorrowService {
                         data: { status: "COMPLETED" },
                     });
                 }
+                // Log Audit Event for each item returned
+                await audit_service_1.auditService.logEvent({
+                    action: shared_1.AuditAction.RETURN_COMPLETED,
+                    entityType: shared_1.AuditEntityType.BORROW,
+                    entityId: item.borrowRecordId,
+                    userId: performerId,
+                    metadata: {
+                        borrowItemId: borrowItemId,
+                        bookId: item.bookId,
+                        fineAmount: fineAmount
+                    }
+                });
+                // Send Notification to Reader
+                const book = await tx.book.findUnique({ where: { id: item.bookId } });
+                await notification_service_1.notificationService.notifyReturnSuccess(item.borrowRecord.userId, {
+                    bookTitle: book?.title || "Book",
+                    bookId: item.bookId,
+                });
             }
             return results;
         });

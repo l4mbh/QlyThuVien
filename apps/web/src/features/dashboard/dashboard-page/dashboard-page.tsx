@@ -14,8 +14,10 @@ import { StatsCard } from "../components/stats-card";
 import { BorrowTrendChart } from "../components/borrow-trend-chart";
 import { OverdueTable } from "../components/overdue-table";
 import { TopBooksList } from "../components/top-books-list";
+import { RecentActivities } from "../components/recent-activities";
 import { useAuth } from "@/features/auth/auth.hook";
 import { UserRole } from "@/types/auth/user.entity";
+import { type AuditLog } from "@/types/audit.type";
 
 export const DashboardPage = () => {
   const { user } = useAuth();
@@ -25,26 +27,36 @@ export const DashboardPage = () => {
     topBooks: TopBook[];
     overdue: OverdueDetail[];
     lowStock: LowStockBook[];
+    activities: AuditLog[];
   }>({
     summary: null,
     trends: [],
     topBooks: [],
     overdue: [],
-    lowStock: []
+    lowStock: [],
+    activities: []
   });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchAllData = async () => {
       try {
-        const [summary, trends, topBooks, overdue, lowStock] = await Promise.all([
+        const [summary, trends, topBooks, overdue, lowStock, activities] = await Promise.all([
           dashboardService.getSummary(),
           dashboardService.getBorrowTrends(),
           dashboardService.getTopBooks(),
           dashboardService.getOverdueItems(),
-          dashboardService.getLowStockBooks()
+          dashboardService.getLowStockBooks(),
+          dashboardService.getRecentActivities(1, 10)
         ]);
-        setData({ summary, trends, topBooks, overdue, lowStock });
+        setData({ 
+          summary, 
+          trends, 
+          topBooks, 
+          overdue, 
+          lowStock, 
+          activities: activities.items 
+        });
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
       } finally {
@@ -204,6 +216,9 @@ export const DashboardPage = () => {
           </div>
 
           <TopBooksList data={data.topBooks} />
+
+          {/* Recent Activities */}
+          <RecentActivities activities={data.activities} isLoading={isLoading} />
         </div>
       </div>
     </div>

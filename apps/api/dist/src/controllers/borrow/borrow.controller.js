@@ -27,7 +27,8 @@ class BorrowController {
         };
         this.createBorrow = async (req, res, next) => {
             try {
-                const borrow = await this.borrowService.createBorrow(req.body);
+                const performerId = req.user.userId;
+                const borrow = await this.borrowService.createBorrow(req.body, performerId);
                 const response = { data: borrow, code: shared_1.ErrorCode.SUCCESS };
                 res.json(response);
             }
@@ -37,7 +38,8 @@ class BorrowController {
         };
         this.returnBook = async (req, res, next) => {
             try {
-                const result = await this.borrowService.returnBook(req.body);
+                const performerId = req.user.userId;
+                const result = await this.borrowService.returnBook(req.body, performerId);
                 const response = { data: result, code: shared_1.ErrorCode.SUCCESS };
                 res.json(response);
             }

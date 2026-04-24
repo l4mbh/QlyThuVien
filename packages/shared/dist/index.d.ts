@@ -29,6 +29,46 @@ declare const ErrorCode: {
 type ErrorCodeType = keyof typeof ErrorCode;
 
 /**
+ * Standardized actions for system audit logs
+ */
+declare enum AuditAction {
+    CREATE_BOOK = "CREATE_BOOK",
+    UPDATE_BOOK = "UPDATE_BOOK",
+    DELETE_BOOK = "DELETE_BOOK",
+    CREATE_CATEGORY = "CREATE_CATEGORY",
+    UPDATE_CATEGORY = "UPDATE_CATEGORY",
+    DELETE_CATEGORY = "DELETE_CATEGORY",
+    BORROW_CREATED = "BORROW_CREATED",
+    RETURN_COMPLETED = "RETURN_COMPLETED",
+    BORROW_OVERDUE = "BORROW_OVERDUE",
+    INVENTORY_ADJUSTED = "INVENTORY_ADJUSTED",
+    USER_CREATED = "USER_CREATED",
+    USER_UPDATED = "USER_UPDATED",
+    USER_BLOCKED = "USER_BLOCKED"
+}
+/**
+ * Entity types that can be audited
+ */
+declare enum AuditEntityType {
+    BOOK = "BOOK",
+    USER = "USER",
+    BORROW = "BORROW",
+    CATEGORY = "CATEGORY",
+    SYSTEM = "SYSTEM"
+}
+
+/**
+ * Types of notifications in the system
+ */
+declare enum NotificationType {
+    OVERDUE = "OVERDUE",
+    BORROW_SUCCESS = "BORROW_SUCCESS",
+    RETURN_SUCCESS = "RETURN_SUCCESS",
+    SYSTEM = "SYSTEM",
+    FINE_ASSIGNED = "FINE_ASSIGNED"
+}
+
+/**
  * Định nghĩa chuẩn cho kết quả của một Rule.
  * ok: true - Hợp lệ
  * ok: false - Vi phạm, kèm mã lỗi (string) và thông tin chi tiết (nếu có)
@@ -102,6 +142,42 @@ interface ApiResponse<T = any> {
     };
 }
 
+interface AuditLog {
+    id: string;
+    action: AuditAction;
+    entityType: AuditEntityType;
+    entityId: string;
+    userId: string;
+    userName?: string;
+    metadata?: Record<string, any>;
+    createdAt: Date;
+}
+interface CreateAuditLogDto {
+    action: AuditAction;
+    entityType: AuditEntityType;
+    entityId: string;
+    userId: string;
+    metadata?: Record<string, any>;
+}
+
+interface Notification {
+    id: string;
+    userId: string;
+    type: NotificationType;
+    title: string;
+    message?: string;
+    metadata?: Record<string, any>;
+    isRead: boolean;
+    createdAt: Date;
+}
+interface CreateNotificationDto {
+    userId: string;
+    type: NotificationType;
+    title: string;
+    message?: string;
+    metadata?: Record<string, any>;
+}
+
 /**
  * Hàm thực thi danh sách các rules theo chuỗi (pipeline).
  * Sẽ dừng lại ở rule đầu tiên trả về kết quả không thành công (ok: false).
@@ -112,4 +188,4 @@ interface ApiResponse<T = any> {
  */
 declare const runRules: <T>(rules: Rule<T>[], input: T) => RuleResult;
 
-export { type ApiResponse, type BorrowContext, ErrorCode, type ErrorCodeType, type PaginatedData, type PaginationMeta, type Rule, type RuleResult, booksAvailable, borrowRuleSet, isUserActive, noOverdue, runRules, withinLimit };
+export { type ApiResponse, AuditAction, AuditEntityType, type AuditLog, type BorrowContext, type CreateAuditLogDto, type CreateNotificationDto, ErrorCode, type ErrorCodeType, type Notification, NotificationType, type PaginatedData, type PaginationMeta, type Rule, type RuleResult, booksAvailable, borrowRuleSet, isUserActive, noOverdue, runRules, withinLimit };

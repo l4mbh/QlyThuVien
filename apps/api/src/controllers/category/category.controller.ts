@@ -31,8 +31,8 @@ export class CategoryController {
       if (!validation.success) {
         throw new AppError(ErrorCode.VALIDATION_ERROR, validation.error.issues[0].message);
       }
-
-      const category = await this.categoryService.createCategory(validation.data);
+      const userId = (req as any).user.userId;
+      const category = await this.categoryService.createCategory(validation.data, userId);
       res.json({ data: category, code: ErrorCode.SUCCESS });
     } catch (error: any) {
       next(error);
@@ -46,8 +46,8 @@ export class CategoryController {
       if (!validation.success) {
         throw new AppError(ErrorCode.VALIDATION_ERROR, validation.error.issues[0].message);
       }
-
-      const category = await this.categoryService.updateCategory(id, validation.data);
+      const userId = (req as any).user.userId;
+      const category = await this.categoryService.updateCategory(id, validation.data, userId);
       res.json({ data: category, code: ErrorCode.SUCCESS });
     } catch (error: any) {
       next(error);
@@ -57,7 +57,8 @@ export class CategoryController {
   deleteCategory = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const id = req.params.id as string;
-      await this.categoryService.deleteCategory(id);
+      const userId = (req as any).user.userId;
+      await this.categoryService.deleteCategory(id, userId);
       res.json({ data: { success: true }, code: ErrorCode.SUCCESS });
     } catch (error: any) {
       next(error);
@@ -71,7 +72,8 @@ export class CategoryController {
         throw new AppError(ErrorCode.VALIDATION_ERROR, "Invalid or empty IDs list");
       }
 
-      await this.categoryService.deleteCategories(ids);
+      const userId = (req as any).user.userId;
+      await this.categoryService.deleteCategories(ids, userId);
       res.json({ data: { success: true }, code: ErrorCode.SUCCESS });
     } catch (error: any) {
       next(error);

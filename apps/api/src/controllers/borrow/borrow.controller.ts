@@ -32,7 +32,8 @@ export class BorrowController {
 
   createBorrow = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const borrow = await this.borrowService.createBorrow(req.body);
+      const performerId = (req as any).user.userId;
+      const borrow = await this.borrowService.createBorrow(req.body, performerId);
       const response: ApiResponse = { data: borrow, code: ErrorCode.SUCCESS };
       res.json(response);
     } catch (error) {
@@ -42,7 +43,8 @@ export class BorrowController {
 
   returnBook = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const result = await this.borrowService.returnBook(req.body);
+      const performerId = (req as any).user.userId;
+      const result = await this.borrowService.returnBook(req.body, performerId);
       const response: ApiResponse = { data: result, code: ErrorCode.SUCCESS };
       res.json(response);
     } catch (error) {

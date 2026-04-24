@@ -66,7 +66,27 @@ cp apps/api/.env.example apps/api/.env   # Setup backend environment
 Configure your `DATABASE_URL` in `apps/api/.env`, then run:
 ```powershell
 pnpm db:push                     # Sync Prisma schema with database
+pnpm --filter @qltv/api run seed # Populate initial data & test accounts
 ```
+
+### 🧪 Test Accounts & Seeding
+The system includes a seeding script that generates a standard set of accounts for development and testing. 
+
+To populate the database with these accounts, run:
+```powershell
+pnpm --filter @qltv/api run seed
+```
+
+All test accounts use the default password: **`123456`**.
+
+| Role | Email | Status | Purpose |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `admin@admin.com` | ✅ Active | Full system access & reports |
+| **Staff** | `staff1@lib.com` | ✅ Active | Staff management access |
+| **Staff** | `staff2@lib.com` | ✅ Active | Staff management access |
+| **Reader** | `reader1@gmail.com` | ✅ Active | Regular reader testing |
+| **Reader** | `reader2@gmail.com` | ✅ Active | Regular reader testing |
+| **Reader** | `blocked@gmail.com` | 🚫 **Blocked** | **Testing access restriction logic** |
 
 ### 3. Development
 Start the entire system (Frontend + Backend + Shared Watch Mode):

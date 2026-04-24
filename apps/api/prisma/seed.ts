@@ -45,6 +45,49 @@ async function main() {
   });
 
   console.log('Admin user created/updated:', adminUser.email);
+
+  // Create staff users
+  const staffUsers = [
+    { name: 'Staff Member 1', email: 'staff1@lib.com' },
+    { name: 'Staff Member 2', email: 'staff2@lib.com' },
+  ];
+
+  for (const staff of staffUsers) {
+    const user = await prisma.user.upsert({
+      where: { email: staff.email },
+      update: { password: adminPassword, role: 'STAFF' },
+      create: {
+        name: staff.name,
+        email: staff.email,
+        password: adminPassword,
+        role: 'STAFF',
+        status: 'ACTIVE',
+      },
+    });
+    console.log('Staff user created/updated:', user.email);
+  }
+
+  // Create reader users
+  const readerUsers = [
+    { name: 'Active Reader 1', email: 'reader1@gmail.com', status: 'ACTIVE' as const },
+    { name: 'Active Reader 2', email: 'reader2@gmail.com', status: 'ACTIVE' as const },
+    { name: 'Blocked Reader', email: 'blocked@gmail.com', status: 'BLOCKED' as const },
+  ];
+
+  for (const reader of readerUsers) {
+    const user = await prisma.user.upsert({
+      where: { email: reader.email },
+      update: { password: adminPassword, status: reader.status },
+      create: {
+        name: reader.name,
+        email: reader.email,
+        password: adminPassword,
+        role: 'READER',
+        status: reader.status,
+      },
+    });
+    console.log(`Reader user (${reader.status}) created/updated:`, user.email);
+  }
 }
 
 main()

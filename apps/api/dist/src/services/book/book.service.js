@@ -12,6 +12,7 @@ const shared_1 = require("@qltv/shared");
 const category_service_1 = require("../category/category.service");
 const generateCallNumber_1 = require("../../utils/generateCallNumber");
 const app_error_1 = require("../../utils/app-error");
+const audit_service_1 = require("../audit/audit.service");
 class BookService {
     constructor() {
         this.bookRepository = new book_repository_1.BookRepository();
@@ -27,7 +28,7 @@ class BookService {
         }
         return book;
     }
-    async createBook(data) {
+    async createBook(data, userId) {
         const existingBook = await this.bookRepository.findByIsbn(data.isbn);
         if (existingBook) {
             throw new app_error_1.AppError(shared_1.ErrorCode.BOOK_ALREADY_EXISTS, "Book with this ISBN already exists");
@@ -36,7 +37,7 @@ class BookService {
         let categoryId = data.categoryId;
         let category;
         if (!categoryId) {
-            category = await this.categoryService.getOrCreateCategory("Unknown", "000");
+            category = await this.categoryService.getOrCreateCategory("Unknown", "000", userId);
             categoryId = category.id;
         }
         else {
@@ -49,18 +50,45 @@ class BookService {
         if (!data.callNumber) {
             data.callNumber = await (0, generateCallNumber_1.generateCallNumber)(data.author, data.publishedYear || new Date().getFullYear(), category.code || "000");
         }
-        return this.bookRepository.create({
+        const book = await this.bookRepository.create({
             ...data,
             categoryId
         });
+        // Log Event
+        await audit_service_1.auditService.logEvent({
+            action: shared_1.AuditAction.CREATE_BOOK,
+            entityType: shared_1.AuditEntityType.BOOK,
+            entityId: book.id,
+            userId,
+            metadata: { title: book.title, isbn: book.isbn }
+        });
+        return book;
     }
-    async updateBook(id, data) {
+    async updateBook(id, data, userId) {
         await this.getBookById(id);
-        return this.bookRepository.update(id, data);
+        const book = await this.bookRepository.update(id, data);
+        // Log Event
+        await audit_service_1.auditService.logEvent({
+            action: shared_1.AuditAction.UPDATE_BOOK,
+            entityType: shared_1.AuditEntityType.BOOK,
+            entityId: book.id,
+            userId,
+            metadata: { title: book.title, changes: data }
+        });
+        return book;
     }
-    async deleteBook(id) {
+    async deleteBook(id, userId) {
         await this.getBookById(id);
-        return this.bookRepository.softDelete(id);
+        const book = await this.bookRepository.softDelete(id);
+        // Log Event
+        await audit_service_1.auditService.logEvent({
+            action: shared_1.AuditAction.DELETE_BOOK,
+            entityType: shared_1.AuditEntityType.BOOK,
+            entityId: book.id,
+            userId,
+            metadata: { title: book.title }
+        });
+        return book;
     }
     async bulkDeleteBooks(ids) {
         return this.bookRepository.bulkDelete(ids);
@@ -98,6 +126,19 @@ class BookService {
                     change: data.change,
                     reason: data.reason,
                     note: data.note || null
+                }
+            });
+            // Log Audit Event
+            await audit_service_1.auditService.logEvent({
+                action: shared_1.AuditAction.INVENTORY_ADJUSTED,
+                entityType: shared_1.AuditEntityType.BOOK,
+                entityId: bookId,
+                userId,
+                metadata: {
+                    title: updatedBook.title,
+                    change: data.change,
+                    reason: data.reason,
+                    newAvailable: updatedBook.availableQuantity
                 }
             });
             return updatedBook;

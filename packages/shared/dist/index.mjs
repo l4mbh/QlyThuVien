@@ -30,6 +30,42 @@ var ErrorCode = {
   CATEGORY_HAS_BOOKS: "CATEGORY_HAS_BOOKS"
 };
 
+// src/constants/audit.ts
+var AuditAction = /* @__PURE__ */ ((AuditAction2) => {
+  AuditAction2["CREATE_BOOK"] = "CREATE_BOOK";
+  AuditAction2["UPDATE_BOOK"] = "UPDATE_BOOK";
+  AuditAction2["DELETE_BOOK"] = "DELETE_BOOK";
+  AuditAction2["CREATE_CATEGORY"] = "CREATE_CATEGORY";
+  AuditAction2["UPDATE_CATEGORY"] = "UPDATE_CATEGORY";
+  AuditAction2["DELETE_CATEGORY"] = "DELETE_CATEGORY";
+  AuditAction2["BORROW_CREATED"] = "BORROW_CREATED";
+  AuditAction2["RETURN_COMPLETED"] = "RETURN_COMPLETED";
+  AuditAction2["BORROW_OVERDUE"] = "BORROW_OVERDUE";
+  AuditAction2["INVENTORY_ADJUSTED"] = "INVENTORY_ADJUSTED";
+  AuditAction2["USER_CREATED"] = "USER_CREATED";
+  AuditAction2["USER_UPDATED"] = "USER_UPDATED";
+  AuditAction2["USER_BLOCKED"] = "USER_BLOCKED";
+  return AuditAction2;
+})(AuditAction || {});
+var AuditEntityType = /* @__PURE__ */ ((AuditEntityType2) => {
+  AuditEntityType2["BOOK"] = "BOOK";
+  AuditEntityType2["USER"] = "USER";
+  AuditEntityType2["BORROW"] = "BORROW";
+  AuditEntityType2["CATEGORY"] = "CATEGORY";
+  AuditEntityType2["SYSTEM"] = "SYSTEM";
+  return AuditEntityType2;
+})(AuditEntityType || {});
+
+// src/constants/notification.ts
+var NotificationType = /* @__PURE__ */ ((NotificationType2) => {
+  NotificationType2["OVERDUE"] = "OVERDUE";
+  NotificationType2["BORROW_SUCCESS"] = "BORROW_SUCCESS";
+  NotificationType2["RETURN_SUCCESS"] = "RETURN_SUCCESS";
+  NotificationType2["SYSTEM"] = "SYSTEM";
+  NotificationType2["FINE_ASSIGNED"] = "FINE_ASSIGNED";
+  return NotificationType2;
+})(NotificationType || {});
+
 // src/rules/borrow.rules.ts
 var isUserActive = ({ user }) => {
   if (user.status !== "ACTIVE") {
@@ -88,7 +124,10 @@ var runRules = (rules, input) => {
   return { ok: true };
 };
 export {
+  AuditAction,
+  AuditEntityType,
   ErrorCode,
+  NotificationType,
   booksAvailable,
   borrowRuleSet,
   isUserActive,

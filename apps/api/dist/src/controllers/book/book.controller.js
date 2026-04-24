@@ -35,7 +35,8 @@ class BookController {
         };
         this.createBook = async (req, res, next) => {
             try {
-                const book = await this.bookService.createBook(req.body);
+                const userId = req.user.userId;
+                const book = await this.bookService.createBook(req.body, userId);
                 const response = { data: book, code: shared_1.ErrorCode.SUCCESS };
                 res.json(response);
             }
@@ -45,7 +46,8 @@ class BookController {
         };
         this.updateBook = async (req, res, next) => {
             try {
-                const book = await this.bookService.updateBook(req.params.id, req.body);
+                const userId = req.user.userId;
+                const book = await this.bookService.updateBook(req.params.id, req.body, userId);
                 const response = { data: book, code: shared_1.ErrorCode.SUCCESS };
                 res.json(response);
             }
@@ -55,7 +57,8 @@ class BookController {
         };
         this.deleteBook = async (req, res, next) => {
             try {
-                const book = await this.bookService.deleteBook(req.params.id);
+                const userId = req.user.userId;
+                const book = await this.bookService.deleteBook(req.params.id, userId);
                 const response = { data: book, code: shared_1.ErrorCode.SUCCESS };
                 res.json(response);
             }

@@ -1,11 +1,13 @@
 import prisma from "../../config/db/db";
 import { BorrowRepository } from "../../repositories/borrow/borrow.repository";
 import { CreateBorrowDTO, ReturnBookDTO } from "../../types/borrow/borrow.entity";
-import { ErrorCode } from "@qltv/shared";
+import { ErrorCode, AuditAction, AuditEntityType, NotificationType } from "@qltv/shared";
 import { BorrowItemStatus, UserStatus, Prisma } from "@prisma/client";
 import { AppError } from "../../utils/app-error";
 import { runRules } from "@qltv/shared";
 import { borrowRuleSet } from "@qltv/shared";
+import { auditService } from "../audit/audit.service";
+import { notificationService } from "../notification/notification.service";
 
 export class BorrowService {
   private borrowRepository: BorrowRepository;
@@ -26,7 +28,7 @@ export class BorrowService {
     return record;
   }
 
-  async createBorrow(data: CreateBorrowDTO) {
+  async createBorrow(data: CreateBorrowDTO, performerId: string) {
     const { userId, bookIds, dueDate } = data;
 
     return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
@@ -112,11 +114,32 @@ export class BorrowService {
         data: { currentBorrowCount: { increment: bookIds.length } },
       });
 
+      // Log Audit Event
+      await auditService.logEvent({
+        action: AuditAction.BORROW_CREATED,
+        entityType: AuditEntityType.BORROW,
+        entityId: borrowRecord.id,
+        userId: performerId,
+        metadata: { 
+          readerId: userId, 
+          bookCount: bookIds.length,
+          dueDate: dueDate
+        }
+      });
+
+      // Send Notification to Reader
+      await notificationService.notifyBorrowSuccess(userId, {
+        bookTitle: books.map(b => b.title).join(", "),
+        dueDate: new Date(dueDate),
+        bookId: bookIds[0], // Simplified for now
+        borrowRecordId: borrowRecord.id
+      });
+
       return borrowRecord;
     });
   }
 
-  async returnBook(data: ReturnBookDTO) {
+  async returnBook(data: ReturnBookDTO, performerId: string) {
     const { borrowItemIds } = data;
 
     return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
@@ -178,6 +201,26 @@ export class BorrowService {
             data: { status: "COMPLETED" },
           });
         }
+
+        // Log Audit Event for each item returned
+        await auditService.logEvent({
+          action: AuditAction.RETURN_COMPLETED,
+          entityType: AuditEntityType.BORROW,
+          entityId: item.borrowRecordId,
+          userId: performerId,
+          metadata: { 
+            borrowItemId: borrowItemId,
+            bookId: item.bookId,
+            fineAmount: fineAmount
+          }
+        });
+
+        // Send Notification to Reader
+        const book = await tx.book.findUnique({ where: { id: item.bookId } });
+        await notificationService.notifyReturnSuccess(item.borrowRecord.userId, {
+          bookTitle: book?.title || "Book",
+          bookId: item.bookId,
+        });
       }
 
       return results;

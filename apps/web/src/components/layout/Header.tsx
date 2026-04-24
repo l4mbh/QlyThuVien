@@ -1,7 +1,8 @@
-import { Bell, Search, User as UserIcon, LogOut, Settings } from "lucide-react";
+import { Search, User as UserIcon, LogOut, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/ui/notification-bell/notification-bell";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -38,10 +39,7 @@ export const Header = () => {
         </div>
       </div>
       <div className="flex items-center gap-5">
-        <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:bg-slate-100 rounded-full h-9 w-9">
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-2 right-2.5 h-2 w-2 bg-red-500 rounded-full border-2 border-white"></span>
-        </Button>
+        <NotificationBell />
         <div className="flex items-center gap-3 pl-2 border-l border-slate-200">
           <div className="text-right hidden lg:block">
             <p className="text-sm font-semibold text-slate-700 leading-none">{user?.name || "User"}</p>

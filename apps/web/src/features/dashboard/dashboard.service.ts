@@ -7,6 +7,8 @@ import {
   type OverdueDetail,
   type LowStockBook 
 } from "@/types/report/report.entity";
+import { type AuditLog } from "@/types/audit.type";
+import { type PaginatedData } from "@/types/response.type";
 
 export const dashboardService = {
   async getSummary(): Promise<DashboardSummary> {
@@ -31,6 +33,11 @@ export const dashboardService = {
 
   async getLowStockBooks(threshold: number = 3): Promise<LowStockBook[]> {
     const response = await api.get<ApiResponse<LowStockBook[]>>(`/reports/low-stock?threshold=${threshold}`);
+    return response.data.data!;
+  },
+
+  async getRecentActivities(page: number = 1, limit: number = 20): Promise<PaginatedData<AuditLog>> {
+    const response = await api.get<ApiResponse<PaginatedData<AuditLog>>>(`/audit-logs?page=${page}&limit=${limit}`);
     return response.data.data!;
   },
 };
