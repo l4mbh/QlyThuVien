@@ -99,25 +99,35 @@ High-performance management interfaces built using TanStack Table and shadcn/ui,
 - PostgreSQL instance
 
 ### Installation
-1. Install dependencies: pnpm install
-2. Setup environment: cp apps/api/.env.example apps/api/.env
-3. Initialize database: pnpm db:push
-4. Seed initial data: pnpm --filter @qltv/api run seed
-
-<<<<<<< HEAD
-### Development
-Run the full system in development mode:
-pnpm dev
-=======
-### 2. Database Setup
-Configure your `DATABASE_URL` in `apps/api/.env`, then run:
+1. Install project dependencies:
 ```powershell
-pnpm db:push                     # Sync Prisma schema with database
+pnpm install
 ```
->>>>>>> 5931ce8ea02b055b05133f084132fa9427e9bf0b
+
+2. Setup environment variables for the API:
+```powershell
+cp apps/api/.env.example apps/api/.env
+```
+
+### Database Setup
+1. Sync the Prisma schema with your database:
+```powershell
+pnpm db:push
+```
+
+2. Populate the database with initial test data and accounts:
+```powershell
+pnpm --filter @qltv/api run seed
+```
+
+### Development
+Start the full system (Frontend, Backend, and Shared Watch Mode):
+```powershell
+pnpm dev
+```
 
 ## Test Accounts
-All test accounts use the default password: 123456
+All test accounts use the default password: **123456**
 
 | Role | Email | Status |
 | :--- | :--- | :--- |
@@ -128,4 +138,5 @@ All test accounts use the default password: 123456
 
 ---
 **Designed with precision for enterprise scalability and architectural excellence.**
+
 
