@@ -1,89 +1,83 @@
-# LibMgnt - Library Management System
+# LibMgnt - Enterprise-Grade Library Management System
 
-A modern, full-stack Library Management System dashboard built with React, Node.js, and PostgreSQL. Features a premium UI with Glassmorphism and a robust JWT-based authentication system.
+A high-performance, full-stack Monorepo application built with **pnpm**, **React 19**, and **Node.js**. This project serves as a showcase for advanced software architecture, featuring a centralized rule engine, atomic transaction handling, and a unified type system.
 
-## 🚀 Tech Stack
+## 🌟 Modern Monorepo Infrastructure
 
-### Frontend
-- **Framework**: React 19 + Vite
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS v3
-- **Components**: shadcn/ui (Radix UI + Lucide Icons)
-- **State Management**: React Context API
-- **Networking**: Axios with JWT Interceptors
-- **Routing**: React Router DOM v7
+We transitioned from a legacy monolithic structure to a high-efficiency **pnpm Workspace**:
+- **Zero-Dependency Hoisting**: Optimized `node_modules` using pnpm's content-addressable store.
+- **Cross-Package Orchestration**: Managed via `pnpm-workspace.yaml`, allowing seamless internal linking between `@qltv/shared`, `@qltv/api`, and `@qltv/web`.
+- **Hybrid Build Pipeline**: Utilizing `tsup` for lightning-fast library bundling (ESM/CJS) and `tsc` for robust type-checking.
 
-### Backend
-- **Framework**: Node.js + Express
-- **Database**: PostgreSQL
-- **ORM**: Prisma
-- **Auth**: JWT (JSON Web Tokens)
-- **Validation**: Zod
+## 🧠 Core Architectural Patterns (The "Daily" Engineering)
 
-## ✨ Features
+### 1. Centralized Business Rule Engine (`@qltv/shared`)
+One of the most critical parts of the system. We extracted complex logic into a dedicated, pure TypeScript engine:
+- **Decoupled Logic**: Rules like `maxBooksPerUser` or `overdueCheck` are isolated from database concerns.
+- **Universal Validation**: The same logic is imported by the **Backend** (for authority) and the **Frontend** (for instant UX feedback), ensuring zero logic drift.
+- **Functional Composition**: Rules are written as atomic functions, making them 100% unit-testable.
 
-- **Authentication**: Secure Login and Registration with JWT persistence.
-- **Protected Routes**: Internal pages accessible only to authenticated users.
-- **Role-based Access Control (RBAC)**: Different UI and permissions for `ADMIN` and `STAFF`.
-- **Dashboard**: Real-time overview of library statistics (Books, Readers, Borrowing).
-- **Flat UI**: High-end aesthetic with semi-transparent elements and backdrop blurs.
-- **Responsive Design**: Fully functional on desktop and mobile.
+### 2. Service-Layer Pattern & Atomic Transactions
+The Backend is built with a strict **Controller-Service-Model** separation:
+- **Service-Oriented Logic**: Controllers only handle HTTP concerns; all business orchestration lives in `services/`.
+- **Atomic Workflows**: Operations like "Borrowing a Book" involve multiple steps (creating records, updating stock, checking user status). These are wrapped in **Prisma Transactions** to ensure a "All-or-Nothing" data integrity.
+- **Race Condition Safety**: Implemented row-level consistency checks within transaction blocks.
 
-## 📁 Project Structure
+### 3. Type-First Development (Shared Contracts)
+We eliminated "Any" and manual interface duplication:
+- **Shared API Contracts**: All request/response structures are defined in `@qltv/shared`.
+- **Automated Type Propagation**: Changes in the shared package immediately trigger type errors in both FE and BE if they break the contract, preventing runtime bugs.
+
+### 4. Advanced Frontend Architecture (`apps/web`)
+The frontend is not just a UI; it's a robust **Data Management System (DMS)**:
+- **DMS Data-Table Pattern**: Standardized usage of `shadcn/ui` and `TanStack Table` for all management modules (Books, Readers, Borrowing). This includes built-in pagination, advanced filtering, and high-performance rendering.
+- **Centralized Axios Instance**: A specialized API client featuring:
+    - **Request Interceptors**: Automatic JWT injection for authenticated requests.
+    - **Response Interceptors**: Global handling of 401/403 status codes and seamless session management.
+- **Unified Error Mapping**: Instead of hardcoded strings, the UI utilizes a global mapping system that translates `ErrorCode` constants (from `@qltv/shared`) into user-friendly notifications (via `sonner`).
+- **Feature-Based Folder Structure**: Organized by business domains (`features/auth`, `features/books`, etc.) to ensure high maintainability and prevent circular dependencies.
+
+## 📁 Directory Overview
 
 ```text
-LibMgnt/
-├── backend/                # Node.js Express server
-│   ├── prisma/             # DB Schema & Migrations
-│   ├── src/
-│   │   ├── modules/        # Domain-driven modules (Auth, Books, etc.)
-│   │   ├── middlewares/    # Auth, Error, Logging middlewares
-│   │   └── constants/      # Error codes, enums
-│   └── .env.example
-├── frontend/               # React Vite application
-│   ├── src/
-│   │   ├── features/       # Feature-based modules (Auth, Dashboard)
-│   │   ├── components/     # Reusable UI & Layout components
-│   │   ├── services/       # API clients (Axios instance)
-│   │   ├── types/          # Centralized TS types/interfaces
-│   │   └── routes/         # Routing configuration
-│   └── .env.example
-└── docs/                   # Documentation & Specs
+├── apps/
+│   ├── api/                # Backend API (Node.js, Prisma, Express)
+│   └── web/                # Frontend Web (React 19, Vite, shadcn/ui)
+├── packages/
+│   └── shared/             # The "Brain" (Rules, Types, Constants, Helpers)
+├── pnpm-workspace.yaml     # Workspace configuration
+└── package.json            # Global scripts & dev orchestration
 ```
 
-## 🛠️ Getting Started
+## 🛠️ Usage & Workflow
 
 ### Prerequisites
-- Node.js (v18+)
-- PostgreSQL
+- [pnpm](https://pnpm.io/) installed.
+- Node.js v18+.
+- PostgreSQL Instance.
 
-### 1. Setup Backend
+### 1. Installation & Environment
 ```powershell
-cd backend
-npm install
-# Update .env with your DATABASE_URL
-npx prisma db push
-npm run dev
+pnpm install                     # Install all dependencies
+cp apps/api/.env.example apps/api/.env   # Setup backend environment
 ```
 
-### 2. Setup Frontend
+### 2. Database Setup
+Configure your `DATABASE_URL` in `apps/api/.env`, then run:
 ```powershell
-cd frontend
-npm install
-# Update .env with VITE_API_BASE_URL
-npm run dev
+pnpm db:push                     # Sync Prisma schema with database
 ```
 
-## 🔐 Environment Variables
+### 3. Development
+Start the entire system (Frontend + Backend + Shared Watch Mode):
+```powershell
+pnpm dev                         # Access Web at http://localhost:5173
+```
 
-### Backend (`backend/.env`)
-- `PORT`: Server port (default: 3000)
-- `DATABASE_URL`: PostgreSQL connection string
-- `JWT_SECRET`: Secret key for token signing
-- `JWT_EXPIRES_IN`: Token expiration (e.g., 1d)
+## 📜 Utility Scripts
+- `pnpm build`: Production build for all packages.
+- `pnpm db:studio`: Open Prisma Studio to manage data visually.
+- `pnpm clean`: Wipe all `node_modules` and `dist` for a fresh start.
 
-### Frontend (`frontend/.env`)
-- `VITE_API_BASE_URL`: Backend API URL (e.g., http://localhost:3000/api/v1)
-
-## 📄 License
-This project is for educational purposes.
+---
+**Crafted with precision to demonstrate scalable software engineering principles.**
