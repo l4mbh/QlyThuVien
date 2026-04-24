@@ -1,16 +1,16 @@
 {
-  "updated_at": "2026-04-23T21:20:00Z",
+  "updated_at": "2026-04-24T11:15:00Z",
   "working_on": {
-    "feature": "Librarian Command Center Overhaul",
-    "task": "Bento Grid Dashboard & Inventory Hardening",
+    "feature": "Shared Logic Standardization",
+    "task": "Implementing Proxy-based Alias Strategy",
     "status": "stable",
     "files": [
-      "frontend/src/features/dashboard/dashboard-page/dashboard-page.tsx",
-      "frontend/src/features/books/components/inventory-management-modal.tsx",
-      "backend/src/services/report/report.service.ts"
+      "frontend/src/shared/constants/error-codes.ts",
+      "frontend/src/shared/rules/borrow.rules.ts",
+      "frontend/vite.config.ts"
     ],
     "blockers": [],
-    "notes": "Dashboard is now a high-level command center with actionable signals. Inventory management has been hardened with directional logic."
+    "notes": "Vite now correctly resolves and transpiles shared constants and rules via internal proxies. This fixed the build error related to importing from outside the src directory."
   },
   "pending_tasks": [
     { "task": "Email notifications for overdue books", "priority": "medium", "notes": "Implement the 'Remind' (Bell icon) logic" },
@@ -18,16 +18,13 @@
     { "task": "Real-time Dashboard", "priority": "low", "notes": "Websocket integration for live borrow/return notifications" }
   ],
   "recent_changes": [
-    { "timestamp": "2026-04-23T21:00:00Z", "type": "feature", "description": "Overhauled Dashboard with Bento Grid layout and Actionable Signals", "files": ["dashboard-page.tsx", "stats-card.tsx"] },
-    { "timestamp": "2026-04-23T21:10:00Z", "type": "feature", "description": "Hardened Inventory Management UI with directional buttons and delta preview", "files": ["inventory-management-modal.tsx"] },
-    { "timestamp": "2026-04-23T21:15:00Z", "type": "fix", "description": "Resolved Revenue card visibility and production build errors", "files": ["stats-card.tsx", "dashboard-page.tsx"] }
+    { "timestamp": "2026-04-24T10:30:00Z", "type": "fix", "description": "Vite Module Resolution fix via Proxy-based Alias Strategy", "files": ["src/shared/**/*", "vite.config.ts"] },
+    { "timestamp": "2026-04-24T11:00:00Z", "type": "polish", "description": "Finalized Command Center V2 and Branded PDF Exports", "files": ["report.service.ts", "endpoints.md"] }
   ],
   "errors_encountered": [
-    { "error": "TS1005: ';' expected in StatsCard", "solution": "Corrected destructuring syntax", "resolved": true },
-    { "error": "Property 'coverUrl' does not exist on type 'TopBook'", "solution": "Updated frontend entity types", "resolved": true }
+    { "error": "Vite error: Cannot import file outside of root src", "solution": "Created proxy files in src/shared that re-export from root shared/", "resolved": true }
   ],
   "decisions_made": [
-    { "decision": "Bento Grid for Dashboard", "reason": "Better prioritization of operational signals over passive data" },
-    { "decision": "isDark prop for StatsCard", "reason": "Consistent UI accessibility for dark-themed revenue cards" }
+    { "decision": "Proxy-based Alias Strategy", "reason": "Avoids complex Vite/Rollup config while keeping a single source of truth for shared logic." }
   ]
 }

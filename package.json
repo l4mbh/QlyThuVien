@@ -1,0 +1,16 @@
+{
+  "name": "qlythuvien-monorepo",
+  "private": true,
+  "description": "Library Management System Monorepo",
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "dev:shared": "pnpm --filter @qltv/shared dev",
+    "build": "pnpm -r build",
+    "build:shared": "pnpm --filter @qltv/shared build",
+    "clean": "pnpm -r exec rm -rf node_modules dist",
+    "install:all": "pnpm install"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

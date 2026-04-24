@@ -29,6 +29,7 @@ All notable changes to this project will be documented in this file.
 - **Print Optimization**: Global `@media print` CSS for high-quality browser-based reporting.
 
 ### Fixed
+- **Vite Module Resolution**: Implemented a **Proxy-based Alias Strategy** using internal `src/shared` files to resolve cross-directory transpilation issues, ensuring standardized logic (Error Codes, Borrow Rules) is shared safely between Frontend and Backend.
 - **TypeScript Verbatim Compliance**: Fixed production build errors by converting entity imports to `import type`.
 - **JSX Entity Escaping**: Resolved build-breaking unescaped characters in UI components.
 - **Report Service Logic**: Corrected collection health aggregation to use `totalQuantity`/`availableQuantity` mapping instead of non-existent status fields.

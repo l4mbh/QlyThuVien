@@ -6,7 +6,7 @@
   "project": {
     "name": "LibMgnt",
     "type": "Library Management System Dashboard",
-    "status": "Librarian Command Center V2 + Bento Dashboard Completed"
+    "status": "Librarian Command Center V2 + Bento Dashboard + Module Proxy Strategy"
   },
   "tech_stack": {
     "frontend": {
@@ -109,7 +109,8 @@
     "Branded Reporting: All official PDF exports must include system branding (header/footer)",
     "Print Optimization: Use @media print to hide non-content UI during document printing",
     "Dead Stock: Defined as books with no borrow activity in the last 6 months",
-    "Low Stock Alert: Triggered when availableQuantity < 3"
+    "Low Stock Alert: Triggered when availableQuantity < 3",
+    "Shared Strategy: Use internal src/shared proxies to import from root shared/ directory to bypass Vite outside-src limitations"
   ],
   "features": [
     "Librarian Command Center: Actionable Bento Grid dashboard (Signals, Overdue, Inventory Alerts)",
@@ -120,7 +121,8 @@
     "Export System: CSV (PapaParse) and PDF (jsPDF) support",
     "ISBN Integration: Smart book info auto-fetch with cover preview",
     "Borrow Management: POS-style workflow with real-time validation",
-    "Auth Persistence: Synchronized localStorage initialization"
+    "Auth Persistence: Synchronized localStorage initialization",
+    "Module Proxy Strategy: Clean cross-directory logic sharing"
   ],
   "knowledge_items": {
     "patterns": [
@@ -128,7 +130,8 @@
       "Branded Export Engine: Unified helper for official document generation",
       "Print-optimized Layouts using global CSS media rules",
       "Generic DataTable + useDataTable Hook for server-side resources",
-      "Compute-on-read Overdue Pattern"
+      "Compute-on-read Overdue Pattern",
+      "Proxy-based Alias Strategy: Internal src/shared/ re-exports root shared/ to satisfy Vite"
     ],
     "gotchas": [
       "JSX Escaping: Use &gt; or {'<'} for special characters in JSX text to avoid build errors",
@@ -136,9 +139,10 @@
       "Folder Encapsulation: Ensure UI components are imported from their specific folder (e.g., @/components/ui/badge/badge)",
       "Prisma Aggregation: Use sum/count instead of groupBy for non-existent status fields",
       "Browser CSV: Use PapaParse instead of json2csv",
-      "Dark Mode Contrast: Use isDark prop for StatsCard to fix text visibility on dark backgrounds"
+      "Dark Mode Contrast: Use isDark prop for StatsCard to fix text visibility on dark backgrounds",
+      "Vite outside-src: Vite has issues transpiling TS files outside of the root src/ folder; use proxy files within src/ to bridge this."
     ],
-    "knowledge_items": [
+    "conventions": [
       "Folder Structure 100% Encapsulation",
       "Zero 'any' Policy",
       "HTTP 200 Always Success strategy",
@@ -146,4 +150,3 @@
     ]
   }
 }
-
