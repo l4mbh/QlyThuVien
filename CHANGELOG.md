@@ -21,6 +21,11 @@ All notable changes to this project will be documented in this file.
  
 ## [2026-04-24] - Librarian Command Center V2
 ### Added
+- **Notification System (Phase 2)**: Full implementation of a real-time, event-driven notification engine.
+- **Metadata-Driven Architecture**: Refactored notifications to use structured JSON metadata instead of hardcoded strings, allowing for dynamic frontend rendering and future deep-linking.
+- **Prisma Schema Update**: Enhanced `Notification` model with a `metadata` (JSONB) field and made `message` optional for flexible event payloads.
+- **NotificationBell Component**: Premium dropdown UI featuring dynamic message rendering, type-aware icons, unread counting, and optimized 5s polling.
+- **Automated Overdue Alerts**: Daily Node-cron job (08:00 AM) that scans for overdue books and sends targeted notifications to readers.
 - **Workflow-Driven Dashboard**: Replaced static reports with a "Command Center" featuring tabs for Daily Operations, Overdue Actions, and Finance.
 - **Branded PDF Export Engine**: Professional, official-branded PDF generation for Daily Logs, Collection Health, and Monthly reports with headers/footers.
 - **Actionable Overdue Management**: Real-time overdue list with automated fine estimation and integrated reader contact (Phone).

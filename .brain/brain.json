@@ -6,7 +6,7 @@
   "project": {
     "name": "LibMgnt",
     "type": "Library Management System Dashboard",
-    "status": "Librarian Command Center V2 + Bento Dashboard + Module Proxy Strategy"
+    "status": "Librarian Command Center V2 + Event-Driven Notification System + Bento Dashboard"
   },
   "tech_stack": {
     "frontend": {
@@ -16,7 +16,7 @@
       "ui_components": "shadcn/ui (radix-ui, lucide-react)",
       "routing": "React Router DOM",
       "api_client": "Axios",
-      "notifications": "Sonner (Toast)",
+      "notifications": "Sonner (Toast) + Notification Bell (Dropdown)",
       "table_library": "@tanstack/react-table v8",
       "csv_library": "PapaParse",
       "chart_library": "Recharts",
@@ -28,6 +28,7 @@
       "database": "PostgreSQL",
       "authentication": "JWT (jsonwebtoken)",
       "validation": "Zod",
+      "scheduler": "node-cron",
       "external_apis": [
         "Google Books API",
         "OpenLibrary API"
@@ -35,118 +36,62 @@
     }
   },
   "database_schema": {
-    "summary": "Database quan hệ PostgreSQL quản lý: Người dùng, Danh mục, Sách, Phiếu mượn và Phí phạt trễ hạn (fineAmount).",
+    "summary": "Database quan hệ PostgreSQL quản lý: Người dùng, Danh mục, Sách, Phiếu mượn và Phí phạt. Hỗ trợ thông báo JSON-metadata.",
     "tables": [
       "users",
       "categories",
       "books",
       "borrow_records",
-      "borrow_items"
+      "borrow_items",
+      "notifications",
+      "audit_logs"
     ],
-    "relationships_explained": "1 Category có nhiều Book. 1 User có nhiều BorrowRecord. 1 BorrowRecord có nhiều BorrowItem. Quá hạn được tính động dựa trên dueDate."
+    "relationships_explained": "1 User có nhiều Notification. Notification lưu metadata (JSON) để render thông tin linh hoạt trên FE."
   },
   "api_endpoints": [
+    {
+      "path": "/notifications",
+      "explained": "GET: fetch notifications for current user. POST: send notification (internal/admin). PATCH: mark as read."
+    },
     {
       "path": "/auth/login",
       "explained": "Login: receives email/password, returns user info + JWT token"
     },
     {
-      "path": "/auth/register",
-      "explained": "Register: creates new user, returns user info + JWT token"
-    },
-    {
-      "path": "/auth/me",
-      "explained": "Get current profile info via JWT token"
-    },
-    {
-      "path": "/reports/monthly",
-      "explained": "Get summary metrics for a specific month (borrows, returns, overdues, fines)"
-    },
-    {
-      "path": "/reports/low-stock",
-      "explained": "List books with quantity below threshold (Command Center V2)"
-    },
-    {
-      "path": "/reports/inventory",
-      "explained": "Get current repository snapshot"
-    },
-    {
-      "path": "/reports/daily-operations",
-      "explained": "Get all borrow/return activities for today (Command Center V2)"
-    },
-    {
-      "path": "/reports/actionable-overdue",
-      "explained": "List overdue items with fine estimation and reader contact info"
-    },
-    {
-      "path": "/reports/collection-health",
-      "explained": "Audit inventory: state breakdown, dead stock, and best sellers"
-    },
-    {
-      "path": "/reports/financial-ledger",
-      "explained": "Daily reconciliation of collected fines"
-    },
-    {
-      "path": "/users/:id",
-      "explained": "Get reader detail with computed stats"
-    },
-    {
-      "path": "/books",
-      "explained": "List books with server-side pagination/filtering"
-    },
-    {
       "path": "/borrow/return",
-      "explained": "Process book returns, calculate fines (5,000 VND/day) atomically"
+      "explained": "Process book returns, calculate fines, and trigger RETURN_SUCCESS notifications."
     }
   ],
   "business_rules": [
+    "Metadata-driven Notifications: Favor structured events over hardcoded strings for better scalability",
+    "Overdue Checker: Automated daily scanning at 08:00 AM via cron jobs",
+    "Notification Polling: UI polls every 60s (temporarily 5s for dev) to keep states synced",
     "Strict DRY principle, no logic duplication",
-    "Shared UI components must reside in src/components/ui",
-    "Auto-logout on 401 Unauthorized",
     "Compute-on-read Overdue Pattern for real-time accurate state",
-    "Fine Calculation: fine = overdueDays * 5,000 VND, persisted upon return",
-    "Workflow-Driven Dashboards: Favor actionable operational views over passive data",
-    "Branded Reporting: All official PDF exports must include system branding (header/footer)",
-    "Print Optimization: Use @media print to hide non-content UI during document printing",
-    "Dead Stock: Defined as books with no borrow activity in the last 6 months",
-    "Low Stock Alert: Triggered when availableQuantity < 3",
-    "Shared Strategy: Use internal src/shared proxies to import from root shared/ directory to bypass Vite outside-src limitations"
+    "Fine Calculation: fine = overdueDays * 5,000 VND, persisted upon return"
   ],
   "features": [
-    "Librarian Command Center: Actionable Bento Grid dashboard (Signals, Overdue, Inventory Alerts)",
-    "Official Reporting: Branded PDF generation and print-optimized views",
+    "Event-Driven Notification System: Real-time bell alerts with metadata-driven dynamic rendering",
+    "Automated Overdue Engine: Daily reminders for borrowing violations",
+    "Librarian Command Center: Actionable Bento Grid dashboard",
+    "Official Reporting: Branded PDF generation",
     "Inventory Audit: Dead stock detection and best-seller tracking",
-    "Financial Reconciliation: Real-time ledger for daily fine collection",
-    "Admin Reporting System: Monthly, Inventory, and Reader snapshots",
-    "Export System: CSV (PapaParse) and PDF (jsPDF) support",
-    "ISBN Integration: Smart book info auto-fetch with cover preview",
-    "Borrow Management: POS-style workflow with real-time validation",
-    "Auth Persistence: Synchronized localStorage initialization",
-    "Module Proxy Strategy: Clean cross-directory logic sharing"
+    "Borrow Management: POS-style workflow with real-time validation"
   ],
   "knowledge_items": {
     "patterns": [
-      "Command Center Pattern: Actionable-first UI design (Bento Grid)",
-      "Branded Export Engine: Unified helper for official document generation",
-      "Print-optimized Layouts using global CSS media rules",
-      "Generic DataTable + useDataTable Hook for server-side resources",
-      "Compute-on-read Overdue Pattern",
+      "Metadata-driven UI Pattern: Backend sends data, Frontend renders message (Event-driven)",
+      "Command Center Pattern: Actionable-first UI design",
       "Proxy-based Alias Strategy: Internal src/shared/ re-exports root shared/ to satisfy Vite"
     ],
     "gotchas": [
-      "JSX Escaping: Use &gt; or {'<'} for special characters in JSX text to avoid build errors",
-      "TypeScript Verbatim: Use 'import type' for entities to comply with verbatimModuleSyntax",
-      "Folder Encapsulation: Ensure UI components are imported from their specific folder (e.g., @/components/ui/badge/badge)",
-      "Prisma Aggregation: Use sum/count instead of groupBy for non-existent status fields",
-      "Browser CSV: Use PapaParse instead of json2csv",
-      "Dark Mode Contrast: Use isDark prop for StatsCard to fix text visibility on dark backgrounds",
-      "Vite outside-src: Vite has issues transpiling TS files outside of the root src/ folder; use proxy files within src/ to bridge this."
+      "Prisma JSON fields: Use explicit casting 'as any' in repositories to satisfy TypeScript when assigning JSON objects",
+      "Vite Module Resolution: Use proxy files within src/ to bridge shared code outside src/",
+      "TSC string | null: Ensure Prisma optional fields (String?) are handled with ?? null in repositories"
     ],
     "conventions": [
-      "Folder Structure 100% Encapsulation",
-      "Zero 'any' Policy",
-      "HTTP 200 Always Success strategy",
-      "English Localization for all UI and code comments"
+      "English Localization for all UI and code comments",
+      "JSONB for flexible metadata in Notification and Audit models"
     ]
   }
 }

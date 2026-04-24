@@ -1,30 +1,31 @@
 {
-  "updated_at": "2026-04-24T11:15:00Z",
+  "updated_at": "2026-04-24T13:23:00Z",
   "working_on": {
-    "feature": "Shared Logic Standardization",
-    "task": "Implementing Proxy-based Alias Strategy",
-    "status": "stable",
+    "feature": "Notification System",
+    "task": "Refactor to Metadata-driven architecture",
+    "status": "completed",
     "files": [
-      "frontend/src/shared/constants/error-codes.ts",
-      "frontend/src/shared/rules/borrow.rules.ts",
-      "frontend/vite.config.ts"
+      "apps/api/src/services/notification/notification.service.ts",
+      "apps/web/src/components/ui/notification-bell/notification-bell.tsx",
+      "apps/api/prisma/schema.prisma"
     ],
     "blockers": [],
-    "notes": "Vite now correctly resolves and transpiles shared constants and rules via internal proxies. This fixed the build error related to importing from outside the src directory."
+    "notes": "System is now event-driven. UI is English. Polling is 5s for testing."
   },
   "pending_tasks": [
-    { "task": "Email notifications for overdue books", "priority": "medium", "notes": "Implement the 'Remind' (Bell icon) logic" },
-    { "task": "Fine Payment Integration", "priority": "low", "notes": "Connect with payment gateways (MoMo/VNPAY) if needed" },
-    { "task": "Real-time Dashboard", "priority": "low", "notes": "Websocket integration for live borrow/return notifications" }
+    { "task": "Add deep-linking to Notification items", "priority": "medium", "notes": "Click to open borrow/book details" },
+    { "task": "Implement Audit Log to Notification linkage", "priority": "high", "notes": "Phase 3 goal" },
+    { "task": "Set polling interval back to 60s for production", "priority": "low" }
   ],
   "recent_changes": [
-    { "timestamp": "2026-04-24T10:30:00Z", "type": "fix", "description": "Vite Module Resolution fix via Proxy-based Alias Strategy", "files": ["src/shared/**/*", "vite.config.ts"] },
-    { "timestamp": "2026-04-24T11:00:00Z", "type": "polish", "description": "Finalized Command Center V2 and Branded PDF Exports", "files": ["report.service.ts", "endpoints.md"] }
+    { "timestamp": "2026-04-24T13:15:00Z", "type": "refactor", "description": "Switched to Metadata-based notifications", "files": ["apps/api/src/services/notification/notification.service.ts"] },
+    { "timestamp": "2026-04-24T06:13:00Z", "type": "database", "description": "Added metadata field to Notification model", "files": ["apps/api/prisma/schema.prisma"] }
   ],
   "errors_encountered": [
-    { "error": "Vite error: Cannot import file outside of root src", "solution": "Created proxy files in src/shared that re-export from root shared/", "resolved": true }
+    { "error": "TSC Build failure (string | undefined)", "solution": "Added explicit type casting and null coalescing in repository", "resolved": true }
   ],
   "decisions_made": [
-    { "decision": "Proxy-based Alias Strategy", "reason": "Avoids complex Vite/Rollup config while keeping a single source of truth for shared logic." }
+    { "decision": "Metadata-driven instead of hardcoded messages", "reason": "Better scalability and UI flexibility" },
+    { "decision": "5s polling for testing", "reason": "Immediate feedback during development" }
   ]
 }
