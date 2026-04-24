@@ -1,31 +1,49 @@
 {
-  "updated_at": "2026-04-24T13:23:00Z",
+  "updated_at": "2026-04-24T14:24:00+07:00",
   "working_on": {
-    "feature": "Notification System",
-    "task": "Refactor to Metadata-driven architecture",
+    "feature": "System Settings & Maintenance Mode",
+    "task": "Dynamic Settings integration + Maintenance Mode UI/UX",
     "status": "completed",
     "files": [
-      "apps/api/src/services/notification/notification.service.ts",
-      "apps/web/src/components/ui/notification-bell/notification-bell.tsx",
-      "apps/api/prisma/schema.prisma"
+      "apps/api/src/services/settings/setting.service.ts",
+      "apps/api/src/controllers/settings/setting.controller.ts",
+      "apps/api/src/repositories/settings/setting.repository.ts",
+      "apps/api/src/middlewares/system/maintenance.middleware.ts",
+      "apps/api/src/routes/system/system.routes.ts",
+      "apps/api/src/modules/auth/auth.service.ts",
+      "apps/api/src/jobs/overdue-checker.job.ts",
+      "apps/web/src/features/settings/setting.service.ts",
+      "apps/web/src/features/auth/LoginPage/LoginPage.tsx",
+      "apps/web/src/pages/Maintenance.tsx",
+      "apps/web/src/services/api.ts",
+      "packages/shared/src/constants/settings.ts",
+      "packages/shared/src/constants/error-codes.ts"
     ],
     "blockers": [],
-    "notes": "System is now event-driven. UI is English. Polling is 5s for testing."
+    "notes": "All business rules now dynamic via System Settings. Maintenance mode fully integrated with Always 200 strategy."
   },
   "pending_tasks": [
+    { "task": "Implement notifyDueSoon method in notificationService", "priority": "medium", "notes": "overdue-checker.job already queries due-soon items but does not send notifications yet" },
+    { "task": "Set notification polling interval back to 60s for production", "priority": "low", "notes": "Currently 5s for development testing" },
     { "task": "Add deep-linking to Notification items", "priority": "medium", "notes": "Click to open borrow/book details" },
-    { "task": "Implement Audit Log to Notification linkage", "priority": "high", "notes": "Phase 3 goal" },
-    { "task": "Set polling interval back to 60s for production", "priority": "low" }
+    { "task": "Clean up duplicate setting.service.ts files", "priority": "low", "notes": "Exists at both src/services/ and src/features/settings/" }
   ],
   "recent_changes": [
-    { "timestamp": "2026-04-24T13:15:00Z", "type": "refactor", "description": "Switched to Metadata-based notifications", "files": ["apps/api/src/services/notification/notification.service.ts"] },
-    { "timestamp": "2026-04-24T06:13:00Z", "type": "database", "description": "Added metadata field to Notification model", "files": ["apps/api/prisma/schema.prisma"] }
+    { "timestamp": "2026-04-24T14:12:00+07:00", "type": "feature", "description": "Maintenance Mode: middleware + AuthService check + /maintenance page + Login warning banner + /system/status public endpoint", "files": ["apps/api/src/middlewares/system/maintenance.middleware.ts", "apps/web/src/pages/Maintenance.tsx", "apps/web/src/features/auth/LoginPage/LoginPage.tsx"] },
+    { "timestamp": "2026-04-24T14:05:00+07:00", "type": "feature", "description": "Dynamic Settings: BorrowModal fetches BORROW_DURATION_DAYS, overdue-checker uses OVERDUE_CHECK_TIME + DUE_SOON_DAYS", "files": ["apps/web/src/features/borrow/components/borrow-modal/borrow-modal.tsx", "apps/api/src/jobs/overdue-checker.job.ts"] },
+    { "timestamp": "2026-04-24T13:50:00+07:00", "type": "feature", "description": "System Settings module: CRUD API, Zod validation, Audit logging, Notification routing, Frontend service", "files": ["apps/api/src/services/settings/setting.service.ts", "apps/api/src/controllers/settings/setting.controller.ts"] },
+    { "timestamp": "2026-04-24T13:30:00+07:00", "type": "fix", "description": "Fixed Prisma repository initialization, JWT payload userId mismatch, tsconfig rootDir for monorepo", "files": ["apps/api/src/repositories/settings/setting.repository.ts", "apps/api/tsconfig.json"] }
   ],
   "errors_encountered": [
-    { "error": "TSC Build failure (string | undefined)", "solution": "Added explicit type casting and null coalescing in repository", "resolved": true }
+    { "error": "Vite ESM: ApiResponse interface not exported from @qltv/shared dist", "solution": "Use local type from @/types/response.type instead of importing interface from shared package", "resolved": true },
+    { "error": "Admin redirected to /maintenance when logging in", "solution": "Middleware must exempt /auth/login, then AuthService checks role after password validation", "resolved": true },
+    { "error": "BorrowItemStatus import from @qltv/shared fails", "solution": "BorrowItemStatus is a Prisma enum - import from @prisma/client, not from shared", "resolved": true },
+    { "error": "settingService import path @/lib/axios not found", "solution": "Project uses @/services/api with named export 'api', not @/lib/axios", "resolved": true }
   ],
   "decisions_made": [
-    { "decision": "Metadata-driven instead of hardcoded messages", "reason": "Better scalability and UI flexibility" },
-    { "decision": "5s polling for testing", "reason": "Immediate feedback during development" }
+    { "decision": "Always 200 for Maintenance Mode", "reason": "Consistent with project-wide HTTP response strategy. Return { code: MAINTENANCE_MODE } in body, not HTTP 503" },
+    { "decision": "Public /system/status endpoint", "reason": "Login page needs to check maintenance status without auth token to show warning banner" },
+    { "decision": "Maintenance check in both Middleware AND AuthService", "reason": "Middleware blocks authenticated non-admin requests. AuthService blocks non-admin login attempts (no token at login time)" },
+    { "decision": "Local ApiResponse type for FE services", "reason": "Vite ESM strips TypeScript interfaces from compiled shared package dist, causing runtime crash" }
   ]
 }
