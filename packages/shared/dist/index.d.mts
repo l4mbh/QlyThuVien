@@ -29,6 +29,10 @@ declare const ErrorCode: {
     readonly CATEGORY_NOT_FOUND: "CATEGORY_NOT_FOUND";
     readonly CATEGORY_ALREADY_EXISTS: "CATEGORY_ALREADY_EXISTS";
     readonly CATEGORY_HAS_BOOKS: "CATEGORY_HAS_BOOKS";
+    readonly RESERVATION_NOT_FOUND: "RESERVATION_NOT_FOUND";
+    readonly ALREADY_RESERVED: "ALREADY_RESERVED";
+    readonly INVALID_RESERVATION_STATUS: "INVALID_RESERVATION_STATUS";
+    readonly RESERVATION_LIMIT_EXCEEDED: "RESERVATION_LIMIT_EXCEEDED";
 };
 type ErrorCodeType = keyof typeof ErrorCode;
 
@@ -65,6 +69,11 @@ declare const QUERY_KEYS: {
         readonly ALL: "notifications";
         readonly LIST: "notifications_list";
     };
+    readonly RESERVATIONS: {
+        readonly ALL: "reservations";
+        readonly LIST: "reservations_list";
+        readonly MY: readonly ["reservations_my"];
+    };
 };
 
 /**
@@ -85,7 +94,11 @@ declare enum AuditAction {
     USER_UPDATED = "USER_UPDATED",
     USER_BLOCKED = "USER_BLOCKED",
     SYSTEM_CONFIG_UPDATED = "SYSTEM_CONFIG_UPDATED",
-    NOTIFICATION_CONFIG_UPDATED = "NOTIFICATION_CONFIG_UPDATED"
+    NOTIFICATION_CONFIG_UPDATED = "NOTIFICATION_CONFIG_UPDATED",
+    RESERVATION_CREATED = "RESERVATION_CREATED",
+    RESERVATION_CANCELLED = "RESERVATION_CANCELLED",
+    RESERVATION_PROMOTED = "RESERVATION_PROMOTED",
+    RESERVATION_COMPLETED = "RESERVATION_COMPLETED"
 }
 /**
  * Entity types that can be audited
@@ -95,7 +108,8 @@ declare enum AuditEntityType {
     USER = "USER",
     BORROW = "BORROW",
     CATEGORY = "CATEGORY",
-    SYSTEM = "SYSTEM"
+    SYSTEM = "SYSTEM",
+    RESERVATION = "RESERVATION"
 }
 
 /**
@@ -106,7 +120,9 @@ declare enum NotificationType {
     BORROW_SUCCESS = "BORROW_SUCCESS",
     RETURN_SUCCESS = "RETURN_SUCCESS",
     SYSTEM = "SYSTEM",
-    FINE_ASSIGNED = "FINE_ASSIGNED"
+    FINE_ASSIGNED = "FINE_ASSIGNED",
+    RESERVATION_READY = "RESERVATION_READY",
+    QUEUE_UPDATE = "QUEUE_UPDATE"
 }
 
 /**
@@ -135,6 +151,60 @@ declare const SETTING_CATEGORIES: {
     FINE: SettingKey[];
     NOTIFICATION: SettingKey[];
     SYSTEM: SettingKey[];
+};
+
+/**
+ * Centralized messages for the entire system.
+ * Values matched with apps/web/src/constants/errors/error-map.ts for consistency.
+ */
+declare const ErrorMessage: {
+    readonly SUCCESS: "Operation successful";
+    readonly INTERNAL_SERVER_ERROR: "System error, please try again later";
+    readonly VALIDATION_ERROR: "Invalid data provided";
+    readonly UNAUTHORIZED: "Please login to continue";
+    readonly FORBIDDEN: "You do not have permission to perform this action";
+    readonly NOT_FOUND: "Requested data not found";
+    readonly MAINTENANCE_MODE: "System is under maintenance. Please come back later.";
+    readonly INVALID_CREDENTIALS: "Incorrect email or password";
+    readonly TOKEN_EXPIRED: "Session expired, please login again";
+    readonly TOKEN_INVALID: "Invalid session token";
+    readonly USER_NOT_FOUND: "User not found";
+    readonly USER_ALREADY_EXISTS: "Email is already registered";
+    readonly USER_BLOCKED: "Your account has been blocked";
+    readonly BOOK_NOT_FOUND: "Book not found";
+    readonly BOOK_ALREADY_EXISTS: "This ISBN already exists in the system";
+    readonly OUT_OF_STOCK: "No copies available for borrowing";
+    readonly BORROW_LIMIT_EXCEEDED: "You have exceeded the borrowing limit";
+    readonly HAS_OVERDUE_BOOKS: "You have overdue books, please return them before borrowing new ones";
+    readonly BORROW_RECORD_NOT_FOUND: "Borrow record not found";
+    readonly INVALID_BORROW_OPERATION: "Invalid borrow operation";
+    readonly CATEGORY_NOT_FOUND: "Category not found";
+    readonly CATEGORY_ALREADY_EXISTS: "Category name already exists";
+    readonly CATEGORY_HAS_BOOKS: "Cannot delete category containing books";
+    readonly RESERVATION_NOT_FOUND: "Reservation record not found";
+    readonly ALREADY_RESERVED: "You already have an active reservation for this book";
+    readonly INVALID_RESERVATION_STATUS: "Invalid reservation status for this operation";
+    readonly RESERVATION_LIMIT_EXCEEDED: "You have reached your maximum reservation limit";
+    readonly ISBN_REQUIRED: "ISBN is required";
+    readonly PHONE_REQUIRED: "Phone number is required";
+    readonly INVALID_ID_LIST: "Invalid or empty IDs list provided";
+    readonly INSUFFICIENT_QUANTITY: "Insufficient available quantity";
+    readonly QUANTITY_LIMIT_VIOLATION: "Total quantity cannot be less than current borrowed count";
+    readonly API_REQUEST_FAILED: "External API request failed";
+    readonly NOT_FOUND_ON_SOURCE: "Resource not found on external source";
+};
+declare const NotificationMessage: {
+    readonly BORROW_SUCCESS_TITLE: "Borrowing Successful";
+    readonly RETURN_SUCCESS_TITLE: "Book Returned";
+    readonly OVERDUE_TITLE: "Book Overdue Alert!";
+    readonly RESERVATION_READY_TITLE: "Your reserved book is ready!";
+    readonly QUEUE_UPDATE_TITLE: "Queue Status Update";
+    readonly SYSTEM_TITLE: "System Notification";
+    readonly BORROW_SUCCESS_BODY: (bookTitle: string, dueDate: string) => string;
+    readonly RETURN_SUCCESS_BODY: (bookTitle: string) => string;
+    readonly OVERDUE_BODY: (bookTitle: string, dueDate: string) => string;
+    readonly RESERVATION_READY_BODY: (bookTitle: string, date: string) => string;
+    readonly QUEUE_UPDATE_BODY: (bookTitle: string, pos: number) => string;
 };
 
 /**
@@ -286,9 +356,25 @@ interface CreateBorrowDTO {
     phone?: string;
     bookIds: string[];
     dueDate: string | Date;
+    reservationId?: string;
 }
 interface ReturnBookDTO {
     borrowItemIds: string[];
+}
+
+interface CreateReservationDTO {
+    userId?: string;
+    phone?: string;
+    bookId: string;
+}
+interface ReservationEntity {
+    id: string;
+    userId: string;
+    bookId: string;
+    status: string;
+    createdAt: Date;
+    updatedAt: Date;
+    expiresAt?: Date | null;
 }
 
 interface BookEntity {
@@ -391,6 +477,16 @@ declare const createNotificationApi: (api: AxiosInstance) => {
     markAsRead: (id: string) => Promise<any>;
     markAllAsRead: () => Promise<any>;
 };
+declare const createReservationApi: (api: AxiosInstance) => {
+    list: (params?: any) => Promise<any>;
+    getMy: () => Promise<any>;
+    create: (data: {
+        bookId: string;
+        phone?: string;
+        userId?: string;
+    }) => Promise<any>;
+    cancel: (id: string) => Promise<any>;
+};
 
 /**
  * Normalize phone number to international format (+84...)
@@ -402,4 +498,4 @@ declare const createNotificationApi: (api: AxiosInstance) => {
  */
 declare const normalizePhone: (phone: string) => string;
 
-export { type ApiClientConfig, type ApiResponse, AuditAction, AuditEntityType, type AuditLog, type BookEntity, type BorrowContext, type BorrowEntity, type CategoryEntity, type CreateAuditLogDto, type CreateBorrowDTO, type CreateNotificationDto, DEFAULT_SETTINGS, ErrorCode, type ErrorCodeType, type Notification, type NotificationEntity, NotificationType, type PaginatedData, type PaginationMeta, QUERY_KEYS, type ReturnBookDTO, type Rule, type RuleResult, SETTING_CATEGORIES, SettingKey, SettingValidationMap, type UpdateSettingDto, UpdateSettingSchema, type UserEntity, UserRole, UserStatus, booksAvailable, borrowRuleSet, createBookApi, createBorrowApi, createCategoryApi, createNotificationApi, createSharedApiClient, isUserActive, noOverdue, normalizePhone, runRules, withinLimit };
+export { type ApiClientConfig, type ApiResponse, AuditAction, AuditEntityType, type AuditLog, type BookEntity, type BorrowContext, type BorrowEntity, type CategoryEntity, type CreateAuditLogDto, type CreateBorrowDTO, type CreateNotificationDto, type CreateReservationDTO, DEFAULT_SETTINGS, ErrorCode, type ErrorCodeType, ErrorMessage, type Notification, type NotificationEntity, NotificationMessage, NotificationType, type PaginatedData, type PaginationMeta, QUERY_KEYS, type ReservationEntity, type ReturnBookDTO, type Rule, type RuleResult, SETTING_CATEGORIES, SettingKey, SettingValidationMap, type UpdateSettingDto, UpdateSettingSchema, type UserEntity, UserRole, UserStatus, booksAvailable, borrowRuleSet, createBookApi, createBorrowApi, createCategoryApi, createNotificationApi, createReservationApi, createSharedApiClient, isUserActive, noOverdue, normalizePhone, runRules, withinLimit };

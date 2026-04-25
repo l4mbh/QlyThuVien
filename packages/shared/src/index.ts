@@ -3,6 +3,7 @@ export * from './constants/queryKeys';
 export * from './constants/audit';
 export * from './constants/notification';
 export * from './constants/settings';
+export * from './constants/messages';
 
 export * from './schemas/settings/setting.schema';
 
@@ -15,6 +16,7 @@ export * from './types/notification';
 export * from './types/rules';
 export * from './types/user';
 export * from './types/borrow';
+export * from './types/reservation';
 
 // Explicitly export entities to ensure visibility in all builds
 export type { 

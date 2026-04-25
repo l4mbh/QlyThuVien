@@ -7,6 +7,7 @@ import { Readers } from "@/pages/Readers";
 import { Borrow } from "@/pages/Borrow";
 import { Reports } from "@/pages/Reports";
 import { Settings } from "@/pages/Settings";
+import { Reservations } from "@/pages/Reservations";
 import { LoginPage } from "@/features/auth/LoginPage/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage/RegisterPage";
 import { ProtectedRoute } from "@/components/ui/protected-route/protected-route";
@@ -78,6 +79,14 @@ const router = createBrowserRouter([
         handle: { 
           crumb: "Borrow Records",
           description: "Track book loans, returns, and manage due dates."
+        },
+      },
+      {
+        path: "reservations",
+        element: <Reservations />,
+        handle: { 
+          crumb: "Smart Queue",
+          description: "Monitor and manage book reservations and queue priorities."
         },
       },
       {

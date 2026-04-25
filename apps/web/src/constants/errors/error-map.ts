@@ -12,6 +12,7 @@ export const ErrorMessages: Record<string, string> = {
   [ErrorCode.UNAUTHORIZED]: "Please login to continue",
   [ErrorCode.FORBIDDEN]: "You do not have permission to perform this action",
   [ErrorCode.NOT_FOUND]: "Requested data not found",
+  [ErrorCode.MAINTENANCE_MODE]: "System is under maintenance. Please come back later.",
 
   // Auth
   [ErrorCode.INVALID_CREDENTIALS]: "Incorrect email or password",
@@ -38,6 +39,12 @@ export const ErrorMessages: Record<string, string> = {
   [ErrorCode.CATEGORY_NOT_FOUND]: "Category not found",
   [ErrorCode.CATEGORY_ALREADY_EXISTS]: "Category name already exists",
   [ErrorCode.CATEGORY_HAS_BOOKS]: "Cannot delete category containing books",
+
+  // Reservation
+  [ErrorCode.RESERVATION_NOT_FOUND]: "Reservation record not found",
+  [ErrorCode.ALREADY_RESERVED]: "You already have an active reservation for this book",
+  [ErrorCode.INVALID_RESERVATION_STATUS]: "Invalid reservation status for this operation",
+  [ErrorCode.RESERVATION_LIMIT_EXCEEDED]: "You have reached your maximum reservation limit",
 };
 
 /**

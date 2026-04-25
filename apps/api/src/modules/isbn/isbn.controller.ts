@@ -1,26 +1,22 @@
 import { Request, Response, NextFunction } from "express";
-import { IsbnService } from "./isbn.service";
+import { isbnService } from "./isbn.service";
 import { mapCategory } from "../../utils/mapCategory";
 import { generateCallNumber } from "../../utils/generateCallNumber";
-import { ErrorCode } from "@qltv/shared";
+import { ErrorCode, ErrorMessage } from "@qltv/shared";
 import { AppError } from "../../utils/app-error";
 
 
 export class IsbnController {
-  private isbnService: IsbnService;
-
-  constructor() {
-    this.isbnService = new IsbnService();
-  }
+  constructor() {}
 
   fetchBookByIsbn = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { isbn } = req.body;
       if (!isbn) {
-        throw new AppError(ErrorCode.VALIDATION_ERROR, "ISBN is required");
+        throw new AppError(ErrorCode.VALIDATION_ERROR, ErrorMessage.ISBN_REQUIRED);
       }
 
-      const bookInfo = await this.isbnService.fetchBookByIsbn(isbn);
+      const bookInfo = await isbnService.fetchBookByIsbn(isbn);
       
       // Auto-suggest category
       const suggestedCategory = mapCategory(bookInfo.category);

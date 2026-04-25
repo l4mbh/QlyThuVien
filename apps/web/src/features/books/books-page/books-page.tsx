@@ -204,6 +204,7 @@ export const BooksPage: React.FC = () => {
         onClose={() => setIsFormOpen(false)}
         onSuccess={() => {
           setIsFormOpen(false);
+          queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BOOKS.LIST] });
         }}
         selectedBook={selectedBook}
         categories={categories}
@@ -215,6 +216,7 @@ export const BooksPage: React.FC = () => {
         book={inventoryBook}
         onSuccess={() => {
           setIsInventoryModalOpen(false);
+          queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BOOKS.LIST] });
         }}
       />
 
@@ -239,7 +241,7 @@ export const BooksPage: React.FC = () => {
               toast.success(`Successfully deleted ${selectedIds.length} books`);
               setIsBulkDeleteModalOpen(false);
               setSelectedIds([]);
-              queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BOOKS.ALL] });
+              queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BOOKS.LIST] });
             }
           } catch (error: any) {
             toast.error(error.message || "Failed to delete books");

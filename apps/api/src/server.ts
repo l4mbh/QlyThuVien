@@ -1,6 +1,7 @@
 import app from "./app";
 import { ENV } from "./config/env/env";
 import { initOverdueJob } from "./jobs/overdue-checker.job";
+import { initReservationCleanupJob } from "./jobs/reservation-cleanup.job";
 import { settingService } from "./services/settings/setting.service";
 
 const startServer = async () => {
@@ -15,6 +16,7 @@ const startServer = async () => {
 
       // Initialize background jobs
       initOverdueJob();
+      initReservationCleanupJob();
     });
   } catch (error) {
     console.error("[Server]: Failed to start server:", error);

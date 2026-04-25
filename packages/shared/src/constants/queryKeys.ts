@@ -31,4 +31,9 @@ export const QUERY_KEYS = {
     ALL: 'notifications',
     LIST: 'notifications_list',
   },
+  RESERVATIONS: {
+    ALL: 'reservations',
+    LIST: 'reservations_list',
+    MY: ['reservations_my'],
+  },
 } as const;

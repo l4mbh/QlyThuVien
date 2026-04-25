@@ -1,23 +1,22 @@
 import prisma from "../../config/db/db";
 import { BorrowRepository } from "../../repositories/borrow/borrow.repository";
 import { CreateBorrowDTO, ReturnBookDTO } from "../../types/borrow/borrow.entity";
-import { ErrorCode, AuditAction, AuditEntityType, NotificationType, SettingKey } from "@qltv/shared";
-import { BorrowItemStatus, UserStatus, Prisma } from "@prisma/client";
+import { ErrorCode, AuditAction, AuditEntityType, NotificationType, SettingKey, ErrorMessage } from "@qltv/shared";
+import { BorrowItemStatus, UserStatus, Prisma, ReservationStatus } from "@prisma/client";
 import { AppError } from "../../utils/app-error";
 import { runRules } from "@qltv/shared";
 import { borrowRuleSet } from "@qltv/shared";
 import { auditService } from "../audit/audit.service";
 import { notificationService } from "../notification/notification.service";
 import { settingService } from "../settings/setting.service";
-import { UserService } from "../user/user.service";
+import { userService } from "../user/user.service";
+import { reservationService } from "../reservation/reservation.service";
 
 export class BorrowService {
   private borrowRepository: BorrowRepository;
-  private userService: UserService;
 
   constructor() {
     this.borrowRepository = new BorrowRepository();
-    this.userService = new UserService();
   }
 
   async getAllBorrows() {
@@ -31,7 +30,7 @@ export class BorrowService {
   async getBorrowById(id: string) {
     const record = await this.borrowRepository.findRecordById(id);
     if (!record) {
-      throw new AppError(ErrorCode.BORROW_RECORD_NOT_FOUND, "Borrow record not found");
+      throw new AppError(ErrorCode.BORROW_RECORD_NOT_FOUND, ErrorMessage.BORROW_RECORD_NOT_FOUND);
     }
     return record;
   }
@@ -41,19 +40,19 @@ export class BorrowService {
 
     // 0. Pre-resolve user if phone provided but no userId
     if (!userId && phone) {
-      const user = await this.userService.findOrCreateReader(phone);
+      const user = await userService.findOrCreateReader(phone);
       userId = user.id;
     }
 
     if (!userId) {
-      throw new AppError(ErrorCode.USER_NOT_FOUND, "User identification (ID or Phone) is required");
+      throw new AppError(ErrorCode.USER_NOT_FOUND, ErrorMessage.USER_NOT_FOUND);
     }
 
     return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // 1. Fetch required data for rules
       const user = await tx.user.findUnique({ where: { id: userId } });
       if (!user) {
-        throw new AppError(ErrorCode.USER_NOT_FOUND, "User not found");
+        throw new AppError(ErrorCode.USER_NOT_FOUND, ErrorMessage.USER_NOT_FOUND);
       }
 
       const books = await tx.book.findMany({
@@ -64,7 +63,7 @@ export class BorrowService {
       });
 
       if (books.length !== bookIds.length) {
-        throw new AppError(ErrorCode.BOOK_NOT_FOUND, "One or more books not found");
+        throw new AppError(ErrorCode.BOOK_NOT_FOUND, ErrorMessage.BOOK_NOT_FOUND);
       }
 
       // 2. Fetch Global Borrow Limit from Settings
@@ -121,13 +120,30 @@ export class BorrowService {
 
       // 5. Update Book availableQuantity (-1)
       await Promise.all(
-        bookIds.map((bookId) =>
-          tx.book.update({
-            where: { id: bookId },
-            data: { availableQuantity: { decrement: 1 } },
-          })
-        )
+        bookIds.map(async (bookId) => {
+          // If this book is part of the reservationId provided, we skip decrement 
+          // because it was already soft-allocated when the reservation became READY.
+          let isFromReservation = false;
+          if (data.reservationId) {
+            const res = await tx.reservation.findUnique({ where: { id: data.reservationId } });
+            if (res && res.bookId === bookId && res.status === ReservationStatus.READY) {
+              isFromReservation = true;
+            }
+          }
+
+          if (!isFromReservation) {
+            return tx.book.update({
+              where: { id: bookId },
+              data: { availableQuantity: { decrement: 1 } },
+            });
+          }
+        })
       );
+
+      // 5.5 Mark reservation as completed if provided
+      if (data.reservationId) {
+        await reservationService.markAsCompleted(data.reservationId, tx);
+      }
 
       // 6. Update User currentBorrowCount (+ bookIds.length)
       await tx.user.update({
@@ -175,7 +191,7 @@ export class BorrowService {
         });
 
         if (!item) {
-          throw new AppError(ErrorCode.BORROW_RECORD_NOT_FOUND, `Borrow item ${borrowItemId} not found`);
+          throw new AppError(ErrorCode.BORROW_RECORD_NOT_FOUND, ErrorMessage.BORROW_RECORD_NOT_FOUND);
         }
 
         if (item.status === BorrowItemStatus.RETURNED) {
@@ -206,6 +222,9 @@ export class BorrowService {
           where: { id: item.borrowRecord.userId },
           data: { currentBorrowCount: { decrement: 1 } },
         });
+
+        // 5.5 Auto-promote next reservation for this book
+        await reservationService.promoteNext(item.bookId, tx, performerId);
 
         results.push(updatedItem);
 
@@ -266,4 +285,6 @@ export class BorrowService {
     return Math.min(calculatedFine, maxFine);
   }
 }
+
+export const borrowService = new BorrowService();
 

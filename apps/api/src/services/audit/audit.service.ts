@@ -1,5 +1,6 @@
 import { AuditRepository } from "../../repositories/audit/audit.repository";
 import { CreateAuditLogDto, AuditLog, PaginatedData } from "@qltv/shared";
+import { Prisma } from "@prisma/client";
 
 export class AuditService {
   private auditRepository: AuditRepository;
@@ -11,10 +12,10 @@ export class AuditService {
   /**
    * Log a system event
    */
-  async logEvent(data: CreateAuditLogDto): Promise<AuditLog> {
+  async logEvent(data: CreateAuditLogDto, tx?: Prisma.TransactionClient): Promise<AuditLog> {
     try {
       // We can add more logic here, like filtering sensitive data from metadata
-      return await this.auditRepository.create(data);
+      return await this.auditRepository.create(data, tx);
     } catch (error) {
       console.error("Failed to log audit event:", error);
       // We don't throw error here to avoid breaking the main business flow

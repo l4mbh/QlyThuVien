@@ -157,7 +157,7 @@ export class ReportService {
       return {
         id: item.id,
         bookTitle: item.book.title,
-        readerName: item.borrowRecord.user.name,
+        readerName: item.borrowRecord.user.name || "Guest Reader",
         borrowDate: item.borrowedAt.toISOString(),
         dueDate: item.borrowRecord.dueDate.toISOString(),
         daysOverdue
@@ -333,8 +333,8 @@ export class ReportService {
       generatedAt: new Date(),
       topReaders: topReadersRaw.map(r => ({
         id: r.id,
-        name: r.name,
-        email: r.email,
+        name: r.name || "Guest Reader",
+        email: r.email || "N/A",
         borrowCount: r._count.borrowRecords
       })),
       riskyReaders: Array.from(riskyMap.values()),
@@ -385,7 +385,7 @@ export class ReportService {
       id: op.id,
       type: op.returnedAt && op.returnedAt >= start && op.returnedAt <= end ? 'RETURN' : 'BORROW',
       bookTitle: op.book.title,
-      readerName: op.borrowRecord.user.name,
+      readerName: op.borrowRecord.user.name || "Guest Reader",
       timestamp: op.returnedAt && op.returnedAt >= start && op.returnedAt <= end ? op.returnedAt : op.borrowedAt
     }));
   }
@@ -419,7 +419,7 @@ export class ReportService {
       return {
         borrowItemId: item.id,
         bookTitle: item.book.title,
-        readerName: item.borrowRecord.user.name,
+        readerName: item.borrowRecord.user.name || "Guest Reader",
         readerPhone: null, // User model does not have a phone field
         dueDate: item.borrowRecord.dueDate,
         daysOverdue,
@@ -528,7 +528,7 @@ export class ReportService {
 
     return fineEntries.map(entry => ({
       id: entry.id,
-      readerName: entry.borrowRecord.user.name,
+      readerName: entry.borrowRecord.user.name || "Guest Reader",
       bookTitle: entry.book.title,
       amount: entry.fineAmount || 0,
       date: entry.returnedAt!

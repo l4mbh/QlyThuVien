@@ -34,6 +34,8 @@ __export(index_exports, {
   AuditEntityType: () => AuditEntityType,
   DEFAULT_SETTINGS: () => DEFAULT_SETTINGS,
   ErrorCode: () => ErrorCode,
+  ErrorMessage: () => ErrorMessage,
+  NotificationMessage: () => NotificationMessage,
   NotificationType: () => NotificationType,
   QUERY_KEYS: () => QUERY_KEYS,
   SETTING_CATEGORIES: () => SETTING_CATEGORIES,
@@ -48,6 +50,7 @@ __export(index_exports, {
   createBorrowApi: () => createBorrowApi,
   createCategoryApi: () => createCategoryApi,
   createNotificationApi: () => createNotificationApi,
+  createReservationApi: () => createReservationApi,
   createSharedApiClient: () => createSharedApiClient,
   isUserActive: () => isUserActive,
   noOverdue: () => noOverdue,
@@ -87,7 +90,12 @@ var ErrorCode = {
   // Category
   CATEGORY_NOT_FOUND: "CATEGORY_NOT_FOUND",
   CATEGORY_ALREADY_EXISTS: "CATEGORY_ALREADY_EXISTS",
-  CATEGORY_HAS_BOOKS: "CATEGORY_HAS_BOOKS"
+  CATEGORY_HAS_BOOKS: "CATEGORY_HAS_BOOKS",
+  // Reservation
+  RESERVATION_NOT_FOUND: "RESERVATION_NOT_FOUND",
+  ALREADY_RESERVED: "ALREADY_RESERVED",
+  INVALID_RESERVATION_STATUS: "INVALID_RESERVATION_STATUS",
+  RESERVATION_LIMIT_EXCEEDED: "RESERVATION_LIMIT_EXCEEDED"
 };
 
 // src/constants/queryKeys.ts
@@ -119,6 +127,11 @@ var QUERY_KEYS = {
   NOTIFICATIONS: {
     ALL: "notifications",
     LIST: "notifications_list"
+  },
+  RESERVATIONS: {
+    ALL: "reservations",
+    LIST: "reservations_list",
+    MY: ["reservations_my"]
   }
 };
 
@@ -139,6 +152,10 @@ var AuditAction = /* @__PURE__ */ ((AuditAction2) => {
   AuditAction2["USER_BLOCKED"] = "USER_BLOCKED";
   AuditAction2["SYSTEM_CONFIG_UPDATED"] = "SYSTEM_CONFIG_UPDATED";
   AuditAction2["NOTIFICATION_CONFIG_UPDATED"] = "NOTIFICATION_CONFIG_UPDATED";
+  AuditAction2["RESERVATION_CREATED"] = "RESERVATION_CREATED";
+  AuditAction2["RESERVATION_CANCELLED"] = "RESERVATION_CANCELLED";
+  AuditAction2["RESERVATION_PROMOTED"] = "RESERVATION_PROMOTED";
+  AuditAction2["RESERVATION_COMPLETED"] = "RESERVATION_COMPLETED";
   return AuditAction2;
 })(AuditAction || {});
 var AuditEntityType = /* @__PURE__ */ ((AuditEntityType2) => {
@@ -147,6 +164,7 @@ var AuditEntityType = /* @__PURE__ */ ((AuditEntityType2) => {
   AuditEntityType2["BORROW"] = "BORROW";
   AuditEntityType2["CATEGORY"] = "CATEGORY";
   AuditEntityType2["SYSTEM"] = "SYSTEM";
+  AuditEntityType2["RESERVATION"] = "RESERVATION";
   return AuditEntityType2;
 })(AuditEntityType || {});
 
@@ -157,6 +175,8 @@ var NotificationType = /* @__PURE__ */ ((NotificationType2) => {
   NotificationType2["RETURN_SUCCESS"] = "RETURN_SUCCESS";
   NotificationType2["SYSTEM"] = "SYSTEM";
   NotificationType2["FINE_ASSIGNED"] = "FINE_ASSIGNED";
+  NotificationType2["RESERVATION_READY"] = "RESERVATION_READY";
+  NotificationType2["QUEUE_UPDATE"] = "QUEUE_UPDATE";
   return NotificationType2;
 })(NotificationType || {});
 
@@ -189,6 +209,67 @@ var SETTING_CATEGORIES = {
   FINE: ["FINE_PER_DAY" /* FINE_PER_DAY */, "MAX_FINE" /* MAX_FINE */, "ENABLE_FINE" /* ENABLE_FINE */],
   NOTIFICATION: ["DUE_SOON_DAYS" /* DUE_SOON_DAYS */, "OVERDUE_CHECK_TIME" /* OVERDUE_CHECK_TIME */, "ENABLE_NOTIFICATION" /* ENABLE_NOTIFICATION */],
   SYSTEM: ["MAINTENANCE_MODE" /* MAINTENANCE_MODE */]
+};
+
+// src/constants/messages.ts
+var ErrorMessage = {
+  // General
+  SUCCESS: "Operation successful",
+  INTERNAL_SERVER_ERROR: "System error, please try again later",
+  VALIDATION_ERROR: "Invalid data provided",
+  UNAUTHORIZED: "Please login to continue",
+  FORBIDDEN: "You do not have permission to perform this action",
+  NOT_FOUND: "Requested data not found",
+  MAINTENANCE_MODE: "System is under maintenance. Please come back later.",
+  // Auth
+  INVALID_CREDENTIALS: "Incorrect email or password",
+  TOKEN_EXPIRED: "Session expired, please login again",
+  TOKEN_INVALID: "Invalid session token",
+  // User
+  USER_NOT_FOUND: "User not found",
+  USER_ALREADY_EXISTS: "Email is already registered",
+  USER_BLOCKED: "Your account has been blocked",
+  // Book
+  BOOK_NOT_FOUND: "Book not found",
+  BOOK_ALREADY_EXISTS: "This ISBN already exists in the system",
+  OUT_OF_STOCK: "No copies available for borrowing",
+  // Borrow
+  BORROW_LIMIT_EXCEEDED: "You have exceeded the borrowing limit",
+  HAS_OVERDUE_BOOKS: "You have overdue books, please return them before borrowing new ones",
+  BORROW_RECORD_NOT_FOUND: "Borrow record not found",
+  INVALID_BORROW_OPERATION: "Invalid borrow operation",
+  // Category
+  CATEGORY_NOT_FOUND: "Category not found",
+  CATEGORY_ALREADY_EXISTS: "Category name already exists",
+  CATEGORY_HAS_BOOKS: "Cannot delete category containing books",
+  // Reservation
+  RESERVATION_NOT_FOUND: "Reservation record not found",
+  ALREADY_RESERVED: "You already have an active reservation for this book",
+  INVALID_RESERVATION_STATUS: "Invalid reservation status for this operation",
+  RESERVATION_LIMIT_EXCEEDED: "You have reached your maximum reservation limit",
+  // Specific Validation
+  ISBN_REQUIRED: "ISBN is required",
+  PHONE_REQUIRED: "Phone number is required",
+  INVALID_ID_LIST: "Invalid or empty IDs list provided",
+  INSUFFICIENT_QUANTITY: "Insufficient available quantity",
+  QUANTITY_LIMIT_VIOLATION: "Total quantity cannot be less than current borrowed count",
+  API_REQUEST_FAILED: "External API request failed",
+  NOT_FOUND_ON_SOURCE: "Resource not found on external source"
+};
+var NotificationMessage = {
+  // Titles
+  BORROW_SUCCESS_TITLE: "Borrowing Successful",
+  RETURN_SUCCESS_TITLE: "Book Returned",
+  OVERDUE_TITLE: "Book Overdue Alert!",
+  RESERVATION_READY_TITLE: "Your reserved book is ready!",
+  QUEUE_UPDATE_TITLE: "Queue Status Update",
+  SYSTEM_TITLE: "System Notification",
+  // Templates
+  BORROW_SUCCESS_BODY: (bookTitle, dueDate) => `You have successfully borrowed "${bookTitle}". Please return it by ${dueDate}.`,
+  RETURN_SUCCESS_BODY: (bookTitle) => `You have successfully returned "${bookTitle}". Thank you!`,
+  OVERDUE_BODY: (bookTitle, dueDate) => `The book "${bookTitle}" was due on ${dueDate}. Please return it to avoid fines.`,
+  RESERVATION_READY_BODY: (bookTitle, date) => `The book "${bookTitle}" you reserved is ready. Please collect it by ${date}.`,
+  QUEUE_UPDATE_BODY: (bookTitle, pos) => `Your position in the queue for "${bookTitle}" is now #${pos}.`
 };
 
 // src/schemas/settings/setting.schema.ts
@@ -358,6 +439,12 @@ var createNotificationApi = (api) => ({
   markAsRead: (id) => api.patch(`/notifications/${id}/read`).then((res) => res.data),
   markAllAsRead: () => api.post("/notifications/mark-all-read").then((res) => res.data)
 });
+var createReservationApi = (api) => ({
+  list: (params) => api.get("/reservations", { params }).then((res) => res.data),
+  getMy: () => api.get("/reservations/my").then((res) => res.data),
+  create: (data) => api.post("/reservations", data).then((res) => res.data),
+  cancel: (id) => api.post(`/reservations/${id}/cancel`).then((res) => res.data)
+});
 
 // src/utils/phone.ts
 var normalizePhone = (phone) => {
@@ -386,6 +473,8 @@ var normalizePhone = (phone) => {
   AuditEntityType,
   DEFAULT_SETTINGS,
   ErrorCode,
+  ErrorMessage,
+  NotificationMessage,
   NotificationType,
   QUERY_KEYS,
   SETTING_CATEGORIES,
@@ -400,6 +489,7 @@ var normalizePhone = (phone) => {
   createBorrowApi,
   createCategoryApi,
   createNotificationApi,
+  createReservationApi,
   createSharedApiClient,
   isUserActive,
   noOverdue,

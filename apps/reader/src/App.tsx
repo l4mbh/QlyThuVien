@@ -10,28 +10,9 @@ import { useMyBorrowed } from './hooks/useBorrow';
 import { useNotifications, useMarkNotificationRead } from './hooks/useNotifications';
 import { Skeleton } from './components/ui/Skeleton';
 import { LoginPage } from './features/auth/pages/LoginPage';
+import { MyBooksPage } from './features/dashboard/pages/MyBooksPage';
 
-const MyBooksPage = () => {
-  const { data: borrowed, isLoading } = useMyBorrowed();
 
-  return (
-    <div className="pt-4 space-y-8">
-      <div className="space-y-1 px-1">
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight">My Bookshelf</h2>
-        <p className="text-sm font-medium text-slate-500">Track your active loans and return deadlines</p>
-      </div>
-      {isLoading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map(i => (
-            <Skeleton key={i} className="h-32 w-full rounded-[24px]" />
-          ))}
-        </div>
-      ) : (
-        <MyBorrowedList items={borrowed || []} />
-      )}
-    </div>
-  );
-};
 
 const NotificationsPage = () => {
   const { data: notifications, isLoading } = useNotifications();

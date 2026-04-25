@@ -89,6 +89,45 @@ paths:
       responses:
         '200': { description: Success }
 
+  # --- RESERVATIONS ---
+  /reservations:
+    get:
+      summary: List all reservations (Staff/Admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Success }
+    post:
+      summary: Create book reservation (Reader/Staff/Admin)
+      security:
+        - bearerAuth: []
+        - phoneAuth: []
+      responses:
+        '201': { description: Created }
+
+  /reservations/my:
+    get:
+      summary: Get personal reservations with positions
+      security:
+        - bearerAuth: []
+        - phoneAuth: []
+      responses:
+        '200': { description: Success }
+
+  /reservations/{id}/cancel:
+    post:
+      summary: Cancel a reservation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      security:
+        - bearerAuth: []
+        - phoneAuth: []
+      responses:
+        '200': { description: Success }
+
   # --- SETTINGS ---
   /settings:
     get:

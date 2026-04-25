@@ -5,6 +5,8 @@ import { cn } from '../../../lib/utils';
 import { useBookDetail } from '../../../hooks/useBooks';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { useNavigate } from 'react-router-dom';
+import { useCreateReservation, useMyReservations } from '../../../hooks/useReservations';
+import { toast } from 'sonner';
 
 interface BookDetailModalProps {
   bookId: string | null;
@@ -16,13 +18,48 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ bookId, onClos
   const navigate = useNavigate();
   const isLoggedIn = !!localStorage.getItem('reader_phone');
 
-  const handleBorrow = () => {
+  const { data: myReservations } = useMyReservations();
+  const createReservation = useCreateReservation();
+
+  const isReserved = myReservations?.some((r: any) => 
+    r.bookId === bookId && (r.status === 'PENDING' || r.status === 'READY')
+  );
+
+  const handleBorrow = async () => {
     if (!isLoggedIn) {
       navigate('/login');
       return;
     }
-    // For now, just close modal or show success since actual borrow is done by Staff
-    onClose();
+    
+    try {
+      const phone = localStorage.getItem('reader_phone');
+      await createReservation.mutateAsync({ 
+        bookId: bookId!,
+        phone: phone || undefined
+      });
+      toast.success('Reservation created! Please pick up at library.');
+      onClose();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to create reservation');
+    }
+  };
+
+  const handleReserve = async () => {
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
+    
+    try {
+      const phone = localStorage.getItem('reader_phone');
+      await createReservation.mutateAsync({ 
+        bookId: bookId!,
+        phone: phone || undefined
+      });
+      toast.success('Successfully joined the queue!');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to join queue');
+    }
   };
 
   return (
@@ -124,9 +161,18 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ bookId, onClos
                       {isLoggedIn ? 'Borrow this Book' : 'Sign in to Borrow'}
                     </button>
                   ) : (
-                    <div className="w-full py-5 bg-slate-100 text-slate-400 rounded-2xl font-black text-center">
-                      Currently Unavailable
-                    </div>
+                    <button 
+                      className={cn(
+                        "w-full py-5 rounded-2xl font-black transition-all shadow-xl active:scale-[0.98]",
+                        isReserved 
+                          ? "bg-slate-100 text-slate-400 cursor-not-allowed shadow-none" 
+                          : "bg-orange-500 text-white shadow-orange-500/20 hover:bg-orange-600"
+                      )}
+                      onClick={handleReserve}
+                      disabled={isReserved || createReservation.isPending}
+                    >
+                      {isReserved ? 'Already in Queue' : (isLoggedIn ? 'Join the Queue' : 'Sign in to Join Queue')}
+                    </button>
                   )}
                 </div>
               </div>

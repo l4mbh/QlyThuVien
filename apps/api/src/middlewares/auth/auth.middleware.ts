@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { ErrorCode } from "@qltv/shared";
+import { ErrorCode, ErrorMessage } from "@qltv/shared";
 import { verifyToken } from "../../utils/jwt.util";
 import { UserRole } from "@prisma/client";
 import { AppError } from "../../utils/app-error";
@@ -38,7 +38,7 @@ export const authMiddleware = async (
       }
     }
 
-    throw new AppError(ErrorCode.UNAUTHORIZED, "No identity provided");
+    throw new AppError(ErrorCode.UNAUTHORIZED, ErrorMessage.UNAUTHORIZED);
   } catch (error: any) {
     if (error instanceof AppError) {
       return next(error);
@@ -49,10 +49,10 @@ export const authMiddleware = async (
 
     if (error.name === "TokenExpiredError") {
       code = ErrorCode.TOKEN_EXPIRED;
-      message = "Session expired";
+      message = ErrorMessage.TOKEN_EXPIRED;
     } else if (error.name === "JsonWebTokenError") {
       code = ErrorCode.TOKEN_INVALID;
-      message = "Invalid token";
+      message = ErrorMessage.TOKEN_INVALID;
     }
 
     next(new AppError(code, message));
@@ -62,7 +62,7 @@ export const authMiddleware = async (
 export const roleMiddleware = (allowedRoles: UserRole[]) => {
   return (req: any, res: Response, next: NextFunction) => {
     if (!req.user || !allowedRoles.includes(req.user.role)) {
-      return next(new AppError(ErrorCode.FORBIDDEN, "Forbidden: Insufficient permissions"));
+      return next(new AppError(ErrorCode.FORBIDDEN, ErrorMessage.FORBIDDEN));
     }
     next();
   };

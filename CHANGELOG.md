@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-04-26] - Phase 06 System Recovery & Singleton Standardization
+### Added
+- **Master Architecture Standard**: Created `.brain/ARCHITECTURE.md` to document the core monorepo structure and patterns.
+- **Reservation Loopback**: Linked the Reader App's "Borrow" button to the Backend Reservation API, ensuring reader requests are visible to Admin.
+
+### Changed
+- **Service Singleton Pattern**: Refactored ALL backend services (Book, User, Borrow, Reservation, Notification) to be exported as singletons to prevent `this` context binding errors in Express.
+- **Backend Stability**: Removed all `this.` references from controllers and switched to direct service singleton calls.
+- **Brain Sync**: Updated `.brain/brain.json` and `.brain/session.json` to capture the new architectural standards.
+
+### Fixed
+- **Internal Server Error**: Resolved `Cannot read properties of undefined (reading 'getAllBooks')` and similar crashes across all controllers.
+- **Pagination Logic**: Fixed book list fetching by restoring `parseInt` for query parameters.
+- **Reader Dummy Buttons**: Fixed "Borrow" button in `BookDetailModal` that previously had no functional API call.
+
 ## [2026-04-25] - Phone-First Identity Migration
 ### Added
 - **Identity-lite System**: Transitioned from mandatory Email/Password to a UX-first Phone-first identity model.

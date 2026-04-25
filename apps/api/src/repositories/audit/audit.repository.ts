@@ -1,11 +1,13 @@
 import prisma from "../../config/db/db";
+import { Prisma } from "@prisma/client";
 import { CreateAuditLogDto, AuditLog } from "@qltv/shared";
 import { paginate } from "../../utils/pagination.helper";
 import { PaginatedData } from "@qltv/shared";
 
 export class AuditRepository {
-  async create(data: CreateAuditLogDto): Promise<AuditLog> {
-    return prisma.auditLog.create({
+  async create(data: CreateAuditLogDto, tx?: Prisma.TransactionClient): Promise<AuditLog> {
+    const client = tx || prisma;
+    return client.auditLog.create({
       data: {
         action: data.action,
         entityType: data.entityType,

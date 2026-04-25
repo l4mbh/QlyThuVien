@@ -1,18 +1,14 @@
 import { Request, Response, NextFunction } from "express";
-import { BorrowService } from "../../services/borrow/borrow.service";
+import { borrowService } from "../../services/borrow/borrow.service";
 import { ErrorCode } from "@qltv/shared";
 import { ApiResponse } from "@qltv/shared";
 
 export class BorrowController {
-  private borrowService: BorrowService;
-
-  constructor() {
-    this.borrowService = new BorrowService();
-  }
+  constructor() {}
 
   getAllBorrows = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const borrows = await this.borrowService.getAllBorrows();
+      const borrows = await borrowService.getAllBorrows();
       const response: ApiResponse = { data: borrows, code: ErrorCode.SUCCESS };
       res.json(response);
     } catch (error) {
@@ -23,7 +19,7 @@ export class BorrowController {
   getMyBorrowed = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = (req as any).user.userId;
-      const borrows = await this.borrowService.getMyBorrowed(userId);
+      const borrows = await borrowService.getMyBorrowed(userId);
       const response: ApiResponse = { data: borrows, code: ErrorCode.SUCCESS };
       res.json(response);
     } catch (error) {
@@ -33,7 +29,7 @@ export class BorrowController {
 
   getBorrowById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const borrow = await this.borrowService.getBorrowById(req.params.id as string);
+      const borrow = await borrowService.getBorrowById(req.params.id as string);
       const response: ApiResponse = { data: borrow, code: ErrorCode.SUCCESS };
       res.json(response);
     } catch (error) {
@@ -44,7 +40,7 @@ export class BorrowController {
   createBorrow = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const performerId = (req as any).user.userId;
-      const borrow = await this.borrowService.createBorrow(req.body, performerId);
+      const borrow = await borrowService.createBorrow(req.body, performerId);
       const response: ApiResponse = { data: borrow, code: ErrorCode.SUCCESS };
       res.json(response);
     } catch (error) {
@@ -55,7 +51,7 @@ export class BorrowController {
   returnBook = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const performerId = (req as any).user.userId;
-      const result = await this.borrowService.returnBook(req.body, performerId);
+      const result = await borrowService.returnBook(req.body, performerId);
       const response: ApiResponse = { data: result, code: ErrorCode.SUCCESS };
       res.json(response);
     } catch (error) {

@@ -10,6 +10,7 @@ import auditRoutes from "./audit/audit.routes";
 import notificationRoutes from "./notification/notification.routes";
 import settingRoutes from "./settings/setting.routes";
 import systemRoutes from "./system/system.routes";
+import reservationRoutes from "./reservation/reservation.routes";
 
 import { maintenanceMiddleware } from "../middlewares/system/maintenance.middleware";
 
@@ -29,6 +30,7 @@ router.use("/audit-logs", auditRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/settings", settingRoutes);
 router.use("/system", systemRoutes);
+router.use("/reservations", reservationRoutes);
 
 export default router;
 

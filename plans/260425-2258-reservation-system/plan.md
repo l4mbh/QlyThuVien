@@ -12,14 +12,12 @@ Hệ thống đặt sách và hàng đợi thông minh dựa trên mô hình Sta
 
 ## Phases
 
-| Phase | Name | Status | Progress |
-|-------|------|--------|----------|
-| 01 | Database Foundation | ⬜ Pending | 0% |
-| 02 | Core Service Logic | ⬜ Pending | 0% |
-| 03 | API & Documentation | ⬜ Pending | 0% |
-| 04 | Reader App UX (Client) | ⬜ Pending | 0% |
-| 05 | Admin App UI (Staff) | ⬜ Pending | 0% |
-| 06 | Automation & Testing | ⬜ Pending | 0% |
+| 01 | Database Foundation | ✅ Complete | 100% |
+| 02 | Core Service Logic | ✅ Complete | 100% |
+| 03 | API & Documentation | ✅ Complete | 100% |
+| 04 | Reader App UX (Client) | ✅ Complete | 100% |
+| 05 | Admin App UI (Staff) | ✅ Complete | 100% |
+| 06 | Automation & Testing | ✅ Complete | 100% |
 
 ## Quick Commands
 - Start Phase 1: `/code phase-01`

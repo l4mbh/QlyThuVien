@@ -1,20 +1,16 @@
 import { Request, Response, NextFunction } from "express";
-import { CategoryService } from "../../services/category/category.service";
-import { ErrorCode } from "@qltv/shared";
+import { categoryService } from "../../services/category/category.service";
+import { ErrorCode, ErrorMessage } from "@qltv/shared";
 import { createCategorySchema, updateCategorySchema } from "../../schemas/category/category.schema";
 import { AppError } from "../../utils/app-error";
 
 export class CategoryController {
-  private categoryService: CategoryService;
-
-  constructor() {
-    this.categoryService = new CategoryService();
-  }
+  constructor() {}
 
   getAllCategories = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { search, page, limit } = req.query;
-      const categories = await this.categoryService.getAllCategories({
+      const categories = await categoryService.getAllCategories({
         search: search as string,
         page: page ? parseInt(page as string) : undefined,
         limit: limit ? parseInt(limit as string) : undefined,
@@ -32,7 +28,7 @@ export class CategoryController {
         throw new AppError(ErrorCode.VALIDATION_ERROR, validation.error.issues[0].message);
       }
       const userId = (req as any).user.userId;
-      const category = await this.categoryService.createCategory(validation.data, userId);
+      const category = await categoryService.createCategory(validation.data, userId);
       res.json({ data: category, code: ErrorCode.SUCCESS });
     } catch (error: any) {
       next(error);
@@ -47,7 +43,7 @@ export class CategoryController {
         throw new AppError(ErrorCode.VALIDATION_ERROR, validation.error.issues[0].message);
       }
       const userId = (req as any).user.userId;
-      const category = await this.categoryService.updateCategory(id, validation.data, userId);
+      const category = await categoryService.updateCategory(id, validation.data, userId);
       res.json({ data: category, code: ErrorCode.SUCCESS });
     } catch (error: any) {
       next(error);
@@ -58,7 +54,7 @@ export class CategoryController {
     try {
       const id = req.params.id as string;
       const userId = (req as any).user.userId;
-      await this.categoryService.deleteCategory(id, userId);
+      await categoryService.deleteCategory(id, userId);
       res.json({ data: { success: true }, code: ErrorCode.SUCCESS });
     } catch (error: any) {
       next(error);
@@ -69,11 +65,11 @@ export class CategoryController {
     try {
       const { ids } = req.body;
       if (!ids || !Array.isArray(ids) || ids.length === 0) {
-        throw new AppError(ErrorCode.VALIDATION_ERROR, "Invalid or empty IDs list");
+        throw new AppError(ErrorCode.VALIDATION_ERROR, ErrorMessage.INVALID_ID_LIST);
       }
 
       const userId = (req as any).user.userId;
-      await this.categoryService.deleteCategories(ids, userId);
+      await categoryService.deleteCategories(ids, userId);
       res.json({ data: { success: true }, code: ErrorCode.SUCCESS });
     } catch (error: any) {
       next(error);

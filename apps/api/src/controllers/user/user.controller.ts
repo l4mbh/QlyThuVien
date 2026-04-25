@@ -1,20 +1,16 @@
 import { Request, Response, NextFunction } from "express";
-import { UserService } from "../../services/user/user.service";
-import { ErrorCode } from "@qltv/shared";
+import { userService } from "../../services/user/user.service";
+import { ErrorCode, ErrorMessage } from "@qltv/shared";
 import { ApiResponse } from "@qltv/shared";
 import { AppError } from "../../utils/app-error";
 
 export class UserController {
-  private userService: UserService;
-
-  constructor() {
-    this.userService = new UserService();
-  }
+  constructor() {}
 
   getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { role } = req.query;
-      const users = await this.userService.getAllUsers(role ? { role } : {});
+      const users = await userService.getAllUsers(role ? { role } : {});
       const response: ApiResponse = { data: users, code: ErrorCode.SUCCESS };
       res.json(response);
     } catch (error) {
@@ -24,7 +20,7 @@ export class UserController {
 
   getUserById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const user = await this.userService.getUserById(req.params.id as string);
+      const user = await userService.getUserById(req.params.id as string);
       const response: ApiResponse = { data: user, code: ErrorCode.SUCCESS };
       res.json(response);
     } catch (error) {
@@ -34,7 +30,7 @@ export class UserController {
 
   createUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const user = await this.userService.createUser(req.body);
+      const user = await userService.createUser(req.body);
       const response: ApiResponse = { data: user, code: ErrorCode.SUCCESS };
       res.json(response);
     } catch (error) {
@@ -44,7 +40,7 @@ export class UserController {
 
   updateUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const user = await this.userService.updateUser(req.params.id as string, req.body);
+      const user = await userService.updateUser(req.params.id as string, req.body);
       const response: ApiResponse = { data: user, code: ErrorCode.SUCCESS };
       res.json(response);
     } catch (error) {
@@ -54,7 +50,7 @@ export class UserController {
 
   blockUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const user = await this.userService.blockUser(req.params.id as string);
+      const user = await userService.blockUser(req.params.id as string);
       const response: ApiResponse = { data: user, code: ErrorCode.SUCCESS };
       res.json(response);
     } catch (error) {
@@ -66,9 +62,9 @@ export class UserController {
     try {
       const { phone } = req.query;
       if (!phone) {
-        throw new AppError(ErrorCode.BAD_REQUEST, "Phone is required");
+        throw new AppError(ErrorCode.VALIDATION_ERROR, ErrorMessage.PHONE_REQUIRED);
       }
-      const user = await this.userService.getUserByPhone(phone as string);
+      const user = await userService.getUserByPhone(phone as string);
       const response: ApiResponse = { data: user, code: ErrorCode.SUCCESS };
       res.json(response);
     } catch (error) {

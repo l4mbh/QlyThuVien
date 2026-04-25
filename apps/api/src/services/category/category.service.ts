@@ -1,6 +1,6 @@
 import { CategoryRepository } from "../../repositories/category/category.repository";
 import { CategoryEntity, CreateCategoryDTO, UpdateCategoryDTO, CategoryFilterDTO } from "../../types/category/category.entity";
-import { ErrorCode, AuditAction, AuditEntityType } from "@qltv/shared";
+import { ErrorCode, AuditAction, AuditEntityType, ErrorMessage } from "@qltv/shared";
 import { PaginatedData } from "@qltv/shared";
 import { AppError } from "../../utils/app-error";
 import { auditService } from "../audit/audit.service";
@@ -24,7 +24,7 @@ export class CategoryService {
     const existing = await this.categoryRepository.findByName(data.name);
 
     if (existing) {
-      throw new AppError(ErrorCode.CATEGORY_ALREADY_EXISTS, "Category already exists");
+      throw new AppError(ErrorCode.CATEGORY_ALREADY_EXISTS, ErrorMessage.CATEGORY_ALREADY_EXISTS);
     }
 
     const category = await this.categoryRepository.create(data);
@@ -44,13 +44,13 @@ export class CategoryService {
   async updateCategory(id: string, data: UpdateCategoryDTO, userId: string): Promise<CategoryEntity> {
     const category = await this.categoryRepository.findById(id);
     if (!category) {
-      throw new AppError(ErrorCode.CATEGORY_NOT_FOUND, "Category not found");
+      throw new AppError(ErrorCode.CATEGORY_NOT_FOUND, ErrorMessage.CATEGORY_NOT_FOUND);
     }
 
     if (data.name) {
       const existing = await this.categoryRepository.findByNameExcludeId(data.name, id);
       if (existing) {
-        throw new AppError(ErrorCode.CATEGORY_ALREADY_EXISTS, "Category name already exists");
+        throw new AppError(ErrorCode.CATEGORY_ALREADY_EXISTS, ErrorMessage.CATEGORY_ALREADY_EXISTS);
       }
     }
 
@@ -72,11 +72,11 @@ export class CategoryService {
     const category = await this.categoryRepository.findByIdWithCount(id);
 
     if (!category) {
-      throw new AppError(ErrorCode.CATEGORY_NOT_FOUND, "Category not found");
+      throw new AppError(ErrorCode.CATEGORY_NOT_FOUND, ErrorMessage.CATEGORY_NOT_FOUND);
     }
 
     if (category._count.books > 0) {
-      throw new AppError(ErrorCode.CATEGORY_HAS_BOOKS, "Cannot delete category because it contains books");
+      throw new AppError(ErrorCode.CATEGORY_HAS_BOOKS, ErrorMessage.CATEGORY_HAS_BOOKS);
     }
 
     await this.categoryRepository.delete(id);
@@ -95,7 +95,7 @@ export class CategoryService {
     const categories = await this.categoryRepository.findByIdsWithCount(ids);
 
     if (categories.length === 0) {
-      throw new AppError(ErrorCode.CATEGORY_NOT_FOUND, "Categories not found");
+      throw new AppError(ErrorCode.CATEGORY_NOT_FOUND, ErrorMessage.CATEGORY_NOT_FOUND);
     }
 
     const categoriesWithBooks = categories.filter(c => c._count.books > 0);
@@ -125,4 +125,6 @@ export class CategoryService {
     return this.createCategory({ name, code }, userId);
   }
 }
+
+export const categoryService = new CategoryService();
 

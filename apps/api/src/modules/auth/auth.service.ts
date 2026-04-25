@@ -2,7 +2,7 @@ import { AuthRepository } from "./auth.repository";
 import { LoginDTO, RegisterDTO, AuthResponse, AuthUser } from "./auth.types";
 import { hashPassword, comparePassword } from "../../utils/hash.util";
 import { generateToken } from "../../utils/jwt.util";
-import { ErrorCode, SettingKey, UserRole } from "@qltv/shared";
+import { ErrorCode, SettingKey, UserRole, ErrorMessage } from "@qltv/shared";
 import { AppError } from "../../utils/app-error";
 import { settingService } from "../../services/settings/setting.service";
 
@@ -16,7 +16,7 @@ export class AuthService {
   async register(data: RegisterDTO): Promise<AuthResponse> {
     const existingUser = await this.authRepository.findByEmail(data.email);
     if (existingUser) {
-      throw new AppError(ErrorCode.USER_ALREADY_EXISTS, "Email already registered");
+      throw new AppError(ErrorCode.USER_ALREADY_EXISTS, ErrorMessage.USER_ALREADY_EXISTS);
     }
 
     const hashedPassword = await hashPassword(data.password);
@@ -40,18 +40,22 @@ export class AuthService {
   async login(data: LoginDTO): Promise<AuthResponse> {
     const user = await this.authRepository.findByEmail(data.email);
     if (!user) {
-      throw new AppError(ErrorCode.INVALID_CREDENTIALS, "Invalid credentials");
+      throw new AppError(ErrorCode.INVALID_CREDENTIALS, ErrorMessage.INVALID_CREDENTIALS);
+    }
+
+    if (!user.password) {
+      throw new AppError(ErrorCode.INVALID_CREDENTIALS, ErrorMessage.INVALID_CREDENTIALS);
     }
 
     const isPasswordValid = await comparePassword(data.password, user.password);
     if (!isPasswordValid) {
-      throw new AppError(ErrorCode.INVALID_CREDENTIALS, "Invalid credentials");
+      throw new AppError(ErrorCode.INVALID_CREDENTIALS, ErrorMessage.INVALID_CREDENTIALS);
     }
 
     // Block non-admin users during maintenance
     const isMaintenance = await settingService.get<boolean>(SettingKey.MAINTENANCE_MODE);
     if (isMaintenance && user.role !== UserRole.ADMIN) {
-      throw new AppError(ErrorCode.MAINTENANCE_MODE, "System is under maintenance. Only administrators can sign in.");
+      throw new AppError(ErrorCode.MAINTENANCE_MODE, ErrorMessage.MAINTENANCE_MODE);
     }
 
     const authUser: AuthUser = {
@@ -69,7 +73,7 @@ export class AuthService {
   async getMe(userId: string): Promise<AuthUser> {
     const user = await this.authRepository.findById(userId);
     if (!user) {
-      throw new AppError(ErrorCode.USER_NOT_FOUND, "User not found");
+      throw new AppError(ErrorCode.USER_NOT_FOUND, ErrorMessage.USER_NOT_FOUND);
     }
 
     return {

@@ -1,0 +1,281 @@
+import prisma from "../../config/db/db";
+import { ReservationRepository } from "../../repositories/reservation/reservation.repository";
+import { CreateReservationDTO } from "../../types/reservation/reservation.entity";
+import { ErrorCode, AuditAction, AuditEntityType, SettingKey, ErrorMessage } from "@qltv/shared";
+import { ReservationStatus, Prisma } from "@prisma/client";
+import { AppError } from "../../utils/app-error";
+import { auditService } from "../audit/audit.service";
+import { notificationService } from "../notification/notification.service";
+import { settingService } from "../settings/setting.service";
+import { UserService } from "../user/user.service";
+
+export class ReservationService {
+  private reservationRepository: ReservationRepository;
+  private userService: UserService;
+
+  constructor() {
+    this.reservationRepository = new ReservationRepository();
+    this.userService = new UserService();
+  }
+
+  async getAllReservations() {
+    const list = await this.reservationRepository.findAll();
+    // For admin, we might want to attach current positions for PENDING ones
+    return Promise.all(list.map(async (res) => {
+      if (res.status === ReservationStatus.PENDING) {
+        const pos = await this.calculatePosition(res.userId, res.bookId, res.createdAt);
+        return { ...res, position: pos };
+      }
+      return res;
+    }));
+  }
+
+  async getMyReservations(userId: string) {
+    const list = await this.reservationRepository.findByUserId(userId);
+    return Promise.all(list.map(async (res) => {
+      if (res.status === ReservationStatus.PENDING) {
+        const pos = await this.calculatePosition(userId, res.bookId, res.createdAt);
+        return { ...res, position: pos };
+      }
+      return res;
+    }));
+  }
+
+  async calculatePosition(userId: string, bookId: string, createdAt: Date): Promise<number> {
+    const count = await this.reservationRepository.countPendingBefore(bookId, createdAt);
+    return count + 1;
+  }
+
+  async createReservation(data: CreateReservationDTO, performerId: string) {
+    let { userId, phone, bookId } = data;
+
+    // 0. Resolve user
+    if (!userId && phone) {
+      const user = await this.userService.findOrCreateReader(phone);
+      userId = user.id;
+    }
+
+    if (!userId) {
+      throw new AppError(ErrorCode.USER_NOT_FOUND, ErrorMessage.USER_NOT_FOUND);
+    }
+
+    return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // 1. Check if already reserved (Active ones)
+      const existing = await tx.reservation.findFirst({
+        where: {
+          userId: userId!,
+          bookId,
+          status: { in: [ReservationStatus.PENDING, ReservationStatus.READY] }
+        }
+      });
+
+      if (existing) {
+        throw new AppError(ErrorCode.ALREADY_RESERVED, ErrorMessage.ALREADY_RESERVED);
+      }
+
+      // 2. Check borrow limit (including active reservations might be a policy)
+      // For now, just check if book exists
+      const book = await tx.book.findUnique({ where: { id: bookId } });
+      if (!book || book.isArchived) {
+        throw new AppError(ErrorCode.BOOK_NOT_FOUND, ErrorMessage.BOOK_NOT_FOUND);
+      }
+
+      // 3. Create Reservation (Default PENDING)
+      const reservation = await tx.reservation.create({
+        data: {
+          userId: userId!,
+          bookId,
+          status: ReservationStatus.PENDING
+        },
+        include: { book: true }
+      });
+
+      // 4. Mark user as having activity
+      await tx.user.update({
+        where: { id: userId! },
+        data: { hasActivity: true }
+      });
+
+      // 5. Try to promote immediately if book is available
+      // Soft allocation: if availableQuantity > 0, we can make it READY
+      const currentBook = await tx.book.findUnique({ where: { id: bookId } });
+      if (currentBook && currentBook.availableQuantity > 0) {
+        // Double check if there are others before this one (shouldn't be, but safe)
+        const othersBefore = await tx.reservation.count({
+          where: { bookId, status: ReservationStatus.PENDING, createdAt: { lt: reservation.createdAt } }
+        });
+
+        if (othersBefore === 0) {
+          return await this.promoteToReady(reservation.id, tx, performerId);
+        }
+      }
+
+      // 6. Audit & Notification for PENDING
+      await auditService.logEvent({
+        action: AuditAction.RESERVATION_CREATED,
+        entityType: AuditEntityType.RESERVATION,
+        entityId: reservation.id,
+        userId: performerId,
+        metadata: { bookId, status: ReservationStatus.PENDING }
+      }, tx);
+
+      const position = await this.calculatePosition(userId!, bookId, reservation.createdAt);
+      await notificationService.notifyQueueUpdate(userId!, {
+        bookTitle: reservation.book.title,
+        bookId,
+        position
+      });
+
+      return { ...reservation, position };
+    });
+  }
+
+  async cancelReservation(id: string, performerId: string) {
+    return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const res = await tx.reservation.findUnique({ 
+        where: { id },
+        include: { book: true }
+      });
+
+      if (!res) throw new AppError(ErrorCode.RESERVATION_NOT_FOUND, ErrorMessage.RESERVATION_NOT_FOUND);
+      
+      if (res.status === ReservationStatus.COMPLETED || res.status === ReservationStatus.CANCELLED) {
+        throw new AppError(ErrorCode.INVALID_RESERVATION_STATUS, ErrorMessage.INVALID_RESERVATION_STATUS);
+      }
+
+      const oldStatus = res.status;
+
+      // 1. Update status
+      const updated = await tx.reservation.update({
+        where: { id },
+        data: { status: ReservationStatus.CANCELLED }
+      });
+
+      // 2. If it was READY, we need to release soft allocation
+      if (oldStatus === ReservationStatus.READY) {
+        await tx.book.update({
+          where: { id: res.bookId },
+          data: { availableQuantity: { increment: 1 } }
+        });
+      }
+
+      // 3. Audit
+      await auditService.logEvent({
+        action: AuditAction.RESERVATION_CANCELLED,
+        entityType: AuditEntityType.RESERVATION,
+        entityId: id,
+        userId: performerId,
+        metadata: { bookId: res.bookId, wasStatus: oldStatus }
+      }, tx);
+
+      // 4. Trigger promoteNext for this book
+      await this.promoteNext(res.bookId, tx, performerId);
+
+      return updated;
+    });
+  }
+
+  /**
+   * Central Logic: Find next pending and make it ready
+   */
+  async promoteNext(bookId: string, tx: Prisma.TransactionClient, performerId: string) {
+    // 1. Check if book is available
+    const book = await tx.book.findUnique({ where: { id: bookId } });
+    if (!book || book.availableQuantity <= 0) return;
+
+    // 2. Find oldest PENDING
+    const nextRes = await tx.reservation.findFirst({
+      where: { bookId, status: ReservationStatus.PENDING },
+      orderBy: { createdAt: "asc" }
+    });
+
+    if (!nextRes) return;
+
+    // 3. Promote it
+    await this.promoteToReady(nextRes.id, tx, performerId);
+  }
+
+  private async promoteToReady(id: string, tx: Prisma.TransactionClient, performerId: string) {
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24); // 24h to collect
+
+    const updated = await tx.reservation.update({
+      where: { id },
+      data: { 
+        status: ReservationStatus.READY,
+        expiresAt
+      },
+      include: { book: true }
+    });
+
+    // Soft allocation: decrease availableQuantity
+    await tx.book.update({
+      where: { id: updated.bookId },
+      data: { availableQuantity: { decrement: 1 } }
+    });
+
+    // Audit
+    await auditService.logEvent({
+      action: AuditAction.RESERVATION_PROMOTED,
+      entityType: AuditEntityType.RESERVATION,
+      entityId: id,
+      userId: performerId,
+      metadata: { bookId: updated.bookId, expiresAt }
+    }, tx);
+
+    // Notify
+    await notificationService.notifyReservationReady(updated.userId, {
+      bookTitle: updated.book.title,
+      bookId: updated.bookId,
+      expiresAt,
+      reservationId: id
+    });
+
+    return updated;
+  }
+
+  async markAsCompleted(id: string, tx: Prisma.TransactionClient) {
+    return tx.reservation.update({
+      where: { id },
+      data: { status: ReservationStatus.COMPLETED }
+    });
+  }
+
+  async markAsExpired(id: string, tx?: Prisma.TransactionClient, performerId: string = "SYSTEM") {
+    const execute = async (transaction: Prisma.TransactionClient) => {
+      const res = await transaction.reservation.findUnique({ where: { id } });
+      if (!res || res.status !== ReservationStatus.READY) return;
+
+      await transaction.reservation.update({
+        where: { id },
+        data: { status: ReservationStatus.EXPIRED }
+      });
+
+      // Release soft allocation
+      await transaction.book.update({
+        where: { id: res.bookId },
+        data: { availableQuantity: { increment: 1 } }
+      });
+
+      // Audit
+      await auditService.logEvent({
+        action: AuditAction.RESERVATION_CANCELLED, // Use CANCELLED or add EXPIRED to shared
+        entityType: AuditEntityType.RESERVATION,
+        entityId: id,
+        userId: performerId,
+        metadata: { bookId: res.bookId, status: ReservationStatus.EXPIRED }
+      }, transaction);
+
+      // Try to promote next
+      await this.promoteNext(res.bookId, transaction, performerId);
+    };
+
+    if (tx) {
+      return await execute(tx);
+    } else {
+      return await prisma.$transaction(async (t) => await execute(t));
+    }
+  }
+}
+
+export const reservationService = new ReservationService();

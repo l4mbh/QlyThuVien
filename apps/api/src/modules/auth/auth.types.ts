@@ -13,8 +13,8 @@ export interface LoginDTO {
 
 export interface AuthUser {
   id: string;
-  name: string;
-  email: string;
+  name: string | null;
+  email: string | null;
   role: UserRole;
 }
 

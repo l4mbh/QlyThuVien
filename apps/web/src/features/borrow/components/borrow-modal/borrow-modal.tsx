@@ -44,12 +44,14 @@ interface BorrowModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  initialReservation?: any;
 }
 
 export const BorrowModal: React.FC<BorrowModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
+  initialReservation,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLookupLoading, setIsLookupLoading] = useState(false);
@@ -101,6 +103,23 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
         }
       };
       fetchData();
+
+      // If initialReservation is provided, pre-fill reader and book
+      if (initialReservation) {
+        if (initialReservation.user) {
+          const reader = initialReservation.user;
+          setSelectedReader(reader);
+          form.setValue("userId", reader.id);
+          form.setValue("phone", reader.phoneRaw || reader.phoneNormalized || "");
+        }
+        if (initialReservation.book) {
+          const book = initialReservation.book;
+          setCart([book]);
+          form.setValue("bookIds", [book.id]);
+        }
+        // Store reservationId in form if we add it to schema, 
+        // or just pass it in onSubmit
+      }
     } else {
       // Reset state on close
       setSelectedReader(null);
@@ -229,7 +248,10 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      const response = await borrowService.createBorrow(values);
+      const response = await borrowService.createBorrow({
+        ...values,
+        reservationId: initialReservation?.id
+      } as any);
       if (response.code === ErrorCode.SUCCESS) {
         toast.success("Borrow record created successfully");
         onSuccess();

@@ -1,7 +1,7 @@
 import prisma from "../../config/db/db";
 import { UserRepository } from "../../repositories/user/user.repository";
 import { CreateUserDTO, UpdateUserDTO, UserEntity } from "../../types/user/user.entity";
-import { ErrorCode, SettingKey } from "@qltv/shared";
+import { ErrorCode, SettingKey, ErrorMessage } from "@qltv/shared";
 import { AppError } from "../../utils/app-error";
 import { UserStatus } from "@prisma/client";
 import { hashPassword } from "../../utils/hash.util";
@@ -72,7 +72,7 @@ export class UserService {
   async getUserById(id: string): Promise<any> {
     const user = await this.userRepository.findById(id);
     if (!user) {
-      throw new AppError(ErrorCode.USER_NOT_FOUND, "User not found");
+      throw new AppError(ErrorCode.USER_NOT_FOUND, ErrorMessage.USER_NOT_FOUND);
     }
 
     const globalBorrowLimit = await settingService.get<number>(SettingKey.BORROW_LIMIT);
@@ -108,7 +108,7 @@ export class UserService {
     if (data.email) {
       const existingUser = await this.userRepository.findByEmail(data.email);
       if (existingUser) {
-        throw new AppError(ErrorCode.USER_ALREADY_EXISTS, "Email already registered");
+        throw new AppError(ErrorCode.USER_ALREADY_EXISTS, ErrorMessage.USER_ALREADY_EXISTS);
       }
     }
 
@@ -138,4 +138,6 @@ export class UserService {
     return this.getUserById(user.id);
   }
 }
+
+export const userService = new UserService();
 

@@ -16,6 +16,7 @@ model User {
   role               UserRole       @default(STAFF)
   status             UserStatus     @default(ACTIVE)
   isGuest            Boolean        @default(true)
+  hasActivity        Boolean        @default(false)
   borrowLimit        Int            @default(5)
   currentBorrowCount Int            @default(0)
   createdAt          DateTime       @default(now())
@@ -25,6 +26,7 @@ model User {
   borrowRecords      BorrowRecord[]
   inventoryLogs      InventoryLog[]
   notifications      Notification[]
+  reservations       Reservation[]
 
   @@map("users")
 }
@@ -55,6 +57,7 @@ model Book {
   category          Category?      @relation(fields: [categoryId], references: [id])
   borrowItems       BorrowItem[]
   inventoryLogs     InventoryLog[]
+  reservations      Reservation[]
 
   @@map("books")
 }
@@ -146,6 +149,30 @@ model NotificationSetting {
   updatedAt DateTime @updatedAt
 
   @@map("notification_settings")
+}
+
+model Reservation {
+  id        String            @id @default(uuid())
+  userId    String
+  bookId    String
+  status    ReservationStatus @default(PENDING)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  expiresAt DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+  book Book @relation(fields: [bookId], references: [id])
+
+  @@index([bookId, status, createdAt])
+  @@map("reservations")
+}
+
+enum ReservationStatus {
+  PENDING
+  READY
+  COMPLETED
+  CANCELLED
+  EXPIRED
 }
 
 enum UserRole {

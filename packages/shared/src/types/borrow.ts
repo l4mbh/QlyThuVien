@@ -3,6 +3,7 @@ export interface CreateBorrowDTO {
   phone?: string;
   bookIds: string[];
   dueDate: string | Date;
+  reservationId?: string;
 }
 
 export interface ReturnBookDTO {

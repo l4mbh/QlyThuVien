@@ -1,6 +1,6 @@
 import { ENV } from "../../config/env/env";
 import { AppError } from "../../utils/app-error";
-import { ErrorCode } from "@qltv/shared";
+import { ErrorCode, ErrorMessage } from "@qltv/shared";
 
 export interface ExternalBookInfo {
   title: string;
@@ -16,11 +16,11 @@ export class IsbnService {
     const url = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}${apiKey ? `&key=${apiKey}` : ""}`;
     
     const response = await fetch(url);
-    if (!response.ok) throw new AppError(ErrorCode.BOOK_NOT_FOUND, "Google Books API request failed");
+    if (!response.ok) throw new AppError(ErrorCode.BOOK_NOT_FOUND, ErrorMessage.API_REQUEST_FAILED);
     
     const data = (await response.json()) as any;
     if (!data.items || data.items.length === 0) {
-      throw new AppError(ErrorCode.BOOK_NOT_FOUND, "No book found with this ISBN on Google Books");
+      throw new AppError(ErrorCode.BOOK_NOT_FOUND, ErrorMessage.NOT_FOUND_ON_SOURCE);
     }
 
     const info = data.items[0].volumeInfo;
@@ -37,14 +37,14 @@ export class IsbnService {
     const url = `https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`;
     
     const response = await fetch(url);
-    if (!response.ok) throw new AppError(ErrorCode.BOOK_NOT_FOUND, "OpenLibrary API request failed");
+    if (!response.ok) throw new AppError(ErrorCode.BOOK_NOT_FOUND, ErrorMessage.API_REQUEST_FAILED);
     
     const data = (await response.json()) as any;
     const bookKey = `ISBN:${isbn}`;
     const book = data[bookKey];
     
     if (!book) {
-      throw new AppError(ErrorCode.BOOK_NOT_FOUND, "No book found with this ISBN on OpenLibrary");
+      throw new AppError(ErrorCode.BOOK_NOT_FOUND, ErrorMessage.NOT_FOUND_ON_SOURCE);
     }
 
     return {
@@ -67,5 +67,7 @@ export class IsbnService {
     }
   }
 }
+
+export const isbnService = new IsbnService();
 
 

@@ -2,7 +2,8 @@ import {
   CreateNotificationDto, 
   Notification, 
   NotificationType,
-  SettingKey
+  SettingKey,
+  NotificationMessage
 } from "@qltv/shared";
 import { NotificationRepository } from "../../repositories/notification/notification.repository";
 import { settingService } from "../settings/setting.service";
@@ -78,7 +79,8 @@ export class NotificationService {
     return this.sendNotification({
       userId,
       type: NotificationType.OVERDUE,
-      title: "Book Overdue Alert!",
+      title: NotificationMessage.OVERDUE_TITLE,
+      message: NotificationMessage.OVERDUE_BODY(payload.bookTitle, payload.dueDate.toLocaleDateString()),
       metadata: payload,
     });
   }
@@ -95,7 +97,8 @@ export class NotificationService {
     return this.sendNotification({
       userId,
       type: NotificationType.BORROW_SUCCESS,
-      title: "Borrowing Successful",
+      title: NotificationMessage.BORROW_SUCCESS_TITLE,
+      message: NotificationMessage.BORROW_SUCCESS_BODY(payload.bookTitle, payload.dueDate.toLocaleDateString()),
       metadata: payload,
     });
   }
@@ -110,7 +113,43 @@ export class NotificationService {
     return this.sendNotification({
       userId,
       type: NotificationType.RETURN_SUCCESS,
-      title: "Book Returned",
+      title: NotificationMessage.RETURN_SUCCESS_TITLE,
+      message: NotificationMessage.RETURN_SUCCESS_BODY(payload.bookTitle),
+      metadata: payload,
+    });
+  }
+
+  /**
+   * Notify about reservation ready
+   */
+  async notifyReservationReady(userId: string, payload: {
+    bookTitle: string;
+    bookId: string;
+    expiresAt: Date;
+    reservationId: string;
+  }): Promise<Notification | null> {
+    return this.sendNotification({
+      userId,
+      type: NotificationType.RESERVATION_READY,
+      title: NotificationMessage.RESERVATION_READY_TITLE,
+      message: NotificationMessage.RESERVATION_READY_BODY(payload.bookTitle, payload.expiresAt.toLocaleDateString()),
+      metadata: payload,
+    });
+  }
+
+  /**
+   * Notify about queue update
+   */
+  async notifyQueueUpdate(userId: string, payload: {
+    bookTitle: string;
+    bookId: string;
+    position: number;
+  }): Promise<Notification | null> {
+    return this.sendNotification({
+      userId,
+      type: NotificationType.QUEUE_UPDATE,
+      title: NotificationMessage.QUEUE_UPDATE_TITLE,
+      message: NotificationMessage.QUEUE_UPDATE_BODY(payload.bookTitle, payload.position),
       metadata: payload,
     });
   }
