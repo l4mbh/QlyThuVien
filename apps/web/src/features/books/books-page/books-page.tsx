@@ -1,12 +1,15 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState } from "react";
 import { BookTable } from "../book-table/book-table";
 import { BookFormModal } from "../book-form-modal/book-form-modal";
 import { InventoryManagementModal } from "../components/inventory-management-modal";
 import { bookService } from "../book.service";
 import type { BookEntity } from "@/types/books/book.entity";
-import type { CategoryEntity } from "@/types/category/category.entity";
 import { Button } from "@/components/ui/button";
-import { ErrorCode } from "@qltv/shared";
+import { 
+  useAdminBooks, 
+  useDeleteBook 
+} from "@/hooks/useBooks";
+import { useCategories } from "@/hooks/useCategories";
 
 import {
   Select,
@@ -15,28 +18,49 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select/select";
-import { FilterX, RefreshCcw, Plus } from "lucide-react";
+import { FilterX, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal/confirmation-modal";
 import { PageHeader } from "@/components/ui/page-header/page-header";
+import { useQueryClient } from "@tanstack/react-query";
+import { QUERY_KEYS, ErrorCode } from "@qltv/shared";
 
 export const BooksPage: React.FC = () => {
-  const [books, setBooks] = useState<BookEntity[]>([]);
-  const [categories, setCategories] = useState<CategoryEntity[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
+  const queryClient = useQueryClient();
+  
   // Pagination State
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
 
   // Search and Filter State
   const [search, setSearch] = useState("");
   const [categoryId, setCategoryId] = useState("all");
   const [availability, setAvailability] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
+
+  // React Query Hooks
+  const { 
+    data: booksData, 
+    isLoading, 
+    isFetching,
+    refetch 
+  } = useAdminBooks({
+    page,
+    limit,
+    search: search || undefined,
+    categoryId: categoryId === "all" ? undefined : categoryId,
+    available: availability === "all" ? undefined : availability === "in-stock",
+    sort: sortBy
+  });
+
+  const { data: categoriesData } = useCategories({ limit: 100 });
+  const categories = Array.isArray(categoriesData) 
+    ? categoriesData 
+    : (categoriesData && typeof categoriesData === 'object' && 'items' in categoriesData) 
+      ? categoriesData.items 
+      : [];
+
+  const deleteMutation = useDeleteBook();
 
   // Modal State
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -45,7 +69,6 @@ export const BooksPage: React.FC = () => {
   // Archive State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [bookToDelete, setBookToDelete] = useState<BookEntity | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   // Inventory Modal State
   const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
@@ -55,51 +78,8 @@ export const BooksPage: React.FC = () => {
   const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  const fetchData = useCallback(async (showLoading = true) => {
-    if (showLoading) setIsLoading(true);
-    try {
-      const [booksRes, categoriesRes] = await Promise.all([
-        bookService.getBooks({
-          page,
-          limit,
-          search: search || undefined,
-          categoryId: categoryId === "all" ? undefined : categoryId,
-          available: availability === "all" ? undefined : availability === "in-stock",
-          sort: sortBy
-        }),
-        bookService.getCategories({ limit: 100 }),
-      ]);
-
-      if ((booksRes.code === 0 || booksRes.code === ErrorCode.SUCCESS) && booksRes.data) {
-        setBooks(booksRes.data.items);
-        setTotal(booksRes.data.meta.total);
-        setTotalPages(booksRes.data.meta.totalPages);
-      }
-      if ((categoriesRes.code === 0 || categoriesRes.code === ErrorCode.SUCCESS) && categoriesRes.data) {
-        const categoriesData = categoriesRes.data;
-        if (Array.isArray(categoriesData)) {
-          setCategories(categoriesData);
-        } else if (categoriesData && typeof categoriesData === 'object' && 'items' in categoriesData) {
-          setCategories(categoriesData.items || []);
-        } else {
-          setCategories([]);
-        }
-      }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to fetch data");
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [page, limit, search, categoryId, availability, sortBy]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
   const handleRefresh = () => {
-    setIsRefreshing(true);
-    fetchData(false);
+    refetch();
   };
 
   const handleResetFilters = () => {
@@ -132,20 +112,12 @@ export const BooksPage: React.FC = () => {
 
   const handleConfirmDelete = async () => {
     if (!bookToDelete) return;
-    setIsDeleting(true);
-    try {
-      const response = await bookService.deleteBook(bookToDelete.id);
-      if (response.code === 0 || response.code === ErrorCode.SUCCESS) {
-        toast.success("Book deleted successfully");
+    deleteMutation.mutate(bookToDelete.id, {
+      onSuccess: () => {
         setIsDeleteModalOpen(false);
-        fetchData(false);
+        setBookToDelete(null);
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to delete book");
-    } finally {
-      setIsDeleting(false);
-      setBookToDelete(null);
-    }
+    });
   };
 
   const handleBulkDelete = (ids: string[]) => {
@@ -153,10 +125,13 @@ export const BooksPage: React.FC = () => {
     setIsBulkDeleteModalOpen(true);
   };
 
+  const books = booksData?.items || [];
+  const total = booksData?.meta?.total || 0;
+  const totalPages = booksData?.meta?.totalPages || 0;
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <PageHeader
-      />
+      <PageHeader />
 
       <BookTable
         books={books}
@@ -185,7 +160,7 @@ export const BooksPage: React.FC = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              {categories.map((cat) => (
+              {categories.map((cat: any) => (
                 <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
               ))}
             </SelectContent>
@@ -217,7 +192,7 @@ export const BooksPage: React.FC = () => {
             <Button variant="ghost" size="icon" onClick={handleResetFilters} title="Reset filters" className="h-10 w-10 text-muted-foreground hover:text-primary">
               <FilterX className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleRefresh} className={`h-10 w-10 text-muted-foreground hover:text-primary ${isRefreshing ? "animate-spin" : ""}`} title="Refresh data">
+            <Button variant="ghost" size="icon" onClick={handleRefresh} className={`h-10 w-10 text-muted-foreground hover:text-primary ${isFetching ? "animate-spin" : ""}`} title="Refresh data">
               <RefreshCcw className="h-4 w-4" />
             </Button>
           </div>
@@ -229,7 +204,6 @@ export const BooksPage: React.FC = () => {
         onClose={() => setIsFormOpen(false)}
         onSuccess={() => {
           setIsFormOpen(false);
-          fetchData(false);
         }}
         selectedBook={selectedBook}
         categories={categories}
@@ -241,7 +215,6 @@ export const BooksPage: React.FC = () => {
         book={inventoryBook}
         onSuccess={() => {
           setIsInventoryModalOpen(false);
-          fetchData(false);
         }}
       />
 
@@ -253,7 +226,7 @@ export const BooksPage: React.FC = () => {
         description={`Are you sure you want to delete "${bookToDelete?.title}"? This action cannot be undone.`}
         confirmText="Delete"
         variant="destructive"
-        isLoading={isDeleting}
+        isLoading={deleteMutation.isPending}
       />
 
       <ConfirmationModal
@@ -261,12 +234,12 @@ export const BooksPage: React.FC = () => {
         onClose={() => setIsBulkDeleteModalOpen(false)}
         onConfirm={async () => {
           try {
-            const response = await bookService.bulkDeleteBooks(selectedIds);
+            const response = await bookService.bulkDelete(selectedIds);
             if (response.code === 0 || response.code === ErrorCode.SUCCESS) {
               toast.success(`Successfully deleted ${selectedIds.length} books`);
               setIsBulkDeleteModalOpen(false);
               setSelectedIds([]);
-              fetchData(false);
+              queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BOOKS.ALL] });
             }
           } catch (error: any) {
             toast.error(error.message || "Failed to delete books");
@@ -280,4 +253,3 @@ export const BooksPage: React.FC = () => {
     </div>
   );
 };
-

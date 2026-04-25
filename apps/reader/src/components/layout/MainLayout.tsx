@@ -2,8 +2,9 @@ import React from 'react';
 import { Outlet, useLocation, NavLink } from 'react-router-dom';
 import { BottomNav } from './BottomNav';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Library, Home, Bell, Bookmark, User } from 'lucide-react';
+import { Search, Library, Home, Bell, Bookmark } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { useIsFetching } from '@tanstack/react-query';
 
 // Desktop/Tablet Nav Items (More spacing)
 const desktopNavItems = [
@@ -16,9 +17,16 @@ const desktopNavItems = [
 
 export const MainLayout: React.FC = () => {
   const location = useLocation();
+  const isFetching = useIsFetching();
 
   return (
     <div className="min-h-screen bg-background flex flex-col font-sans">
+      {/* Global Sync Indicator (Polish) */}
+      <div className={cn(
+        "fixed top-0 left-0 right-0 h-0.5 bg-primary z-[60] transition-all duration-500 origin-left",
+        isFetching > 0 ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0"
+      )} />
+
       {/* Responsive Header */}
       <header className="fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-slate-100 z-40 flex items-center px-4 lg:px-8">
         <div className="max-w-7xl mx-auto w-full flex items-center justify-between">

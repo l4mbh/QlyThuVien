@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { AxiosInstance } from 'axios';
 
 /**
  * Standardized Error Codes list (String-based).
@@ -30,6 +31,41 @@ declare const ErrorCode: {
     readonly CATEGORY_HAS_BOOKS: "CATEGORY_HAS_BOOKS";
 };
 type ErrorCodeType = keyof typeof ErrorCode;
+
+/**
+ * Centralized Query Keys for React Query
+ * Following a hierarchical structure for efficient cache invalidation
+ */
+declare const QUERY_KEYS: {
+    readonly BOOKS: {
+        readonly ALL: "books";
+        readonly LIST: "books_list";
+        readonly DETAIL: (id: string) => string[];
+    };
+    readonly CATEGORIES: {
+        readonly ALL: "categories";
+        readonly LIST: "categories_list";
+        readonly DETAIL: (id: string) => string[];
+    };
+    readonly USERS: {
+        readonly ALL: "users";
+        readonly LIST: "users_list";
+        readonly DETAIL: (id: string) => string[];
+    };
+    readonly PROFILE: {
+        readonly DETAIL: "profile";
+    };
+    readonly BORROWS: {
+        readonly ALL: "borrows";
+        readonly LIST: "borrows_list";
+        readonly DETAIL: (id: string) => string[];
+        readonly MY: readonly ["borrows_my"];
+    };
+    readonly NOTIFICATIONS: {
+        readonly ALL: "notifications";
+        readonly LIST: "notifications_list";
+    };
+};
 
 /**
  * Standardized actions for system audit logs
@@ -72,6 +108,48 @@ declare enum NotificationType {
     SYSTEM = "SYSTEM",
     FINE_ASSIGNED = "FINE_ASSIGNED"
 }
+
+/**
+ * Danh sách các khóa cấu hình hệ thống
+ */
+declare enum SettingKey {
+    BORROW_LIMIT = "BORROW_LIMIT",
+    BORROW_DURATION_DAYS = "BORROW_DURATION_DAYS",
+    FINE_PER_DAY = "FINE_PER_DAY",
+    MAX_FINE = "MAX_FINE",
+    DUE_SOON_DAYS = "DUE_SOON_DAYS",
+    OVERDUE_CHECK_TIME = "OVERDUE_CHECK_TIME",
+    ENABLE_FINE = "ENABLE_FINE",
+    ENABLE_NOTIFICATION = "ENABLE_NOTIFICATION",
+    MAINTENANCE_MODE = "MAINTENANCE_MODE"
+}
+/**
+ * Giá trị mặc định (Fallback) khi database chưa có dữ liệu
+ */
+declare const DEFAULT_SETTINGS: Record<SettingKey, any>;
+/**
+ * Phân nhóm settings để hiển thị UI
+ */
+declare const SETTING_CATEGORIES: {
+    BORROW: SettingKey[];
+    FINE: SettingKey[];
+    NOTIFICATION: SettingKey[];
+    SYSTEM: SettingKey[];
+};
+
+/**
+ * Schema dùng để validate request cập nhật một setting
+ */
+declare const UpdateSettingSchema: z.ZodObject<{
+    key: z.ZodEnum<typeof SettingKey>;
+    value: z.ZodAny;
+}, z.core.$strip>;
+type UpdateSettingDto = z.infer<typeof UpdateSettingSchema>;
+/**
+ * Định nghĩa các bộ quy tắc validation riêng cho từng khóa cấu hình
+ * Giúp đảm bảo dữ liệu nhập vào từ Admin UI luôn đúng logic
+ */
+declare const SettingValidationMap: Partial<Record<SettingKey, z.ZodTypeAny>>;
 
 /**
  * Định nghĩa chuẩn cho kết quả của một Rule.
@@ -129,6 +207,16 @@ declare const noOverdue: Rule<BorrowContext>;
  */
 declare const borrowRuleSet: Array<Rule<BorrowContext>>;
 
+/**
+ * Hàm thực thi danh sách các rules theo chuỗi (pipeline).
+ * Sẽ dừng lại ở rule đầu tiên trả về kết quả không thành công (ok: false).
+ *
+ * @param input Dữ liệu context cần kiểm tra
+ * @param rules Mảng các rules thực thi
+ * @returns RuleResult
+ */
+declare const runRules: <T>(rules: Rule<T>[], input: T) => RuleResult;
+
 interface PaginationMeta {
     total: number;
     page: number;
@@ -183,58 +271,6 @@ interface CreateNotificationDto {
     metadata?: Record<string, any>;
 }
 
-/**
- * Hàm thực thi danh sách các rules theo chuỗi (pipeline).
- * Sẽ dừng lại ở rule đầu tiên trả về kết quả không thành công (ok: false).
- *
- * @param input Dữ liệu context cần kiểm tra
- * @param rules Mảng các rules thực thi
- * @returns RuleResult
- */
-declare const runRules: <T>(rules: Rule<T>[], input: T) => RuleResult;
-
-/**
- * Danh sách các khóa cấu hình hệ thống
- */
-declare enum SettingKey {
-    BORROW_LIMIT = "BORROW_LIMIT",
-    BORROW_DURATION_DAYS = "BORROW_DURATION_DAYS",
-    FINE_PER_DAY = "FINE_PER_DAY",
-    MAX_FINE = "MAX_FINE",
-    DUE_SOON_DAYS = "DUE_SOON_DAYS",
-    OVERDUE_CHECK_TIME = "OVERDUE_CHECK_TIME",
-    ENABLE_FINE = "ENABLE_FINE",
-    ENABLE_NOTIFICATION = "ENABLE_NOTIFICATION",
-    MAINTENANCE_MODE = "MAINTENANCE_MODE"
-}
-/**
- * Giá trị mặc định (Fallback) khi database chưa có dữ liệu
- */
-declare const DEFAULT_SETTINGS: Record<SettingKey, any>;
-/**
- * Phân nhóm settings để hiển thị UI
- */
-declare const SETTING_CATEGORIES: {
-    BORROW: SettingKey[];
-    FINE: SettingKey[];
-    NOTIFICATION: SettingKey[];
-    SYSTEM: SettingKey[];
-};
-
-/**
- * Schema dùng để validate request cập nhật một setting
- */
-declare const UpdateSettingSchema: z.ZodObject<{
-    key: z.ZodEnum<typeof SettingKey>;
-    value: z.ZodAny;
-}, z.core.$strip>;
-type UpdateSettingDto = z.infer<typeof UpdateSettingSchema>;
-/**
- * Định nghĩa các bộ quy tắc validation riêng cho từng khóa cấu hình
- * Giúp đảm bảo dữ liệu nhập vào từ Admin UI luôn đúng logic
- */
-declare const SettingValidationMap: Partial<Record<SettingKey, z.ZodTypeAny>>;
-
 declare enum UserRole {
     ADMIN = "ADMIN",
     STAFF = "STAFF",
@@ -245,4 +281,104 @@ declare enum UserStatus {
     BLOCKED = "BLOCKED"
 }
 
-export { type ApiResponse, AuditAction, AuditEntityType, type AuditLog, type BorrowContext, type CreateAuditLogDto, type CreateNotificationDto, DEFAULT_SETTINGS, ErrorCode, type ErrorCodeType, type Notification, NotificationType, type PaginatedData, type PaginationMeta, type Rule, type RuleResult, SETTING_CATEGORIES, SettingKey, SettingValidationMap, type UpdateSettingDto, UpdateSettingSchema, UserRole, UserStatus, booksAvailable, borrowRuleSet, isUserActive, noOverdue, runRules, withinLimit };
+interface BookEntity {
+    id: string;
+    title: string;
+    author: string;
+    isbn?: string;
+    description?: string;
+    coverUrl?: string;
+    categoryId: string;
+    totalCount: number;
+    availableCount: number;
+    callNumber?: string;
+    category?: CategoryEntity;
+    createdAt: string;
+    updatedAt: string;
+}
+interface CategoryEntity {
+    id: string;
+    name: string;
+    description?: string;
+    booksCount?: number;
+    createdAt: string;
+    updatedAt: string;
+}
+interface UserEntity {
+    id: string;
+    username: string;
+    fullName: string;
+    email: string;
+    role: 'ADMIN' | 'STAFF' | 'READER';
+    status: 'ACTIVE' | 'BLOCKED';
+    createdAt: string;
+    updatedAt: string;
+}
+interface BorrowEntity {
+    id: string;
+    bookId: string;
+    readerId: string;
+    borrowDate: string;
+    dueDate: string;
+    returnDate?: string;
+    status: 'BORROWED' | 'RETURNED' | 'OVERDUE';
+    fineAmount: number;
+    book?: BookEntity;
+    reader?: UserEntity;
+    createdAt: string;
+    updatedAt: string;
+}
+interface NotificationEntity {
+    id: string;
+    userId: string;
+    title: string;
+    message: string;
+    type: string;
+    isRead: boolean;
+    metadata?: any;
+    createdAt: string;
+    updatedAt: string;
+}
+
+interface ApiClientConfig {
+    baseURL: string;
+    getToken?: () => string | null;
+    onUnauthorized?: () => void;
+    onError?: (message: string) => void;
+}
+declare const createSharedApiClient: (config: ApiClientConfig) => AxiosInstance;
+
+declare const createBookApi: (api: AxiosInstance) => {
+    list: (params?: any) => Promise<any>;
+    get: (id: string) => Promise<any>;
+    create: (data: any) => Promise<any>;
+    update: (id: string, data: any) => Promise<any>;
+    delete: (id: string) => Promise<any>;
+    bulkDelete: (ids: string[]) => Promise<any>;
+    fetchISBN: (isbn: string) => Promise<any>;
+    adjustInventory: (id: string, data: any) => Promise<any>;
+    getInventoryLogs: (id: string) => Promise<any>;
+};
+declare const createCategoryApi: (api: AxiosInstance) => {
+    list: (params?: any) => Promise<any>;
+    get: (id: string) => Promise<any>;
+    create: (data: any) => Promise<any>;
+    update: (id: string, data: any) => Promise<any>;
+    delete: (id: string) => Promise<any>;
+};
+declare const createBorrowApi: (api: AxiosInstance) => {
+    list: (params?: any) => Promise<any>;
+    getMyBorrowed: () => Promise<any>;
+    borrow: (data: {
+        bookId: string;
+        readerId: string;
+    }) => Promise<any>;
+    return: (id: string) => Promise<any>;
+};
+declare const createNotificationApi: (api: AxiosInstance) => {
+    getAll: (params?: any) => Promise<any>;
+    markAsRead: (id: string) => Promise<any>;
+    markAllAsRead: () => Promise<any>;
+};
+
+export { type ApiClientConfig, type ApiResponse, AuditAction, AuditEntityType, type AuditLog, type BookEntity, type BorrowContext, type BorrowEntity, type CategoryEntity, type CreateAuditLogDto, type CreateNotificationDto, DEFAULT_SETTINGS, ErrorCode, type ErrorCodeType, type Notification, type NotificationEntity, NotificationType, type PaginatedData, type PaginationMeta, QUERY_KEYS, type Rule, type RuleResult, SETTING_CATEGORIES, SettingKey, SettingValidationMap, type UpdateSettingDto, UpdateSettingSchema, type UserEntity, UserRole, UserStatus, booksAvailable, borrowRuleSet, createBookApi, createBorrowApi, createCategoryApi, createNotificationApi, createSharedApiClient, isUserActive, noOverdue, runRules, withinLimit };

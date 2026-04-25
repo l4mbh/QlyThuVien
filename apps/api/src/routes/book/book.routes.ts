@@ -6,9 +6,9 @@ import { UserRole } from "@prisma/client";
 const router = Router();
 const bookController = new BookController();
 
-router.get("/", authMiddleware, bookController.getAllBooks);
+router.get("/", bookController.getAllBooks);
 router.post("/", authMiddleware, roleMiddleware([UserRole.ADMIN, UserRole.STAFF]), bookController.createBook);
-router.get("/:id", authMiddleware, bookController.getBookById);
+router.get("/:id", bookController.getBookById);
 router.get("/fetch-isbn/:isbn", authMiddleware, bookController.fetchISBN);
 router.patch("/:id", authMiddleware, roleMiddleware([UserRole.ADMIN, UserRole.STAFF]), bookController.updateBook);
 
