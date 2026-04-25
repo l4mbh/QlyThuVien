@@ -1,103 +1,71 @@
-# API Documentation
+# API Documentation (Full System)
 
-Updated: 2026-04-24
-Base URL: `http://localhost:3000/api`
-
----
-
-## 🔐 Authentication (`/auth`)
-
-### POST `/auth/register`
-Register new account.
-**Request:** `{ name, email, password }`
-**Response:** `{ data: { user, token }, code: 0 }`
-
-### POST `/auth/login`
-Login to system.
-**Request:** `{ email, password }`
-**Response:** `{ data: { user, token }, code: 0 }`
-
-### GET `/auth/me`
-Get current user profile (JWT required).
-**Response:** `{ data: user, code: 0 }`
+Ngày cập nhật: 25/04/2026
+Base URL: `http://localhost:3000/api/v1`
 
 ---
 
-## 📚 Books (`/books`)
+## 🆔 Authentication & Security
 
-### GET `/books`
-List books with filters (search, categoryId, available, sort).
-**Params:** `page`, `limit`, `search`, `categoryId`, `available`, `sort`
-**Response:** `{ data: BookEntity[], meta: { total, totalPages, page, limit }, code: 0 }`
+### 1. JWT Authentication (Staff/Admin)
+Dùng cho Dashboard Admin. Gửi token trong header:
+`Authorization: Bearer {token}`
 
-### GET `/books/fetch-isbn/:isbn`
-Smart fetch book info from external APIs.
-**Response:** `{ data: { title, author, category, publishedYear, coverUrl }, code: 0 }`
-
----
-
-## 📂 Categories (`/categories`)
-
-### GET `/categories`
-List categories with server-side pagination/search.
-**Params:** `page`, `limit`, `search`
-**Response:** `{ data: CategoryEntity[], meta: { total, totalPages, page, limit }, code: 0 }`
+### 2. Phone-first Identity (Reader)
+Dùng cho App Reader. Gửi SĐT trong header:
+`X-Reader-Phone: {phone_number}`
 
 ---
 
-## 👤 Users (`/users`)
+## 🛠 Admin Management (Staff/Admin Only)
 
-### GET `/users/:id`
-Get detailed reader profile with financial stats.
-**Response:** 
-```json
-{
-  "data": {
-    "id": "...",
-    "name": "...",
-    "email": "...",
-    "totalFine": 25000,
-    "overdueCount": 2,
-    "borrowRecords": [...]
-  },
-  "code": 0
-}
-```
+### 📚 Books
+- **GET /books**: Lấy danh sách sách (hỗ trợ phân trang, tìm kiếm, lọc theo thể loại).
+- **POST /books**: Thêm sách mới (tự động cập nhật `availableQuantity`).
+- **PATCH /books/:id**: Cập nhật thông tin sách.
+- **DELETE /books**: Xóa sách (hỗ trợ Bulk Delete qua `ids` trong body).
 
----
+### 🏷 Categories
+- **GET /categories**: Lấy danh sách thể loại.
+- **POST /categories**: Tạo thể loại mới (tự sinh mã code).
+- **DELETE /categories**: Xóa thể loại (Bulk Delete).
 
-## 🤝 Borrowing (`/borrow`)
+### 👥 Readers
+- **GET /users?role=READER**: Lấy danh sách người đọc.
+- **GET /users/lookup?phone={phone}**: Tra cứu Reader nhanh bằng SĐT (dùng cho POS borrowing).
+- **PATCH /users/:id**: Cập nhật thông tin, giới hạn mượn hoặc khóa tài khoản Reader.
 
-### POST `/borrow`
-Create borrow record for one or multiple books.
-**Request:** `{ readerId, bookIds: string[], dueDate }`
-**Response:** `{ data: BorrowRecord, code: 0 }`
+### 🔄 Borrowing (Librarian POS)
+- **POST /borrows**: Tạo giao dịch mượn mới (Cart-based).
+- **POST /borrows/return**: Xử lý trả sách, tính toán tiền phạt tự động dựa trên cấu hình.
+- **GET /borrows**: Xem toàn bộ lịch sử mượn trả hệ thống.
 
-### POST `/borrow/return`
-Process book returns and calculate fines.
-**Request:** `{ borrowItemIds: string[] }`
-**Logic:** 
-- Calculates fine: `overdueDays * 5,000 VND`
-- Updates `fineAmount` in `BorrowItem`
-- Restores book stock and decrements reader's `currentBorrowCount`
-**Response:** `{ message: "Books returned successfully", code: 0 }`
+### 📈 Reports & Dashboard
+- **GET /reports/dashboard**: Thống kê tổng quan (Bento Grid data).
+- **GET /reports/inventory**: Báo cáo sức khỏe kho sách (Low stock, Dead stock).
+- **GET /reports/finance**: Báo cáo doanh thu tiền phạt.
 
 ---
 
-## 📊 Reports (`/reports`)
+## 📱 Reader Features (Client App)
 
-### GET `/reports/daily-operations`
-Get all borrow/return activities for today.
-**Response:** `{ data: DailyOperation[], code: 0 }`
+### 🔍 Discovery
+- **GET /books**: Tìm kiếm sách công khai.
+- **GET /categories**: Xem danh mục sách.
 
-### GET `/reports/actionable-overdue`
-List of books currently overdue that require action.
-**Response:** `{ data: ActionableOverdue[], code: 0 }`
+### 📖 Personal Shelf
+- **GET /borrows/my**: Xem danh sách sách đang mượn và lịch sử cá nhân.
+- **Headers:** `X-Reader-Phone: {phone}`
 
-### GET `/reports/collection-health`
-Summary of inventory state, dead stock, and best sellers.
-**Response:** `{ data: CollectionHealth, code: 0 }`
+### 🔔 Notifications
+- **GET /notifications**: Nhận thông báo thời gian thực về hạn trả sách, tin nhắn từ thư viện.
+- **PATCH /notifications/:id/read**: Đánh giá đã đọc thông báo.
 
-### GET `/reports/financial-ledger`
-Reconciliation log of fines collected today.
-**Response:** `{ data: FinancialLedgerEntry[], code: 0 }`
+---
+
+## ⚙️ System Configuration (Admin Only)
+
+### 🔧 Settings
+- **GET /settings**: Lấy toàn bộ cấu hình (Borrow limit, Fine per day, Maintenance mode...).
+- **PATCH /settings/:key**: Cập nhật cấu hình hệ thống (có ghi Audit Log).
+- **GET /system/status**: (Public) Kiểm tra trạng thái bảo trì.

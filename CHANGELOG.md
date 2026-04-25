@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-04-25] - Phone-First Identity Migration
+### Added
+- **Identity-lite System**: Transitioned from mandatory Email/Password to a UX-first Phone-first identity model.
+- **Normalized Phone Logic**: Implemented centralized phone normalization (VN standard) to prevent duplicate identities.
+- **Staff Phone Lookup**: Replaced reader dropdown in Admin App with a high-speed Phone Lookup interface.
+- **Guest Auto-Creation**: Enabled seamless "Find-or-Create" logic during borrowing; new users are created silently as guests.
+- **Reader Mobile App UX**: 
+    - Dedicated `LoginPage` using only phone number.
+    - `AuthGuard` protecting personal borrowing data.
+    - `My Bookshelf` dashboard with real-time loan status tracking (Due Soon/Overdue).
+- **Identity Header Protocol**: Standardized `X-Reader-Phone` header for authenticated API calls from the Reader app.
+- **API Documentation**: Generated comprehensive Markdown and OpenAPI/Swagger specifications for the new identity flow.
+
+### Changed
+- **Prisma Schema**: Added `phoneRaw`, `phoneNormalized`, and `isGuest` fields to the User model.
+- **Auth Middleware**: Enhanced `authMiddleware` to resolve user identity from either JWT (Staff) or Phone Header (Reader).
+- **Shared API Factory**: Updated `createSharedApiClient` to support dynamic custom headers.
+
+### Fixed
+- **Client Inventory Logic**: Resolved "Out of Stock" bug in Reader App caused by `availableCount`/`availableQuantity` field mismatch.
+- **ReferenceError Fix**: Resolved `readerSearch` variable mismatch in the BorrowModal component.
+
 ## [2026-04-23] - Dashboard Overhaul & Inventory Hardening
 ### Added
 - **Bento Grid Command Center**: Redesigned the Dashboard with a modern Bento Grid layout, prioritizing actionable signals and operational intelligence.

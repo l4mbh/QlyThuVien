@@ -1,0 +1,99 @@
+openapi: 3.0.0
+info:
+  title: QLTV Library Management System API
+  version: 1.2.0
+  description: Comprehensive API documentation for both Admin Dashboard and Reader Client.
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Local Development
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    phoneAuth:
+      type: apiKey
+      in: header
+      name: X-Reader-Phone
+
+paths:
+  # --- COMMON/PUBLIC ---
+  /system/status:
+    get:
+      summary: Get maintenance status
+      responses:
+        '200': { description: Success }
+
+  # --- ADMIN/STAFF ONLY ---
+  /books:
+    get:
+      summary: List books (Admin/Reader)
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Success }
+    post:
+      summary: Create book (Admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '201': { description: Created }
+
+  /users/lookup:
+    get:
+      summary: Staff lookup reader by phone
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: phone
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Success }
+
+  /borrows:
+    post:
+      summary: Create new borrow transaction (Staff POS)
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Success }
+
+  /reports/dashboard:
+    get:
+      summary: Get analytics for Bento Grid
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Success }
+
+  # --- READER ONLY ---
+  /borrows/my:
+    get:
+      summary: Get personal borrowing history
+      security:
+        - phoneAuth: []
+      responses:
+        '200': { description: Success }
+
+  /notifications:
+    get:
+      summary: Get user notifications
+      security:
+        - bearerAuth: []
+        - phoneAuth: []
+      responses:
+        '200': { description: Success }
+
+  # --- SETTINGS ---
+  /settings:
+    get:
+      summary: Get system settings
+      security:
+        - bearerAuth: []
+      responses:
+        '200': { description: Success }
