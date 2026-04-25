@@ -4,6 +4,7 @@ import { X, BookOpen, Clock, Tag, Hash, Bookmark, MapPin } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { useBookDetail } from '../../../hooks/useBooks';
 import { Skeleton } from '../../../components/ui/Skeleton';
+import { useNavigate } from 'react-router-dom';
 
 interface BookDetailModalProps {
   bookId: string | null;
@@ -12,6 +13,17 @@ interface BookDetailModalProps {
 
 export const BookDetailModal: React.FC<BookDetailModalProps> = ({ bookId, onClose }) => {
   const { data: book, isLoading } = useBookDetail(bookId);
+  const navigate = useNavigate();
+  const isLoggedIn = !!localStorage.getItem('reader_phone');
+
+  const handleBorrow = () => {
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
+    // For now, just close modal or show success since actual borrow is done by Staff
+    onClose();
+  };
 
   return (
     <Drawer.Root open={!!bookId} onOpenChange={(open) => !open && onClose()}>
@@ -107,9 +119,9 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ bookId, onClos
                   {book.availableQuantity > 0 ? (
                     <button 
                       className="w-full py-5 bg-primary text-white rounded-2xl font-black transition-all shadow-xl shadow-primary/30 active:scale-[0.98] hover:bg-primary/90"
-                      onClick={onClose}
+                      onClick={handleBorrow}
                     >
-                      Borrow this Book
+                      {isLoggedIn ? 'Borrow this Book' : 'Sign in to Borrow'}
                     </button>
                   ) : (
                     <div className="w-full py-5 bg-slate-100 text-slate-400 rounded-2xl font-black text-center">

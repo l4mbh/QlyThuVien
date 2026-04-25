@@ -59,15 +59,24 @@ export const MainLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <NavLink to="/profile" className="flex items-center gap-3 group">
-              <div className="hidden sm:flex flex-col items-end">
-                <span className="text-xs font-black text-slate-900 leading-none">John Doe</span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase">Premium Member</span>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-primary font-black shadow-sm group-hover:border-primary transition-all">
-                JD
-              </div>
-            </NavLink>
+            {localStorage.getItem('reader_phone') ? (
+              <NavLink to="/profile" className="flex items-center gap-3 group">
+                <div className="hidden sm:flex flex-col items-end">
+                  <span className="text-xs font-black text-slate-900 leading-none">Reader</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">{localStorage.getItem('reader_phone')}</span>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black shadow-sm group-hover:bg-primary group-hover:text-white transition-all">
+                  {localStorage.getItem('reader_phone')?.slice(-2) || 'RD'}
+                </div>
+              </NavLink>
+            ) : (
+              <NavLink 
+                to="/login" 
+                className="px-6 py-2.5 bg-primary text-white text-sm font-black rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              >
+                Sign In
+              </NavLink>
+            )}
           </div>
         </div>
       </header>

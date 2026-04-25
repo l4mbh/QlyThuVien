@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { MainLayout } from './components/layout/MainLayout';
 import { Toaster } from 'sonner';
 import { HomePage } from './features/home/pages/HomePage';
@@ -107,8 +107,10 @@ const ProfilePage = () => {
 
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const phone = localStorage.getItem('reader_phone');
+  const location = useLocation();
+
   if (!phone) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
   return <>{children}</>;
 };
@@ -120,13 +122,13 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         
-        <Route path="/" element={<AuthGuard><MainLayout /></AuthGuard>}>
+        <Route path="/" element={<MainLayout />}>
           <Route index element={<HomePage />} />
           <Route path="search" element={<SearchPage />} />
           <Route path="catalog" element={<CatalogPage />} />
-          <Route path="my-books" element={<MyBooksPage />} />
-          <Route path="notifications" element={<NotificationsPage />} />
-          <Route path="profile" element={<ProfilePage />} />
+          <Route path="my-books" element={<AuthGuard><MyBooksPage /></AuthGuard>} />
+          <Route path="notifications" element={<AuthGuard><NotificationsPage /></AuthGuard>} />
+          <Route path="profile" element={<AuthGuard><ProfilePage /></AuthGuard>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

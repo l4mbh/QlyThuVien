@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { Phone, ArrowRight, BookOpen, Loader2 } from "lucide-react";
 
@@ -7,6 +7,8 @@ export const LoginPage = () => {
   const [phone, setPhone] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,7 +24,7 @@ export const LoginPage = () => {
     try {
       localStorage.setItem("reader_phone", phone);
       toast.success("Welcome back!");
-      navigate("/");
+      navigate(from, { replace: true });
     } catch (error) {
       toast.error("Failed to sign in");
     } finally {
