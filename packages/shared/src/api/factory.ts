@@ -3,6 +3,7 @@ import axios, { AxiosInstance } from 'axios';
 export interface ApiClientConfig {
   baseURL: string;
   getToken?: () => string | null;
+  getExtraHeaders?: () => Record<string, string>;
   onUnauthorized?: () => void;
   onError?: (message: string) => void;
 }
@@ -22,6 +23,12 @@ export const createSharedApiClient = (config: ApiClientConfig): AxiosInstance =>
       if (token) {
         req.headers.Authorization = `Bearer ${token}`;
       }
+      
+      const extraHeaders = config.getExtraHeaders?.();
+      if (extraHeaders) {
+        Object.assign(req.headers, extraHeaders);
+      }
+      
       return req;
     },
     (error) => Promise.reject(error)

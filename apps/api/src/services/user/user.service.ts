@@ -6,12 +6,24 @@ import { AppError } from "../../utils/app-error";
 import { UserStatus } from "@prisma/client";
 import { hashPassword } from "../../utils/hash.util";
 import { settingService } from "../settings/setting.service";
+import { normalizePhone } from "@qltv/shared";
 
 export class UserService {
   private userRepository: UserRepository;
 
   constructor() {
     this.userRepository = new UserRepository();
+  }
+
+  async findOrCreateReader(phone: string, name?: string): Promise<any> {
+    const normalized = normalizePhone(phone);
+    const user = await this.userRepository.upsertReader({
+      phoneRaw: phone,
+      phoneNormalized: normalized,
+      name,
+    });
+
+    return this.getUserById(user.id);
   }
 
   async getAllUsers(filter: { role?: any } = {}): Promise<any[]> {
@@ -93,10 +105,13 @@ export class UserService {
   }
 
   async createUser(data: CreateUserDTO): Promise<UserEntity> {
-    const existingUser = await this.userRepository.findByEmail(data.email);
-    if (existingUser) {
-      throw new AppError(ErrorCode.USER_ALREADY_EXISTS, "Email already registered");
+    if (data.email) {
+      const existingUser = await this.userRepository.findByEmail(data.email);
+      if (existingUser) {
+        throw new AppError(ErrorCode.USER_ALREADY_EXISTS, "Email already registered");
+      }
     }
+
     const password = data.password || "123456";
     const hashedPassword = await hashPassword(password);
 
@@ -114,6 +129,13 @@ export class UserService {
   async blockUser(id: string): Promise<UserEntity> {
     await this.getUserById(id);
     return this.userRepository.updateStatus(id, UserStatus.BLOCKED);
+  }
+
+  async getUserByPhone(phone: string): Promise<any | null> {
+    const normalized = normalizePhone(phone);
+    const user = await this.userRepository.findByPhoneNormalized(normalized);
+    if (!user) return null;
+    return this.getUserById(user.id);
   }
 }
 

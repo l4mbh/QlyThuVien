@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { UserService } from "../../services/user/user.service";
 import { ErrorCode } from "@qltv/shared";
 import { ApiResponse } from "@qltv/shared";
+import { AppError } from "../../utils/app-error";
 
 export class UserController {
   private userService: UserService;
@@ -54,6 +55,20 @@ export class UserController {
   blockUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const user = await this.userService.blockUser(req.params.id as string);
+      const response: ApiResponse = { data: user, code: ErrorCode.SUCCESS };
+      res.json(response);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  lookupUserByPhone = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { phone } = req.query;
+      if (!phone) {
+        throw new AppError(ErrorCode.BAD_REQUEST, "Phone is required");
+      }
+      const user = await this.userService.getUserByPhone(phone as string);
       const response: ApiResponse = { data: user, code: ErrorCode.SUCCESS };
       res.json(response);
     } catch (error) {

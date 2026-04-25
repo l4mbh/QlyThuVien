@@ -5,10 +5,13 @@ import { toast } from 'sonner';
 const api = createSharedApiClient({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1',
   getToken: () => localStorage.getItem('token'),
+  getExtraHeaders: () => {
+    const phone = localStorage.getItem('reader_phone');
+    return phone ? { 'X-Reader-Phone': phone } : {};
+  },
   onUnauthorized: () => {
     localStorage.removeItem('token');
-    // For reader app, we don't always force redirect to login, 
-    // but we clear the session.
+    localStorage.removeItem('reader_phone');
   },
   onError: (message) => {
     toast.error(message);

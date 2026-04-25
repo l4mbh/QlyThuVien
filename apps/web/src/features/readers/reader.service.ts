@@ -32,5 +32,12 @@ export const readerService = {
     const response = await api.patch<ApiResponse<Reader>>(`/users/${id}/block`);
     return response.data;
   },
+  
+  lookupReaderByPhone: async (phone: string) => {
+    const response = await api.get<ApiResponse<Reader>>("/users/lookup", {
+      params: { phone },
+    });
+    return response.data;
+  },
 };
 

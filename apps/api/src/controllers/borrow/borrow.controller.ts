@@ -20,6 +20,17 @@ export class BorrowController {
     }
   };
 
+  getMyBorrowed = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = (req as any).user.userId;
+      const borrows = await this.borrowService.getMyBorrowed(userId);
+      const response: ApiResponse = { data: borrows, code: ErrorCode.SUCCESS };
+      res.json(response);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   getBorrowById = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const borrow = await this.borrowService.getBorrowById(req.params.id as string);

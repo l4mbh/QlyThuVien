@@ -30,6 +30,20 @@ export class BorrowRepository {
     });
   }
 
+  async findRecordsByUserId(userId: string): Promise<any[]> {
+    return prisma.borrowRecord.findMany({
+      where: { userId },
+      include: {
+        borrowItems: {
+          include: {
+            book: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
   async findItemById(id: string): Promise<BorrowItemEntity | null> {
     return prisma.borrowItem.findUnique({ where: { id } });
   }

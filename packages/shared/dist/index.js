@@ -51,6 +51,7 @@ __export(index_exports, {
   createSharedApiClient: () => createSharedApiClient,
   isUserActive: () => isUserActive,
   noOverdue: () => noOverdue,
+  normalizePhone: () => normalizePhone,
   runRules: () => runRules,
   withinLimit: () => withinLimit
 });
@@ -294,6 +295,10 @@ var createSharedApiClient = (config) => {
       if (token) {
         req.headers.Authorization = `Bearer ${token}`;
       }
+      const extraHeaders = config.getExtraHeaders?.();
+      if (extraHeaders) {
+        Object.assign(req.headers, extraHeaders);
+      }
       return req;
     },
     (error) => Promise.reject(error)
@@ -353,6 +358,28 @@ var createNotificationApi = (api) => ({
   markAsRead: (id) => api.patch(`/notifications/${id}/read`).then((res) => res.data),
   markAllAsRead: () => api.post("/notifications/mark-all-read").then((res) => res.data)
 });
+
+// src/utils/phone.ts
+var normalizePhone = (phone) => {
+  if (!phone) return "";
+  let cleaned = phone.replace(/[^\d+]/g, "");
+  if (cleaned.startsWith("0")) {
+    return "+84" + cleaned.substring(1);
+  }
+  if (cleaned.startsWith("84") && !cleaned.startsWith("+")) {
+    return "+" + cleaned;
+  }
+  if (/^\d{9}$/.test(cleaned)) {
+    return "+84" + cleaned;
+  }
+  if (cleaned.startsWith("+84")) {
+    return cleaned;
+  }
+  if (!cleaned.startsWith("+") && cleaned.length >= 9) {
+    return "+84" + cleaned;
+  }
+  return cleaned;
+};
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   AuditAction,
@@ -376,6 +403,7 @@ var createNotificationApi = (api) => ({
   createSharedApiClient,
   isUserActive,
   noOverdue,
+  normalizePhone,
   runRules,
   withinLimit
 });

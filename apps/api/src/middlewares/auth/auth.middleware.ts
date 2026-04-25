@@ -4,21 +4,41 @@ import { verifyToken } from "../../utils/jwt.util";
 import { UserRole } from "@prisma/client";
 import { AppError } from "../../utils/app-error";
 
-export const authMiddleware = (
+import { UserService } from "../../services/user/user.service";
+
+const userService = new UserService();
+
+export const authMiddleware = async (
   req: any, // Use any to attach user property
   res: Response,
   next: NextFunction
 ) => {
   try {
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      throw new AppError(ErrorCode.UNAUTHORIZED, "No token provided");
+    const readerPhone = req.headers["x-reader-phone"];
+
+    // 1. Try JWT Auth
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.split(" ")[1];
+      const decoded = verifyToken(token);
+      req.user = decoded;
+      return next();
     }
 
-    const token = authHeader.split(" ")[1];
-    const decoded = verifyToken(token);
-    req.user = decoded;
-    next();
+    // 2. Try Phone-based Auth (Identity-lite)
+    if (readerPhone) {
+      const user = await userService.getUserByPhone(readerPhone as string);
+      if (user) {
+        req.user = { 
+          userId: user.id, 
+          role: user.role,
+          phone: user.phoneNormalized 
+        };
+        return next();
+      }
+    }
+
+    throw new AppError(ErrorCode.UNAUTHORIZED, "No identity provided");
   } catch (error: any) {
     if (error instanceof AppError) {
       return next(error);
@@ -35,7 +55,6 @@ export const authMiddleware = (
       message = "Invalid token";
     }
 
-    
     next(new AppError(code, message));
   }
 };

@@ -281,6 +281,16 @@ declare enum UserStatus {
     BLOCKED = "BLOCKED"
 }
 
+interface CreateBorrowDTO {
+    userId?: string;
+    phone?: string;
+    bookIds: string[];
+    dueDate: string | Date;
+}
+interface ReturnBookDTO {
+    borrowItemIds: string[];
+}
+
 interface BookEntity {
     id: string;
     title: string;
@@ -289,8 +299,8 @@ interface BookEntity {
     description?: string;
     coverUrl?: string;
     categoryId: string;
-    totalCount: number;
-    availableCount: number;
+    totalQuantity: number;
+    availableQuantity: number;
     callNumber?: string;
     category?: CategoryEntity;
     createdAt: string;
@@ -343,6 +353,7 @@ interface NotificationEntity {
 interface ApiClientConfig {
     baseURL: string;
     getToken?: () => string | null;
+    getExtraHeaders?: () => Record<string, string>;
     onUnauthorized?: () => void;
     onError?: (message: string) => void;
 }
@@ -381,4 +392,14 @@ declare const createNotificationApi: (api: AxiosInstance) => {
     markAllAsRead: () => Promise<any>;
 };
 
-export { type ApiClientConfig, type ApiResponse, AuditAction, AuditEntityType, type AuditLog, type BookEntity, type BorrowContext, type BorrowEntity, type CategoryEntity, type CreateAuditLogDto, type CreateNotificationDto, DEFAULT_SETTINGS, ErrorCode, type ErrorCodeType, type Notification, type NotificationEntity, NotificationType, type PaginatedData, type PaginationMeta, QUERY_KEYS, type Rule, type RuleResult, SETTING_CATEGORIES, SettingKey, SettingValidationMap, type UpdateSettingDto, UpdateSettingSchema, type UserEntity, UserRole, UserStatus, booksAvailable, borrowRuleSet, createBookApi, createBorrowApi, createCategoryApi, createNotificationApi, createSharedApiClient, isUserActive, noOverdue, runRules, withinLimit };
+/**
+ * Normalize phone number to international format (+84...)
+ * Rules:
+ * - Remove spaces, dots, dashes, parentheses
+ * - 0912345678 -> +84912345678
+ * - 912345678 -> +84912345678
+ * - 84912345678 -> +84912345678
+ */
+declare const normalizePhone: (phone: string) => string;
+
+export { type ApiClientConfig, type ApiResponse, AuditAction, AuditEntityType, type AuditLog, type BookEntity, type BorrowContext, type BorrowEntity, type CategoryEntity, type CreateAuditLogDto, type CreateBorrowDTO, type CreateNotificationDto, DEFAULT_SETTINGS, ErrorCode, type ErrorCodeType, type Notification, type NotificationEntity, NotificationType, type PaginatedData, type PaginationMeta, QUERY_KEYS, type ReturnBookDTO, type Rule, type RuleResult, SETTING_CATEGORIES, SettingKey, SettingValidationMap, type UpdateSettingDto, UpdateSettingSchema, type UserEntity, UserRole, UserStatus, booksAvailable, borrowRuleSet, createBookApi, createBorrowApi, createCategoryApi, createNotificationApi, createSharedApiClient, isUserActive, noOverdue, normalizePhone, runRules, withinLimit };

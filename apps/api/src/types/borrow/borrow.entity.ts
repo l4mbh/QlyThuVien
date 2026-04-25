@@ -21,13 +21,8 @@ export interface BorrowItemEntity {
   updatedAt: Date;
 }
 
-export interface CreateBorrowDTO {
-  userId: string;
-  bookIds: string[];
-  dueDate: Date;
-}
+import { CreateBorrowDTO as ICreateBorrowDTO, ReturnBookDTO as IReturnBookDTO } from "@qltv/shared";
 
-export interface ReturnBookDTO {
-  borrowItemIds: string[];
-}
+export type CreateBorrowDTO = ICreateBorrowDTO;
+export type ReturnBookDTO = IReturnBookDTO;
 

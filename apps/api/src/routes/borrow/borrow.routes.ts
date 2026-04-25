@@ -7,6 +7,7 @@ const router = Router();
 const borrowController = new BorrowController();
 
 router.get("/", authMiddleware, borrowController.getAllBorrows);
+router.get("/my", authMiddleware, borrowController.getMyBorrowed);
 router.post("/", authMiddleware, roleMiddleware([UserRole.STAFF, UserRole.ADMIN]), borrowController.createBorrow);
 router.post("/return", authMiddleware, roleMiddleware([UserRole.STAFF, UserRole.ADMIN]), borrowController.returnBook);
 router.get("/:id", authMiddleware, borrowController.getBorrowById);

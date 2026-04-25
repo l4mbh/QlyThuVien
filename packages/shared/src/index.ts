@@ -14,6 +14,7 @@ export * from './types/audit';
 export * from './types/notification';
 export * from './types/rules';
 export * from './types/user';
+export * from './types/borrow';
 
 // Explicitly export entities to ensure visibility in all builds
 export type { 
@@ -26,3 +27,4 @@ export type {
 
 export * from './api/factory';
 export * from './api/index';
+export * from './utils/phone';

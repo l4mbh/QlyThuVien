@@ -62,9 +62,9 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ bookId, onClos
                     </h2>
                     <div className={cn(
                       "px-4 py-1.5 text-[11px] font-black rounded-full uppercase flex-shrink-0 shadow-lg",
-                      book.availableCount > 0 ? "bg-green-500 text-white shadow-green-500/20" : "bg-slate-500 text-white"
+                      book.availableQuantity > 0 ? "bg-green-500 text-white shadow-green-500/20" : "bg-slate-500 text-white"
                     )}>
-                      {book.availableCount > 0 ? 'Available' : 'Out of Stock'}
+                      {book.availableQuantity > 0 ? 'Available' : 'Out of Stock'}
                     </div>
                   </div>
                   <p className="text-lg font-bold text-slate-500">
@@ -104,7 +104,7 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ bookId, onClos
 
                 {/* Action Area */}
                 <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-md border-t border-slate-100 max-w-2xl mx-auto rounded-t-3xl">
-                  {book.availableCount > 0 ? (
+                  {book.availableQuantity > 0 ? (
                     <button 
                       className="w-full py-5 bg-primary text-white rounded-2xl font-black transition-all shadow-xl shadow-primary/30 active:scale-[0.98] hover:bg-primary/90"
                       onClick={onClose}

@@ -9,15 +9,18 @@ datasource db {
 
 model User {
   id                 String         @id @default(uuid())
-  name               String
-  email              String         @unique
+  name               String?
+  email              String?        @unique
+  phoneRaw           String?
+  phoneNormalized    String?        @unique
   role               UserRole       @default(STAFF)
   status             UserStatus     @default(ACTIVE)
+  isGuest            Boolean        @default(true)
   borrowLimit        Int            @default(5)
   currentBorrowCount Int            @default(0)
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
-  password           String
+  password           String?
   auditLogs          AuditLog[]
   borrowRecords      BorrowRecord[]
   inventoryLogs      InventoryLog[]

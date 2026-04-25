@@ -87,7 +87,7 @@ export const SearchPage: React.FC = () => {
               title={book.title}
               author={book.author}
               coverUrl={book.coverUrl}
-              status={book.availableCount > 0 ? 'available' : 'out_of_stock'}
+              status={book.availableQuantity > 0 ? 'available' : 'out_of_stock'}
               onClick={() => setSelectedBookId(book.id)}
             />
           ))}

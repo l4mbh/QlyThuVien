@@ -7,6 +7,7 @@ const router = Router();
 const userController = new UserController();
 
 router.get("/", authMiddleware, userController.getAllUsers);
+router.get("/lookup", authMiddleware, userController.lookupUserByPhone);
 router.post("/", authMiddleware, roleMiddleware([UserRole.ADMIN, UserRole.STAFF]), userController.createUser);
 router.get("/:id", authMiddleware, userController.getUserById);
 router.patch("/:id", authMiddleware, userController.updateUser);

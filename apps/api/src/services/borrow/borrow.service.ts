@@ -9,16 +9,23 @@ import { borrowRuleSet } from "@qltv/shared";
 import { auditService } from "../audit/audit.service";
 import { notificationService } from "../notification/notification.service";
 import { settingService } from "../settings/setting.service";
+import { UserService } from "../user/user.service";
 
 export class BorrowService {
   private borrowRepository: BorrowRepository;
+  private userService: UserService;
 
   constructor() {
     this.borrowRepository = new BorrowRepository();
+    this.userService = new UserService();
   }
 
   async getAllBorrows() {
     return this.borrowRepository.findAllRecords();
+  }
+
+  async getMyBorrowed(userId: string) {
+    return this.borrowRepository.findRecordsByUserId(userId);
   }
 
   async getBorrowById(id: string) {
@@ -30,7 +37,17 @@ export class BorrowService {
   }
 
   async createBorrow(data: CreateBorrowDTO, performerId: string) {
-    const { userId, bookIds, dueDate } = data;
+    let { userId, phone, bookIds, dueDate } = data;
+
+    // 0. Pre-resolve user if phone provided but no userId
+    if (!userId && phone) {
+      const user = await this.userService.findOrCreateReader(phone);
+      userId = user.id;
+    }
+
+    if (!userId) {
+      throw new AppError(ErrorCode.USER_NOT_FOUND, "User identification (ID or Phone) is required");
+    }
 
     return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // 1. Fetch required data for rules

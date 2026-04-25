@@ -30,6 +30,24 @@ export class UserRepository {
     return prisma.user.findUnique({ where: { email } });
   }
 
+  async findByPhoneNormalized(phoneNormalized: string): Promise<UserEntity | null> {
+    return prisma.user.findUnique({ where: { phoneNormalized } });
+  }
+
+  async upsertReader(data: { phoneRaw: string; phoneNormalized: string; name?: string }): Promise<UserEntity> {
+    return prisma.user.upsert({
+      where: { phoneNormalized: data.phoneNormalized },
+      update: {}, // No update if exists
+      create: {
+        phoneRaw: data.phoneRaw,
+        phoneNormalized: data.phoneNormalized,
+        name: data.name || `Reader ${data.phoneRaw.slice(-4)}`,
+        role: "READER",
+        isGuest: true,
+      },
+    });
+  }
+
   async create(data: CreateUserDTO): Promise<UserEntity> {
     return prisma.user.create({ data });
   }

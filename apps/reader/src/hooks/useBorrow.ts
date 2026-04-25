@@ -7,7 +7,38 @@ import { toast } from 'sonner';
 export const useMyBorrowed = () => {
   return useQuery({
     queryKey: [QUERY_KEYS.BORROWS.LIST, 'my'],
-    queryFn: () => borrowService.getMyBorrowed().then(res => res.data as BorrowEntity[]),
+    queryFn: async () => {
+      const res = await borrowService.getMyBorrowed();
+      const records = res.data as any[];
+      
+      const items: any[] = [];
+      const now = new Date();
+
+      records.forEach(record => {
+        record.borrowItems.forEach((item: any) => {
+          if (item.status === 'RETURNED') return;
+
+          const dueDate = new Date(record.dueDate);
+          const diffTime = dueDate.getTime() - now.getTime();
+          const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          
+          let status = 'normal';
+          if (daysLeft < 0) status = 'overdue';
+          else if (daysLeft <= 3) status = 'due_soon';
+
+          items.push({
+            id: item.id,
+            title: item.book.title,
+            author: item.book.author,
+            dueDate: new Date(record.dueDate).toLocaleDateString('en-GB'),
+            status,
+            daysLeft
+          });
+        });
+      });
+
+      return items;
+    },
   });
 };
 

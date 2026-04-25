@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { format, addDays } from "date-fns";
-import { Search, X, BookOpen, User, Calendar, Trash2, Plus } from "lucide-react";
+import { Search, X, BookOpen, User, Calendar, Trash2, Plus, Loader2, Phone } from "lucide-react";
 
 import {
   Dialog,
@@ -52,11 +52,13 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
   onSuccess,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLookupLoading, setIsLookupLoading] = useState(false);
   const [readers, setReaders] = useState<Reader[]>([]);
   const [books, setBooks] = useState<BookEntity[]>([]);
+  const [isNewUser, setIsNewUser] = useState(false);
 
   // Search states
-  const [readerSearch, setReaderSearch] = useState("");
+  const [phoneSearch, setPhoneSearch] = useState("");
   const [bookSearch, setBookSearch] = useState("");
 
   // Selections
@@ -67,6 +69,7 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
     resolver: zodResolver(borrowFormSchema),
     defaultValues: {
       userId: "",
+      phone: "",
       bookIds: [],
       dueDate: addDays(new Date(), 14),
     },
@@ -102,7 +105,7 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
       // Reset state on close
       setSelectedReader(null);
       setCart([]);
-      setReaderSearch("");
+      setPhoneSearch("");
       setBookSearch("");
       form.reset();
     }
@@ -110,12 +113,12 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
 
   // Filtered lists
   const filteredReaders = useMemo(() => {
-    if (!readerSearch) return [];
+    if (!phoneSearch) return [];
     return readers.filter(r =>
-      r.name.toLowerCase().includes(readerSearch.toLowerCase()) ||
-      r.email.toLowerCase().includes(readerSearch.toLowerCase())
+      r.name.toLowerCase().includes(phoneSearch.toLowerCase()) ||
+      r.email.toLowerCase().includes(phoneSearch.toLowerCase())
     ).slice(0, 5);
-  }, [readers, readerSearch]);
+  }, [readers, phoneSearch]);
 
   const filteredBooks = useMemo(() => {
     if (!bookSearch) return [];
@@ -126,22 +129,32 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
     ).slice(0, 5);
   }, [books, bookSearch, cart]);
 
-  const validateBorrow = (reader: Reader, currentCart: BookEntity[], nextBook?: BookEntity) => {
+  const validateBorrow = (reader: Reader | null, currentCart: BookEntity[], nextBook?: BookEntity) => {
     const nextCart = nextBook ? [...currentCart, nextBook] : currentCart;
 
+    // Use default values for new guest users
+    const userData = reader ? {
+      id: reader.id,
+      status: reader.status,
+      currentBorrowCount: reader.currentBorrowCount,
+      borrowLimit: reader.borrowLimit,
+      hasOverdueBooks: reader.hasOverdueBooks
+    } : {
+      id: "guest",
+      status: "ACTIVE" as any,
+      currentBorrowCount: 0,
+      borrowLimit: 5,
+      hasOverdueBooks: false
+    };
+
     const result = runRules(borrowRuleSet, {
-      user: {
-        id: reader.id,
-        status: reader.status,
-        currentBorrowCount: reader.currentBorrowCount,
-        borrowLimit: reader.borrowLimit
-      },
+      user: userData,
       books: nextCart.map(b => ({
         id: b.id,
         title: b.title,
         availableQuantity: b.availableQuantity
       })),
-      hasOverdueBooks: reader.hasOverdueBooks
+      hasOverdueBooks: userData.hasOverdueBooks
     });
 
     if (!result.ok) {
@@ -151,17 +164,44 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
     return true;
   };
 
+  const handlePhoneLookup = async (phone: string) => {
+    if (!phone || phone.length < 9) return;
+
+    setIsLookupLoading(true);
+    setIsNewUser(false);
+    try {
+      const response = await readerService.lookupReaderByPhone(phone);
+      if (response.code === ErrorCode.SUCCESS && response.data) {
+        const reader = response.data as Reader;
+        handleSelectReader(reader);
+      } else {
+        // User not found -> treat as new guest
+        setSelectedReader(null);
+        form.setValue("userId", "");
+        form.setValue("phone", phone);
+        setIsNewUser(true);
+        toast.info("New reader detected. A guest account will be created.");
+      }
+    } catch (error) {
+      console.error("Lookup failed", error);
+    } finally {
+      setIsLookupLoading(false);
+    }
+  };
+
   const handleSelectReader = (reader: Reader) => {
     if (!validateBorrow(reader, [])) {
       return;
     }
     setSelectedReader(reader);
     form.setValue("userId", reader.id);
-    setReaderSearch("");
+    form.setValue("phone", reader.phoneRaw || "");
+    setPhoneSearch("");
+    setIsNewUser(false);
   };
 
   const handleAddToCart = (book: BookEntity) => {
-    if (!selectedReader) return;
+    if (!selectedReader && !isNewUser) return;
 
     if (!validateBorrow(selectedReader, cart, book)) {
       return;
@@ -180,7 +220,7 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
   };
 
   const onSubmit = async (values: BorrowFormValues) => {
-    if (!selectedReader) return;
+    if (!selectedReader && !isNewUser) return;
 
     // Final client-side validation
     if (!validateBorrow(selectedReader, cart)) {
@@ -222,66 +262,78 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
                 {/* Reader Selection */}
                 <div className="space-y-3">
                   <FormLabel className="text-sm font-semibold flex items-center gap-2">
-                    <User className="h-4 w-4" /> 1. Select Reader
+                    <User className="h-4 w-4" /> 1. Identify Reader
                   </FormLabel>
 
-                  {!selectedReader ? (
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search by name or email..."
-                        className="pl-9"
-                        value={readerSearch}
-                        onChange={(e) => setReaderSearch(e.target.value)}
-                      />
-                      {filteredReaders.length > 0 && (
-                        <Card className="absolute z-50 w-full mt-1 shadow-xl border-primary/20 overflow-hidden">
-                          {filteredReaders.map(r => (
-                            <div
-                              key={r.id}
-                              className="p-3 hover:bg-accent cursor-pointer flex justify-between items-center transition-colors"
-                              onClick={() => handleSelectReader(r)}
-                            >
-                              <div className="flex flex-col">
-                                <span className="font-medium text-sm">{r.name}</span>
-                                <span className="text-xs text-muted-foreground">{r.email}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                {r.hasOverdueBooks && (
-                                  <Badge variant="destructive" className="text-[8px] uppercase">Overdue</Badge>
-                                )}
-                                <Badge variant="outline" className="text-[10px]">
-                                  {r.currentBorrowCount}/{r.borrowLimit}
-                                </Badge>
-                              </div>
-                            </div>
-                          ))}
-                        </Card>
-                      )}
+                  {!selectedReader && !isNewUser ? (
+                    <div className="flex gap-2">
+                      <div className="relative flex-grow">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Enter phone number..."
+                          className="pl-9"
+                          value={phoneSearch}
+                          onChange={(e) => setPhoneSearch(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handlePhoneLookup(phoneSearch))}
+                        />
+                      </div>
+                      <Button 
+                        type="button" 
+                        variant="secondary" 
+                        onClick={() => handlePhoneLookup(phoneSearch)}
+                        disabled={isLookupLoading || phoneSearch.length < 9}
+                      >
+                        {isLookupLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Lookup"}
+                      </Button>
                     </div>
-                  ) : (
-                    <Card className="p-3 bg-primary/5 border-primary/20 flex justify-between items-center">
+                  ) : selectedReader ? (
+                    <Card className="p-3 bg-primary/5 border-primary/20 flex justify-between items-center animate-in fade-in slide-in-from-top-1">
                       <div className="flex items-center gap-3">
                         <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                          {selectedReader.name.charAt(0)}
+                          {selectedReader.name?.charAt(0) || "U"}
                         </div>
                         <div className="flex flex-col">
                           <span className="font-bold text-sm">{selectedReader.name}</span>
-                          <span className="text-xs text-muted-foreground">{selectedReader.email}</span>
+                          <span className="text-xs text-muted-foreground">{selectedReader.phoneRaw || selectedReader.email}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="flex flex-col items-end">
-                          <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Limit</span>
-                          <span className="text-sm font-bold">{selectedReader.currentBorrowCount} / {selectedReader.borrowLimit}</span>
+                          <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Status</span>
+                          <div className="flex items-center gap-1">
+                            {selectedReader.hasOverdueBooks && (
+                              <Badge variant="destructive" className="text-[8px] h-4">Overdue</Badge>
+                            )}
+                            <Badge variant="outline" className="text-[10px] h-4">
+                              {selectedReader.currentBorrowCount}/{selectedReader.borrowLimit}
+                            </Badge>
+                          </div>
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => setSelectedReader(null)} className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                        <Button variant="ghost" size="icon" onClick={() => { setSelectedReader(null); setPhoneSearch(""); setIsNewUser(false); }} className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </Card>
+                  ) : (
+                    <Card className="p-3 bg-amber-50 border-amber-200 flex justify-between items-center animate-in fade-in slide-in-from-top-1">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+                          <User className="h-4 w-4" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-sm text-amber-900">New Guest Reader</span>
+                          <span className="text-xs text-amber-700">{form.getValues("phone")}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">New Account</Badge>
+                        <Button variant="ghost" size="icon" onClick={() => { setIsNewUser(false); setPhoneSearch(""); }} className="h-8 w-8 text-amber-700 hover:text-destructive">
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
                     </Card>
                   )}
-                  <FormMessage>{form.formState.errors.userId?.message}</FormMessage>
+                  <FormMessage>{form.formState.errors.phone?.message}</FormMessage>
                 </div>
 
                 {/* Book Selection */}
@@ -296,7 +348,7 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
                       className="pl-9"
                       value={bookSearch}
                       onChange={(e) => setBookSearch(e.target.value)}
-                      disabled={!selectedReader}
+                      disabled={!selectedReader && !isNewUser}
                     />
                     {filteredBooks.length > 0 && (
                       <Card className="absolute z-50 w-full mt-1 shadow-xl border-primary/20 overflow-hidden">
@@ -318,7 +370,7 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
                       </Card>
                     )}
                   </div>
-                  {!selectedReader && <p className="text-[10px] text-muted-foreground italic">Please select a reader first</p>}
+                  {!selectedReader && !isNewUser && <p className="text-[10px] text-muted-foreground italic">Please identify a reader first</p>}
                 </div>
 
                 {/* Due Date */}
@@ -407,7 +459,7 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
               </Button>
               <Button
                 type="submit"
-                disabled={isSubmitting || cart.length === 0 || !selectedReader}
+                disabled={isSubmitting || cart.length === 0 || (!selectedReader && !isNewUser)}
                 className="px-8 font-bold"
               >
                 {isSubmitting ? "Processing..." : "Confirm Borrow"}

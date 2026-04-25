@@ -6,8 +6,8 @@ export interface BookEntity {
   description?: string;
   coverUrl?: string;
   categoryId: string;
-  totalCount: number;
-  availableCount: number;
+  totalQuantity: number;
+  availableQuantity: number;
   callNumber?: string;
   category?: CategoryEntity;
   createdAt: string;
