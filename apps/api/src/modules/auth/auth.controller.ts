@@ -39,6 +39,17 @@ export class AuthController {
       next(error);
     }
   };
+
+  readerLogin = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { phone } = req.body;
+      const result = await this.authService.readerLogin(phone);
+      const response: ApiResponse = { data: result, code: ErrorCode.SUCCESS };
+      res.json(response);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 

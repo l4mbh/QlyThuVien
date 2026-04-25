@@ -5,6 +5,8 @@ import { generateToken } from "../../utils/jwt.util";
 import { ErrorCode, SettingKey, UserRole, ErrorMessage } from "@qltv/shared";
 import { AppError } from "../../utils/app-error";
 import { settingService } from "../../services/settings/setting.service";
+import { userService } from "../../services/user/user.service";
+import { normalizePhone } from "@qltv/shared";
 
 export class AuthService {
   private authRepository: AuthRepository;
@@ -82,6 +84,21 @@ export class AuthService {
       email: user.email,
       role: user.role,
     };
+  }
+
+  async readerLogin(phone: string): Promise<AuthResponse> {
+    const user = await userService.findOrCreateReader(phone);
+
+    const authUser: AuthUser = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
+
+    const token = generateToken({ userId: user.id, role: user.role });
+
+    return { user: authUser, token };
   }
 }
 

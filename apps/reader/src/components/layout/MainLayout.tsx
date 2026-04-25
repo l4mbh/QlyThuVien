@@ -6,7 +6,6 @@ import { Search, Library, Home, Bell, Bookmark } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useIsFetching } from '@tanstack/react-query';
 
-// Desktop/Tablet Nav Items (More spacing)
 const desktopNavItems = [
   { icon: Home, label: 'Home', path: '/' },
   { icon: Search, label: 'Search', path: '/search' },
@@ -20,59 +19,59 @@ export const MainLayout: React.FC = () => {
   const isFetching = useIsFetching();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col font-sans">
-      {/* Global Sync Indicator (Polish) */}
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Loading bar */}
       <div className={cn(
-        "fixed top-0 left-0 right-0 h-0.5 bg-primary z-[60] transition-all duration-500 origin-left",
+        "fixed top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-primary to-blue-400 z-[60] transition-all duration-500 origin-left",
         isFetching > 0 ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0"
       )} />
 
-      {/* Responsive Header */}
-      <header className="fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-slate-100 z-40 flex items-center px-4 lg:px-8">
-        <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <NavLink to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-black">L</div>
-              <span className="text-xl font-black text-slate-900 tracking-tighter">LibMgnt</span>
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 h-14 glass z-40 flex items-center px-4 lg:px-8">
+        <div className="max-w-6xl mx-auto w-full flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <NavLink to="/" className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-sm shadow-primary/20">L</div>
+              <span className="text-lg font-bold text-foreground tracking-tight">LibMgnt</span>
             </NavLink>
             
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="hidden md:flex items-center gap-0.5">
               {desktopNavItems.map((item) => (
                 <NavLink
                   key={item.path}
                   to={item.path}
                   className={({ isActive }) =>
                     cn(
-                      "px-4 py-2 rounded-xl text-sm font-black transition-all flex items-center gap-2",
+                      "px-3.5 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2",
                       isActive 
-                        ? "bg-primary text-white shadow-lg shadow-primary/20" 
-                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                        ? "bg-primary text-white shadow-sm shadow-primary/20" 
+                        : "text-muted-foreground hover:text-foreground hover:bg-white/60"
                     )
                   }
                 >
-                  <item.icon size={18} />
+                  <item.icon size={16} />
                   {item.label}
                 </NavLink>
               ))}
             </nav>
           </div>
 
-          <div className="flex items-center gap-4">
-            {localStorage.getItem('reader_phone') ? (
-              <NavLink to="/profile" className="flex items-center gap-3 group">
+          <div className="flex items-center gap-3">
+            {localStorage.getItem('token') ? (
+              <NavLink to="/profile" className="flex items-center gap-2.5 group">
                 <div className="hidden sm:flex flex-col items-end">
-                  <span className="text-xs font-black text-slate-900 leading-none">Reader</span>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">{localStorage.getItem('reader_phone')}</span>
+                  <span className="text-xs font-semibold text-foreground leading-none">Reader</span>
+                  <span className="text-[10px] font-medium text-muted-foreground">{localStorage.getItem('reader_phone')}</span>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black shadow-sm group-hover:bg-primary group-hover:text-white transition-all">
+                <div className="w-9 h-9 rounded-xl bg-primary/8 border border-primary/12 flex items-center justify-center text-primary text-sm font-semibold group-hover:bg-primary group-hover:text-white transition-all">
                   {localStorage.getItem('reader_phone')?.slice(-2) || 'RD'}
                 </div>
               </NavLink>
             ) : (
               <NavLink 
                 to="/login" 
-                className="px-6 py-2.5 bg-primary text-white text-sm font-black rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                className="px-5 py-2 bg-primary text-white text-sm font-semibold rounded-xl shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/25 active:scale-[0.97] transition-all"
               >
                 Sign In
               </NavLink>
@@ -81,16 +80,16 @@ export const MainLayout: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className="flex-1 pt-16 pb-24 md:pb-8 px-4 max-w-7xl mx-auto w-full relative overflow-x-hidden">
+      {/* Main Content */}
+      <main className="flex-1 pt-14 pb-20 md:pb-6 px-4 max-w-6xl mx-auto w-full">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="md:pt-4"
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="md:pt-3"
           >
             <div className="max-w-lg mx-auto md:max-w-none">
                <Outlet />
@@ -99,7 +98,7 @@ export const MainLayout: React.FC = () => {
         </AnimatePresence>
       </main>
 
-      {/* Mobile-only Bottom Navigation */}
+      {/* Mobile Bottom Nav */}
       <div className="md:hidden">
         <BottomNav />
       </div>

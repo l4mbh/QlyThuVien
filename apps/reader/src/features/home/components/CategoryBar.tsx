@@ -1,53 +1,59 @@
 import React, { useState } from 'react';
 import { cn } from '../../../lib/utils';
+import { useCategories } from '../../../hooks/useCategories';
+import { Skeleton } from '../../../components/ui/Skeleton';
 
-const categories = [
-  'All Books',
-  'Fiction',
-  'Technology',
-  'Science',
-  'History',
-  'Biography',
-  'Philosophy',
-  'Art'
-];
+interface CategoryBarProps {
+  onCategoryChange?: (categoryId: string | null) => void;
+}
 
-export const CategoryBar: React.FC = () => {
-  const [activeCategory, setActiveCategory] = useState('All Books');
+export const CategoryBar: React.FC<CategoryBarProps> = ({ onCategoryChange }) => {
+  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
+  const { data: categories, isLoading } = useCategories();
+
+  const handleSelect = (categoryId: string | null) => {
+    setActiveCategoryId(categoryId);
+    onCategoryChange?.(categoryId);
+  };
 
   return (
-    <section className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">Categories</h2>
-        <button className="text-xs font-medium text-primary hover:underline">View all</button>
-      </div>
+    <section className="space-y-2.5">
+      <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-0.5">Browse</h2>
       
-      <div className="flex overflow-x-auto pb-4 gap-2 no-scrollbar -mx-4 px-4">
-        {categories.map((category) => (
-          <button
-            key={category}
-            onClick={() => setActiveCategory(category)}
-            className={cn(
-              "whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 border",
-              activeCategory === category
-                ? "bg-primary text-white border-primary shadow-md shadow-primary/20 scale-105"
-                : "bg-white text-slate-600 border-slate-200 hover:border-primary/30 hover:bg-slate-50"
-            )}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
+      <div className="flex overflow-x-auto pb-3 gap-2 no-scrollbar -mx-4 px-4">
+        <button
+          onClick={() => handleSelect(null)}
+          className={cn(
+            "whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium transition-all duration-150 border",
+            activeCategoryId === null
+              ? "bg-primary text-white border-primary shadow-sm shadow-primary/15"
+              : "glass-subtle text-muted-foreground border-border/50 hover:text-foreground hover:border-border"
+          )}
+        >
+          All
+        </button>
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}} />
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-9 w-20 rounded-xl flex-shrink-0" />
+          ))
+        ) : (
+          categories?.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => handleSelect(cat.id)}
+              className={cn(
+                "whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium transition-all duration-150 border",
+                activeCategoryId === cat.id
+                  ? "bg-primary text-white border-primary shadow-sm shadow-primary/15"
+                  : "glass-subtle text-muted-foreground border-border/50 hover:text-foreground hover:border-border"
+              )}
+            >
+              {cat.name}
+            </button>
+          ))
+        )}
+      </div>
     </section>
   );
 };

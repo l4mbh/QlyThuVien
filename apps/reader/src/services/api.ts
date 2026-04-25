@@ -5,13 +5,14 @@ import { toast } from 'sonner';
 const api = createSharedApiClient({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1',
   getToken: () => localStorage.getItem('token'),
-  getExtraHeaders: () => {
-    const phone = localStorage.getItem('reader_phone');
-    return phone ? { 'X-Reader-Phone': phone } : {};
-  },
   onUnauthorized: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('reader_phone');
+    localStorage.removeItem('reader_user');
+    // Redirect to login if on a protected page
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login';
+    }
   },
   onError: (message) => {
     toast.error(message);

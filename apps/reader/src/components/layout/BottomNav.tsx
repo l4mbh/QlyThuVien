@@ -3,19 +3,18 @@ import { NavLink } from 'react-router-dom';
 import { Search, Library, Home, Bell, Bookmark } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
-// Optimized 5-tab navigation for Mobile
 const navItems = [
   { icon: Search, label: 'Search', path: '/search' },
   { icon: Library, label: 'Catalog', path: '/catalog' },
   { icon: Home, label: 'Home', path: '/', isCenter: true },
-  { icon: Bookmark, label: 'My Books', path: '/my-books' },
+  { icon: Bookmark, label: 'Books', path: '/my-books' },
   { icon: Bell, label: 'Alerts', path: '/notifications' },
 ];
 
 export const BottomNav: React.FC = () => {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg border-t border-slate-100 pb-safe-area-inset-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
-      <div className="flex items-center justify-around h-18 max-w-lg mx-auto px-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 glass pb-[env(safe-area-inset-bottom)]">
+      <div className="flex items-center justify-around h-16 max-w-lg mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           
@@ -26,14 +25,14 @@ export const BottomNav: React.FC = () => {
                 to={item.path}
                 className={({ isActive }) =>
                   cn(
-                    "relative -top-5 flex items-center justify-center w-15 h-15 rounded-full shadow-2xl transition-all duration-300",
+                    "relative -top-4 flex items-center justify-center w-14 h-14 rounded-2xl shadow-lg transition-all duration-200",
                     isActive 
-                      ? "bg-primary text-white scale-110 rotate-[360deg]" 
-                      : "bg-primary text-white/90 hover:scale-105 active:scale-90"
+                      ? "bg-primary text-white shadow-primary/30 scale-105" 
+                      : "bg-primary text-white/90 shadow-primary/20 hover:scale-105 active:scale-95"
                   )
                 }
               >
-                <Icon size={28} strokeWidth={2.5} />
+                <Icon size={24} strokeWidth={2} />
               </NavLink>
             );
           }
@@ -44,22 +43,22 @@ export const BottomNav: React.FC = () => {
               to={item.path}
               className={({ isActive }) =>
                 cn(
-                  "flex flex-col items-center justify-center flex-1 py-3 transition-all duration-200 active:scale-95",
-                  isActive ? "text-primary" : "text-slate-400 hover:text-slate-600"
+                  "flex flex-col items-center justify-center flex-1 py-2 transition-all duration-150 active:scale-95",
+                  isActive ? "text-primary" : "text-muted-foreground"
                 )
               }
             >
               {({ isActive }) => (
                 <>
                   <div className={cn(
-                    "p-1 rounded-xl transition-colors",
-                    isActive && "bg-primary/5"
+                    "p-1.5 rounded-xl transition-colors",
+                    isActive && "bg-primary/8"
                   )}>
-                    <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                    <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} />
                   </div>
                   <span className={cn(
-                    "text-[10px] mt-1 font-black uppercase tracking-tighter",
-                    isActive ? "opacity-100" : "opacity-60"
+                    "text-[10px] mt-0.5 font-medium tracking-tight",
+                    isActive ? "opacity-100" : "opacity-50"
                   )}>
                     {item.label}
                   </span>

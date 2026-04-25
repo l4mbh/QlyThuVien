@@ -23,10 +23,10 @@ export const HomePage: React.FC = () => {
       <HeroSection />
       <CategoryBar />
       
-      <section className="py-4">
-        <div className="flex items-center justify-between mb-4 px-1">
-          <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest">Recommended for you</h2>
-          <button className="text-xs font-bold text-primary hover:underline">See all</button>
+      <section className="py-3">
+        <div className="flex items-center justify-between mb-4 px-0.5">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Recommended</h2>
+          <button className="text-xs font-medium text-primary hover:underline">See all</button>
         </div>
         
         {isLoading ? (

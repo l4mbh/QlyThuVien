@@ -19,15 +19,15 @@ const NotificationsPage = () => {
   const markAsRead = useMarkNotificationRead();
 
   return (
-    <div className="pt-4 space-y-8">
-      <div className="space-y-1 px-1">
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Notifications</h2>
-        <p className="text-sm font-medium text-slate-500">Stay updated with library news and alerts</p>
+    <div className="pt-4 space-y-5">
+      <div className="space-y-1 px-0.5">
+        <h2 className="text-xl font-bold text-foreground tracking-tight">Notifications</h2>
+        <p className="text-sm text-muted-foreground">Stay updated with library alerts</p>
       </div>
       {isLoading ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {[1, 2, 3, 4].map(i => (
-            <Skeleton key={i} className="h-20 w-full rounded-[20px]" />
+            <Skeleton key={i} className="h-18 w-full rounded-2xl" />
           ))}
         </div>
       ) : (
@@ -40,46 +40,50 @@ const NotificationsPage = () => {
 const ProfilePage = () => {
   const navigate = useNavigate();
   const phone = localStorage.getItem('reader_phone');
+  const storedUser = localStorage.getItem('reader_user');
+  const user = storedUser ? JSON.parse(storedUser) : null;
 
   const handleLogout = () => {
+    localStorage.removeItem('token');
     localStorage.removeItem('reader_phone');
+    localStorage.removeItem('reader_user');
     navigate('/login');
   };
 
   return (
-    <div className="pt-8 text-center space-y-8">
+    <div className="pt-6 text-center space-y-6">
       <div className="relative inline-block">
-        <div className="w-28 h-28 bg-primary/10 text-primary rounded-full mx-auto flex items-center justify-center text-4xl font-black border-4 border-white shadow-2xl">
+        <div className="w-24 h-24 bg-primary/8 text-primary rounded-3xl mx-auto flex items-center justify-center text-3xl font-bold border border-primary/10">
           {phone?.slice(-2) || 'RD'}
         </div>
-        <div className="absolute bottom-2 right-2 w-7 h-7 bg-green-500 border-4 border-white rounded-full shadow-lg" />
+        <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 border-[3px] border-background rounded-full" />
       </div>
       
-      <div className="space-y-1 px-4">
-        <h2 className="text-3xl font-black text-slate-900 tracking-tight">Reader</h2>
-        <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">{phone}</p>
+      <div className="space-y-0.5">
+        <h2 className="text-2xl font-bold text-foreground tracking-tight">{user?.name || 'Reader'}</h2>
+        <p className="text-sm text-muted-foreground">{phone}</p>
       </div>
       
-      <div className="grid grid-cols-2 gap-4 px-4">
-        <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex flex-col items-center">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</span>
-          <span className="text-sm font-black text-primary px-3 py-1 bg-primary/5 rounded-full">Active</span>
+      <div className="grid grid-cols-2 gap-3 px-2">
+        <div className="glass-subtle p-4 rounded-2xl border border-border/40 flex flex-col items-center gap-1.5">
+          <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">Status</span>
+          <span className="text-xs font-semibold text-emerald-600 px-2.5 py-0.5 bg-emerald-500/8 rounded-lg">Active</span>
         </div>
-        <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex flex-col items-center">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Identity</span>
-          <span className="text-sm font-black text-slate-900">Phone-first</span>
+        <div className="glass-subtle p-4 rounded-2xl border border-border/40 flex flex-col items-center gap-1.5">
+          <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">Identity</span>
+          <span className="text-xs font-semibold text-foreground">Phone-first</span>
         </div>
       </div>
 
-      <div className="space-y-4 px-4 pb-8">
-        <button className="w-full py-4 bg-white border border-slate-200 text-slate-900 font-black rounded-[20px] shadow-sm hover:bg-slate-50 active:scale-[0.98] transition-all">
+      <div className="space-y-2.5 px-2 pb-6">
+        <button className="w-full py-3.5 glass-subtle border border-border/50 text-foreground font-medium rounded-2xl hover:bg-white/80 active:scale-[0.98] transition-all text-sm">
           Account Settings
         </button>
         <button 
           onClick={handleLogout}
-          className="w-full py-4 bg-red-50 text-red-600 font-black rounded-[20px] active:scale-[0.98] transition-all"
+          className="w-full py-3.5 bg-destructive/8 text-destructive font-medium rounded-2xl active:scale-[0.98] transition-all text-sm border border-destructive/10"
         >
-          Logout
+          Log out
         </button>
       </div>
     </div>
@@ -87,10 +91,10 @@ const ProfilePage = () => {
 };
 
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
-  const phone = localStorage.getItem('reader_phone');
+  const token = localStorage.getItem('token');
   const location = useLocation();
 
-  if (!phone) {
+  if (!token) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
   return <>{children}</>;

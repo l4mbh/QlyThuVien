@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '../../../lib/utils';
+import { BookOpen } from 'lucide-react';
 
 interface BookCardProps {
   title: string;
@@ -13,31 +14,33 @@ export const BookCard: React.FC<BookCardProps> = ({ title, author, coverUrl, sta
   return (
     <div 
       onClick={onClick}
-      className="flex flex-col space-y-3 cursor-pointer group animate-in fade-in slide-in-from-bottom-4 duration-300"
+      className="flex flex-col gap-2.5 cursor-pointer group animate-in fade-in duration-300"
     >
-      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-slate-100 border border-slate-100 shadow-sm transition-all group-hover:shadow-md group-hover:-translate-y-1">
+      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-muted/50 border border-border/40 transition-all duration-200 group-hover:shadow-lg group-hover:shadow-black/5 group-hover:-translate-y-0.5">
         {coverUrl ? (
           <img src={coverUrl} alt={title} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate-300">
-            No Cover
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground/30">
+            <BookOpen size={32} />
           </div>
         )}
+        
+        {/* Status badge */}
         <div className={cn(
-          "absolute top-2 left-2 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-sm",
+          "absolute top-2.5 left-2.5 px-2 py-0.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider",
           status === 'available' 
-            ? "bg-green-500 text-white" 
-            : "bg-slate-500 text-white"
+            ? "bg-emerald-500/90 text-white backdrop-blur-sm" 
+            : "bg-foreground/60 text-white backdrop-blur-sm"
         )}>
           {status === 'available' ? 'Available' : 'Out'}
         </div>
       </div>
       
-      <div className="space-y-1">
-        <h3 className="text-sm font-bold text-slate-900 line-clamp-2 leading-tight group-hover:text-primary transition-colors">
+      <div className="space-y-0.5 px-0.5">
+        <h3 className="text-sm font-semibold text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors">
           {title}
         </h3>
-        <p className="text-xs text-slate-500 font-medium">
+        <p className="text-xs text-muted-foreground">
           {author}
         </p>
       </div>

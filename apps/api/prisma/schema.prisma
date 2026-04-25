@@ -156,6 +156,7 @@ model Reservation {
   userId    String
   bookId    String
   status    ReservationStatus @default(PENDING)
+  position  Int
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
   expiresAt DateTime?
