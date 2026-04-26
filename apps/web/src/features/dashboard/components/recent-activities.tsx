@@ -51,9 +51,9 @@ const getActionConfig = (action: AuditAction) => {
 
 export const RecentActivities: React.FC<RecentActivitiesProps> = ({ activities, isLoading }) => {
   return (
-    <div className="p-1 bg-slate-50 rounded-xl ring-1 ring-slate-200">
+    <div className="p-1 bg-slate-50 rounded-xl ring-1 ring-slate-200 max-h-[400px] overflow-y-auto">
       <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6 space-y-4">
-        <h3 className="font-bold text-slate-800 flex items-center gap-2 text-sm uppercase tracking-tight">
+        <h3 className="sticky top-0 bg-white z-50 pb-2 font-bold text-slate-800 flex items-center gap-2 text-sm uppercase tracking-tight">
           Recent Activities
         </h3>
 

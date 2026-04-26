@@ -30,6 +30,10 @@ export class ReservationService {
     }));
   }
 
+  async getUrgentReservations(limit: number = 5) {
+    return this.reservationRepository.findUrgent(limit);
+  }
+
   async getMyReservations(userId: string) {
     const list = await this.reservationRepository.findByUserId(userId);
     // Only return active reservations for the reader's "My Shelf"

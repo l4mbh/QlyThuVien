@@ -73,4 +73,21 @@ export class ReservationRepository {
       }
     });
   }
+
+  async findUrgent(limit: number = 5) {
+    return prisma.reservation.findMany({
+      where: {
+        status: ReservationStatus.READY,
+        expiresAt: { not: null }
+      },
+      include: {
+        user: true,
+        book: true,
+      },
+      orderBy: {
+        expiresAt: "asc"
+      },
+      take: limit
+    });
+  }
 }

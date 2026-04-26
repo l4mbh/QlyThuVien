@@ -40,5 +40,10 @@ export const dashboardService = {
     const response = await api.get<ApiResponse<PaginatedData<AuditLog>>>(`/audit-logs?page=${page}&limit=${limit}`);
     return response.data.data!;
   },
+
+  async getUrgentReservations(limit: number = 5): Promise<any[]> {
+    const response = await api.get<ApiResponse<any[]>>(`/reservations/urgent?limit=${limit}`);
+    return response.data.data!;
+  },
 };
 

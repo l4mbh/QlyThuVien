@@ -8,6 +8,7 @@ const reservationController = new ReservationController();
 
 // Staff/Admin can see all reservations
 router.get("/", authMiddleware, roleMiddleware([UserRole.STAFF, UserRole.ADMIN]), reservationController.getAllReservations);
+router.get("/urgent", authMiddleware, roleMiddleware([UserRole.STAFF, UserRole.ADMIN]), reservationController.getUrgentReservations);
 
 // Reader/Staff/Admin can see their own
 router.get("/my", authMiddleware, reservationController.getMyReservations);

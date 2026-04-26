@@ -15,6 +15,7 @@ import { BorrowTrendChart } from "../components/borrow-trend-chart";
 import { OverdueTable } from "../components/overdue-table";
 import { TopBooksList } from "../components/top-books-list";
 import { RecentActivities } from "../components/recent-activities";
+import { ReservationAlerts } from "../components/reservation-alerts";
 import { useAuth } from "@/features/auth/auth.hook";
 import { UserRole } from "@/types/auth/user.entity";
 import { type AuditLog } from "@/types/audit.type";
@@ -49,13 +50,13 @@ export const DashboardPage = () => {
           dashboardService.getLowStockBooks(),
           dashboardService.getRecentActivities(1, 10)
         ]);
-        setData({ 
-          summary, 
-          trends, 
-          topBooks, 
-          overdue, 
-          lowStock, 
-          activities: activities.items 
+        setData({
+          summary,
+          trends,
+          topBooks,
+          overdue,
+          lowStock,
+          activities: activities.items
         });
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
@@ -73,7 +74,7 @@ export const DashboardPage = () => {
 
   return (
     <div className="space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-      <PageHeader 
+      <PageHeader
         title="Command Center"
         description={`"The secret of a library is that it is a city of books." — Welcome back, ${user?.name}.`}
       />
@@ -132,10 +133,10 @@ export const DashboardPage = () => {
       {/* Tầng Phụ: Admin Fines */}
       {!isLoading && user?.role === UserRole.ADMIN && data.summary?.totalFines !== null && (
         <div className="animate-in slide-in-from-left-4 duration-700 delay-200">
-          <StatsCard 
-            title="Revenue Insights" 
-            value={formatCurrency(data.summary?.totalFines || 0)} 
-            icon={Coins} 
+          <StatsCard
+            title="Revenue Insights"
+            value={formatCurrency(data.summary?.totalFines || 0)}
+            icon={Coins}
             isDark
             description="Total fines collected from reader penalties"
             className="bg-slate-900 shadow-xl shadow-slate-200"
@@ -184,6 +185,10 @@ export const DashboardPage = () => {
         </div>
 
         <div className="lg:col-span-4 space-y-8">
+          {/* Urgent Pickups */}
+          <ReservationAlerts />
+
+
           {/* Low Stock Panel */}
           <div className="p-1 bg-slate-50 rounded-xl ring-1 ring-slate-200">
             <div className="bg-white rounded-lg shadow-sm overflow-hidden p-6 space-y-4">

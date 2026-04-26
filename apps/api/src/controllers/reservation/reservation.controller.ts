@@ -13,6 +13,17 @@ export class ReservationController {
     }
   };
 
+  getUrgentReservations = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const limit = req.query.limit ? Number(req.query.limit) : 5;
+      const list = await reservationService.getUrgentReservations(limit);
+      const response: ApiResponse = { data: list, code: ErrorCode.SUCCESS };
+      res.json(response);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   getMyReservations = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = (req as any).user.userId;
