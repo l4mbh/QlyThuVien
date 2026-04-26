@@ -32,10 +32,8 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ bookId, onClos
     }
     
     try {
-      const phone = localStorage.getItem('reader_phone');
       await createReservation.mutateAsync({ 
-        bookId: bookId!,
-        phone: phone || undefined
+        bookId: bookId!
       });
       toast.success('Reservation created! Please pick up at library.');
       onClose();
@@ -51,10 +49,8 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ bookId, onClos
     }
     
     try {
-      const phone = localStorage.getItem('reader_phone');
       await createReservation.mutateAsync({ 
-        bookId: bookId!,
-        phone: phone || undefined
+        bookId: bookId!
       });
       toast.success('Successfully joined the queue!');
     } catch (error: any) {
@@ -111,11 +107,11 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ bookId, onClos
                     </h2>
                     <div className={cn(
                       "px-3 py-1 text-[10px] font-semibold rounded-lg uppercase flex-shrink-0",
-                      book.availableQuantity > 0 
+                      (book.effectiveAvailable ?? book.availableQuantity) > 0 
                         ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" 
-                        : "bg-muted text-muted-foreground border border-border"
+                        : "bg-amber-500/10 text-amber-600 border border-amber-500/20"
                     )}>
-                      {book.availableQuantity > 0 ? 'Available' : 'Unavailable'}
+                      {(book.effectiveAvailable ?? book.availableQuantity) > 0 ? 'Available' : 'Limited Stock'}
                     </div>
                   </div>
                   <p className="text-base text-muted-foreground">
@@ -151,11 +147,17 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ bookId, onClos
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {book.description || "Explore this fascinating title at our library. No digital description available yet."}
                   </p>
+                  {book.queueCount && book.queueCount > 0 && (
+                    <div className="mt-4 pt-4 border-t border-border/40 flex items-center justify-between">
+                      <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">In Queue</span>
+                      <span className="text-xs font-bold text-amber-600">{book.queueCount} people waiting</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Action Button */}
                 <div className="fixed bottom-0 left-0 right-0 p-4 glass border-t border-border/40 max-w-2xl mx-auto">
-                  {book.availableQuantity > 0 ? (
+                  {(book.effectiveAvailable ?? book.availableQuantity) > 0 ? (
                     <button 
                       className="w-full py-4 bg-primary text-white rounded-2xl font-semibold transition-all shadow-lg shadow-primary/20 active:scale-[0.98] hover:shadow-xl hover:shadow-primary/25"
                       onClick={handleBorrow}

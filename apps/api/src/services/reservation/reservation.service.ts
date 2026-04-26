@@ -22,8 +22,8 @@ export class ReservationService {
     const list = await this.reservationRepository.findAll();
     // For admin, we might want to attach current positions for PENDING ones
     return Promise.all(list.map(async (res) => {
-      if (res.status === ReservationStatus.PENDING) {
-        const pos = await this.calculatePosition(res.userId, res.bookId, res.createdAt);
+      if (res.status === ReservationStatus.PENDING || res.status === ReservationStatus.READY) {
+        const pos = await this.calculatePosition(res.userId, res.bookId, res.createdAt, res.status);
         return { ...res, position: pos };
       }
       return res;
@@ -32,17 +32,23 @@ export class ReservationService {
 
   async getMyReservations(userId: string) {
     const list = await this.reservationRepository.findByUserId(userId);
-    return Promise.all(list.map(async (res) => {
+    // Only return active reservations for the reader's "My Shelf"
+    const activeReservations = list.filter(res => 
+      res.status === ReservationStatus.PENDING || 
+      res.status === ReservationStatus.READY
+    );
+
+    return Promise.all(activeReservations.map(async (res) => {
       if (res.status === ReservationStatus.PENDING) {
-        const pos = await this.calculatePosition(userId, res.bookId, res.createdAt);
+        const pos = await this.calculatePosition(userId, res.bookId, res.createdAt, res.status);
         return { ...res, position: pos };
       }
-      return res;
+      return { ...res, position: 0 }; // Position doesn't apply to READY/COMPLETED
     }));
   }
 
-  async calculatePosition(userId: string, bookId: string, createdAt: Date): Promise<number> {
-    const count = await this.reservationRepository.countPendingBefore(bookId, createdAt);
+  async calculatePosition(userId: string, bookId: string, createdAt: Date, status: ReservationStatus): Promise<number> {
+    const count = await this.reservationRepository.countStatusBefore(bookId, status, createdAt);
     return count + 1;
   }
 
@@ -53,6 +59,11 @@ export class ReservationService {
     if (!userId && phone) {
       const user = await this.userService.findOrCreateReader(phone);
       userId = user.id;
+    }
+
+    // 0.1 Fallback to performerId if logged in and no other user info
+    if (!userId && performerId && performerId !== "SYSTEM") {
+      userId = performerId;
     }
 
     if (!userId) {
@@ -81,11 +92,19 @@ export class ReservationService {
       }
 
       // 3. Create Reservation (Default PENDING)
+      const pendingCount = await tx.reservation.count({
+        where: { 
+          bookId, 
+          status: ReservationStatus.PENDING 
+        }
+      });
+
       const reservation = await tx.reservation.create({
         data: {
           userId: userId!,
           bookId,
-          status: ReservationStatus.PENDING
+          status: ReservationStatus.PENDING,
+          position: pendingCount + 1
         },
         include: { book: true }
       });
@@ -151,13 +170,7 @@ export class ReservationService {
         data: { status: ReservationStatus.CANCELLED }
       });
 
-      // 2. If it was READY, we need to release soft allocation
-      if (oldStatus === ReservationStatus.READY) {
-        await tx.book.update({
-          where: { id: res.bookId },
-          data: { availableQuantity: { increment: 1 } }
-        });
-      }
+      // 2. If it was READY, no physical inventory change needed in Simple Model
 
       // 3. Audit
       await auditService.logEvent({
@@ -208,19 +221,27 @@ export class ReservationService {
       include: { book: true }
     });
 
-    // Soft allocation: decrease availableQuantity
-    await tx.book.update({
-      where: { id: updated.bookId },
-      data: { availableQuantity: { decrement: 1 } }
-    });
+    // 1. Fetch current book state to ensure it's still available
+    const book = await tx.book.findUnique({ where: { id: updated.bookId } });
+    if (!book || book.availableQuantity <= 0) {
+      console.warn(`[promoteToReady] Book ${updated.bookId} is no longer available. Reverting reservation ${id} to PENDING.`);
+      await tx.reservation.update({
+        where: { id },
+        data: { status: ReservationStatus.PENDING }
+      });
+      return updated;
+    }
 
-    // Audit
+    // 2. Soft allocation: removed in Simple Model
+    // Physical inventory is only reduced at Issue/Borrow time.
+
+    // 3. Log event
     await auditService.logEvent({
+      userId: performerId,
       action: AuditAction.RESERVATION_PROMOTED,
       entityType: AuditEntityType.RESERVATION,
       entityId: id,
-      userId: performerId,
-      metadata: { bookId: updated.bookId, expiresAt }
+      metadata: { bookId: updated.bookId, previousStatus: ReservationStatus.PENDING, expiresAt }
     }, tx);
 
     // Notify
@@ -251,11 +272,7 @@ export class ReservationService {
         data: { status: ReservationStatus.EXPIRED }
       });
 
-      // Release soft allocation
-      await transaction.book.update({
-        where: { id: res.bookId },
-        data: { availableQuantity: { increment: 1 } }
-      });
+      // Release soft allocation: removed in Simple Model
 
       // Audit
       await auditService.logEvent({

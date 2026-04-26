@@ -14,6 +14,8 @@ import { MyBooksPage } from './features/dashboard/pages/MyBooksPage';
 
 
 
+import { useQueryClient } from '@tanstack/react-query';
+
 const NotificationsPage = () => {
   const { data: notifications, isLoading } = useNotifications();
   const markAsRead = useMarkNotificationRead();
@@ -37,33 +39,42 @@ const NotificationsPage = () => {
   );
 };
 
-const ProfilePage = () => {
-  const navigate = useNavigate();
-  const phone = localStorage.getItem('reader_phone');
-  const storedUser = localStorage.getItem('reader_user');
-  const user = storedUser ? JSON.parse(storedUser) : null;
+import { useAuth } from './hooks/useAuth';
+import { Loader2 } from 'lucide-react';
 
-  const handleLogout = () => {
-    localStorage.removeItem('reader_token');
-    localStorage.removeItem('reader_phone');
-    localStorage.removeItem('reader_user');
-    navigate('/login');
-  };
+const ProfilePage = () => {
+  const { user, isLoading, logout } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="pt-6 text-center space-y-6">
+        <Skeleton className="w-24 h-24 rounded-3xl mx-auto" />
+        <div className="space-y-2 flex flex-col items-center">
+          <Skeleton className="h-6 w-32 rounded-lg" />
+          <Skeleton className="h-4 w-24 rounded-lg" />
+        </div>
+        <div className="grid grid-cols-2 gap-3 px-2">
+          <Skeleton className="h-20 rounded-2xl" />
+          <Skeleton className="h-20 rounded-2xl" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pt-6 text-center space-y-6">
       <div className="relative inline-block">
         <div className="w-24 h-24 bg-primary/8 text-primary rounded-3xl mx-auto flex items-center justify-center text-3xl font-bold border border-primary/10">
-          {phone?.slice(-2) || 'RD'}
+          {user?.phone?.slice(-2) || 'RD'}
         </div>
         <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 border-[3px] border-background rounded-full" />
       </div>
-      
+
       <div className="space-y-0.5">
         <h2 className="text-2xl font-bold text-foreground tracking-tight">{user?.name || 'Reader'}</h2>
-        <p className="text-sm text-muted-foreground">{phone}</p>
+        <p className="text-sm text-muted-foreground">{user?.phone}</p>
       </div>
-      
+
       <div className="grid grid-cols-2 gap-3 px-2">
         <div className="glass-subtle p-4 rounded-2xl border border-border/40 flex flex-col items-center gap-1.5">
           <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">Status</span>
@@ -79,8 +90,8 @@ const ProfilePage = () => {
         <button className="w-full py-3.5 glass-subtle border border-border/50 text-foreground font-medium rounded-2xl hover:bg-white/80 active:scale-[0.98] transition-all text-sm">
           Account Settings
         </button>
-        <button 
-          onClick={handleLogout}
+        <button
+          onClick={logout}
           className="w-full py-3.5 bg-destructive/8 text-destructive font-medium rounded-2xl active:scale-[0.98] transition-all text-sm border border-destructive/10"
         >
           Log out
@@ -92,11 +103,25 @@ const ProfilePage = () => {
 
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem('reader_token');
+  const { user, isLoading } = useAuth();
   const location = useLocation();
 
   if (!token) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
   return <>{children}</>;
 };
 
@@ -106,7 +131,7 @@ function App() {
       <Toaster position="top-center" expand={false} richColors />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        
+
         <Route path="/" element={<MainLayout />}>
           <Route index element={<HomePage />} />
           <Route path="search" element={<SearchPage />} />

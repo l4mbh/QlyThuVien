@@ -3,11 +3,13 @@ import { borrowService } from '../services/borrow.service';
 import { QUERY_KEYS } from '@qltv/shared';
 import type { BorrowEntity } from '@qltv/shared';
 import { toast } from 'sonner';
+import { useAuth } from './useAuth';
 
 export const useMyBorrowed = () => {
-  const token = localStorage.getItem('reader_token');
+  const { user, isAuthenticated } = useAuth();
+
   return useQuery({
-    queryKey: [QUERY_KEYS.BORROWS.LIST, 'my'],
+    queryKey: [QUERY_KEYS.BORROWS.LIST, 'my', user?.id],
     queryFn: async () => {
       const res = await borrowService.getMyBorrowed();
       const records = res.data as any[];
@@ -40,7 +42,9 @@ export const useMyBorrowed = () => {
 
       return items;
     },
-    enabled: !!token
+    enabled: isAuthenticated && !!user,
+    staleTime: 5000, // 5s stale time to avoid redundant calls
+    retry: 2 // Allow a few retries for network glitches
   });
 };
 

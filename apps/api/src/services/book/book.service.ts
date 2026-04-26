@@ -16,7 +16,11 @@ export class BookService {
   }
 
   async getAllBooks(filter?: BookFilterDTO): Promise<PaginatedData<BookEntity>> {
-    return this.bookRepository.findAll(filter);
+    const paginated = await this.bookRepository.findAll(filter);
+    
+    paginated.items = paginated.items.map(book => this.calculateDerivedState(book));
+    
+    return paginated;
   }
 
   async getBookById(id: string): Promise<BookEntity> {
@@ -24,12 +28,27 @@ export class BookService {
     if (!book) {
       throw new AppError(ErrorCode.BOOK_NOT_FOUND, ErrorMessage.BOOK_NOT_FOUND);
     }
-    return book;
+    return this.calculateDerivedState(book);
+  }
+
+  private calculateDerivedState(book: BookEntity): BookEntity {
+    const queueCount = book._count?.reservations || 0;
+    const effectiveAvailable = Math.max(0, book.availableQuantity - queueCount);
+    
+    return {
+      ...book,
+      effectiveAvailable,
+      queueCount
+    };
   }
 
   async createBook(data: CreateBookDTO, userId: string): Promise<BookEntity> {
     const existingBook = await this.bookRepository.findByIsbn(data.isbn);
     if (existingBook) {
+      if (existingBook.isArchived) {
+        // If archived, restore and update it instead of failing
+        return this.updateBook(existingBook.id, { ...data, isArchived: false }, userId);
+      }
       throw new AppError(ErrorCode.BOOK_ALREADY_EXISTS, ErrorMessage.BOOK_ALREADY_EXISTS);
     }
 
@@ -69,7 +88,7 @@ export class BookService {
       metadata: { title: book.title, isbn: book.isbn }
     });
 
-    return book;
+    return this.calculateDerivedState(book);
   }
 
   async updateBook(id: string, data: UpdateBookDTO, userId: string): Promise<BookEntity> {
@@ -85,7 +104,7 @@ export class BookService {
       metadata: { title: book.title, changes: data }
     });
 
-    return book;
+    return this.calculateDerivedState(book);
   }
 
   async deleteBook(id: string, userId: string): Promise<BookEntity> {

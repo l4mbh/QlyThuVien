@@ -1,37 +1,42 @@
 import React from 'react';
-import { Bell, Info, CheckCircle2, AlertTriangle, Calendar } from 'lucide-react';
+import { Bell, Info, CheckCircle2, AlertTriangle, Calendar, BookOpen, Clock } from 'lucide-react';
 import { cn } from '../../../lib/utils';
+import { NotificationType } from '@qltv/shared';
+import { format, isToday, isYesterday } from 'date-fns';
 
 interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  timestamp: string;
+  type: string;
   isRead: boolean;
-  dateGroup: 'Today' | 'Yesterday' | 'Earlier';
+  createdAt: string;
 }
 
 interface NotificationListProps {
   notifications: Notification[];
 }
 
-const typeIcons = {
-  info: Info,
-  success: CheckCircle2,
-  warning: AlertTriangle,
-  error: AlertTriangle,
+const typeIcons: Record<string, any> = {
+  [NotificationType.BORROW_SUCCESS]: BookOpen,
+  [NotificationType.RETURN_SUCCESS]: CheckCircle2,
+  [NotificationType.OVERDUE]: AlertTriangle,
+  [NotificationType.RESERVATION_READY]: Clock,
+  [NotificationType.QUEUE_UPDATE]: Bell,
+  [NotificationType.SYSTEM]: Info,
 };
 
-const typeColors = {
-  info: "text-blue-500 bg-blue-50",
-  success: "text-green-500 bg-green-50",
-  warning: "text-amber-500 bg-amber-50",
-  error: "text-red-500 bg-red-50",
+const typeColors: Record<string, string> = {
+  [NotificationType.BORROW_SUCCESS]: "text-blue-500 bg-blue-50",
+  [NotificationType.RETURN_SUCCESS]: "text-green-500 bg-green-50",
+  [NotificationType.OVERDUE]: "text-red-500 bg-red-50",
+  [NotificationType.RESERVATION_READY]: "text-emerald-500 bg-emerald-50",
+  [NotificationType.QUEUE_UPDATE]: "text-amber-500 bg-amber-50",
+  [NotificationType.SYSTEM]: "text-slate-500 bg-slate-50",
 };
 
 export const NotificationList: React.FC<NotificationListProps> = ({ notifications }) => {
-  if (notifications.length === 0) {
+  if (!notifications || notifications.length === 0) {
     return (
       <div className="py-20 text-center space-y-4">
         <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-200">
@@ -45,15 +50,20 @@ export const NotificationList: React.FC<NotificationListProps> = ({ notification
     );
   }
 
-  // Group notifications by dateGroup
+  // Group notifications by date
   const groups = notifications.reduce((acc, notif) => {
-    if (!acc[notif.dateGroup]) acc[notif.dateGroup] = [];
-    acc[notif.dateGroup].push(notif);
+    const date = new Date(notif.createdAt);
+    let group = format(date, 'MMM dd, yyyy');
+    if (isToday(date)) group = 'Today';
+    else if (isYesterday(date)) group = 'Yesterday';
+    
+    if (!acc[group]) acc[group] = [];
+    acc[group].push(notif);
     return acc;
   }, {} as Record<string, Notification[]>);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-10">
       {Object.entries(groups).map(([group, items]) => (
         <div key={group} className="space-y-4">
           <div className="flex items-center gap-2 px-1">
@@ -63,20 +73,23 @@ export const NotificationList: React.FC<NotificationListProps> = ({ notification
           
           <div className="space-y-3">
             {items.map((notif) => {
-              const Icon = typeIcons[notif.type];
+              const Icon = typeIcons[notif.type] || Info;
+              const colorClass = typeColors[notif.type] || "text-slate-500 bg-slate-50";
+              const timestamp = format(new Date(notif.createdAt), 'HH:mm');
+
               return (
                 <div 
                   key={notif.id} 
                   className={cn(
-                    "p-4 rounded-[20px] flex gap-4 transition-all active:scale-[0.98] border",
+                    "p-4 rounded-[24px] flex gap-4 transition-all active:scale-[0.98] border",
                     notif.isRead 
-                      ? "bg-white border-slate-100/60 opacity-80" 
-                      : "bg-white border-primary/20 shadow-sm shadow-primary/5"
+                      ? "bg-white border-slate-100 opacity-80" 
+                      : "bg-white border-primary/15 shadow-sm shadow-primary/5"
                   )}
                 >
                   <div className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-inner",
-                    typeColors[notif.type]
+                    "w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0",
+                    colorClass
                   )}>
                     <Icon size={20} />
                   </div>
@@ -84,22 +97,22 @@ export const NotificationList: React.FC<NotificationListProps> = ({ notification
                   <div className="flex-1 space-y-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <h4 className={cn(
-                        "text-sm font-black truncate",
-                        notif.isRead ? "text-slate-600" : "text-slate-900"
+                        "text-sm font-bold truncate",
+                        notif.isRead ? "text-slate-500" : "text-slate-900"
                       )}>
                         {notif.title}
                       </h4>
                       <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap">
-                        {notif.timestamp}
+                        {timestamp}
                       </span>
                     </div>
-                    <p className="text-sm text-slate-500 leading-snug line-clamp-3">
+                    <p className="text-sm text-slate-500 leading-snug line-clamp-2">
                       {notif.message}
                     </p>
                   </div>
                   
                   {!notif.isRead && (
-                    <div className="w-2.5 h-2.5 rounded-full bg-primary mt-2 flex-shrink-0 animate-pulse shadow-sm shadow-primary" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-primary mt-2 flex-shrink-0 shadow-sm shadow-primary/50" />
                   )}
                 </div>
               );

@@ -1,12 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { bookService } from '../services/book.service';
 import { QUERY_KEYS } from '@qltv/shared';
-import type { BookEntity } from '@qltv/shared';
+import type { BookEntity, PaginatedData } from '@qltv/shared';
 
-export const useBooks = (params?: any) => {
+export const useBooks = (params?: any, options?: any) => {
   return useQuery({
     queryKey: [QUERY_KEYS.BOOKS.LIST, params],
-    queryFn: () => bookService.list(params).then(res => res.data as BookEntity[]),
+    queryFn: () => bookService.list(params).then(res => res.data as PaginatedData<BookEntity>),
+    placeholderData: keepPreviousData,
+    ...options
   });
 };
 

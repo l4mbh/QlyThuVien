@@ -2,13 +2,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationService } from '../services/notification.service';
 import { QUERY_KEYS } from '@qltv/shared';
 import type { NotificationEntity } from '@qltv/shared';
+import { useAuth } from './useAuth';
 
 export const useNotifications = () => {
-  const token = localStorage.getItem('reader_token');
+  const { user, isAuthenticated } = useAuth();
+  
   return useQuery({
-    queryKey: [QUERY_KEYS.NOTIFICATIONS.LIST],
+    queryKey: [QUERY_KEYS.NOTIFICATIONS.LIST, user?.id],
     queryFn: () => notificationService.getAll().then(res => res.data as NotificationEntity[]),
-    enabled: !!token
+    enabled: isAuthenticated && !!user,
+    staleTime: 10000, // 10s
+    retry: 2
   });
 };
 

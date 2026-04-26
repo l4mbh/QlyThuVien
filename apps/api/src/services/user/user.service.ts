@@ -17,6 +17,13 @@ export class UserService {
 
   async findOrCreateReader(phone: string, name?: string): Promise<any> {
     const normalized = normalizePhone(phone);
+    
+    // Explicitly check first to avoid any upsert quirks
+    const existing = await this.userRepository.findByPhoneNormalized(normalized);
+    if (existing) {
+      return this.getUserById(existing.id);
+    }
+
     const user = await this.userRepository.upsertReader({
       phoneRaw: phone,
       phoneNormalized: normalized,
@@ -112,6 +119,16 @@ export class UserService {
       }
     }
 
+    // Always normalize phone if provided
+    if (data.phoneRaw) {
+      data.phoneNormalized = normalizePhone(data.phoneRaw);
+      
+      const existingPhone = await this.userRepository.findByPhoneNormalized(data.phoneNormalized);
+      if (existingPhone) {
+        throw new AppError(ErrorCode.USER_ALREADY_EXISTS, "User with this phone number already exists.");
+      }
+    }
+
     const password = data.password || "123456";
     const hashedPassword = await hashPassword(password);
 
@@ -123,6 +140,17 @@ export class UserService {
 
   async updateUser(id: string, data: UpdateUserDTO): Promise<UserEntity> {
     await this.getUserById(id);
+
+    // Always normalize phone if updating
+    if (data.phoneRaw) {
+      data.phoneNormalized = normalizePhone(data.phoneRaw);
+      
+      const existingPhone = await this.userRepository.findByPhoneNormalized(data.phoneNormalized);
+      if (existingPhone && existingPhone.id !== id) {
+        throw new AppError(ErrorCode.USER_ALREADY_EXISTS, "This phone number is already taken by another user.");
+      }
+    }
+
     return this.userRepository.update(id, data);
   }
 

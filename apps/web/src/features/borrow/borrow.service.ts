@@ -7,7 +7,7 @@ export const borrowService = {
    * Get all borrow records with optional filters
    */
   getAllBorrows: async (params?: { status?: string; userId?: string }) => {
-    const response = await api.get<ApiResponse<BorrowRecord[]>>("/borrow", {
+    const response = await api.get<ApiResponse<BorrowRecord[]>>("/borrows", {
       params,
     });
     return response.data;
@@ -17,7 +17,7 @@ export const borrowService = {
    * Get a single borrow record by ID
    */
   getBorrowById: async (id: string) => {
-    const response = await api.get<ApiResponse<BorrowRecord>>(`/borrow/${id}`);
+    const response = await api.get<ApiResponse<BorrowRecord>>(`/borrows/${id}`);
     return response.data;
   },
 
@@ -25,7 +25,7 @@ export const borrowService = {
    * Create a new borrow record (Multi-book transaction)
    */
   createBorrow: async (data: CreateBorrowDTO) => {
-    const response = await api.post<ApiResponse<BorrowRecord>>("/borrow", data);
+    const response = await api.post<ApiResponse<BorrowRecord>>("/borrows", data);
     return response.data;
   },
 
@@ -33,7 +33,7 @@ export const borrowService = {
    * Return a specific book from a borrow record
    */
   returnBook: async (data: ReturnBookDTO) => {
-    const response = await api.post<ApiResponse<any>>("/borrow/return", data);
+    const response = await api.post<ApiResponse<any>>("/borrows/return", data);
     return response.data;
   },
 };

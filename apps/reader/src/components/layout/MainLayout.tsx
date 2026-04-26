@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Library, Home, Bell, Bookmark } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useIsFetching } from '@tanstack/react-query';
+import { useAuth } from '../../hooks/useAuth';
 
 const desktopNavItems = [
   { icon: Home, label: 'Home', path: '/' },
@@ -16,6 +17,7 @@ const desktopNavItems = [
 
 export const MainLayout: React.FC = () => {
   const location = useLocation();
+  const { user, isAuthenticated } = useAuth();
   const isFetching = useIsFetching();
 
   return (
@@ -58,14 +60,14 @@ export const MainLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            {localStorage.getItem('reader_token') ? (
+            {isAuthenticated ? (
               <NavLink to="/profile" className="flex items-center gap-2.5 group">
                 <div className="hidden sm:flex flex-col items-end">
-                  <span className="text-xs font-semibold text-foreground leading-none">Reader</span>
-                  <span className="text-[10px] font-medium text-muted-foreground">{localStorage.getItem('reader_phone')}</span>
+                  <span className="text-xs font-semibold text-foreground leading-none">{user?.name || 'Reader'}</span>
+                  <span className="text-[10px] font-medium text-muted-foreground">{user?.phone}</span>
                 </div>
                 <div className="w-9 h-9 rounded-xl bg-primary/8 border border-primary/12 flex items-center justify-center text-primary text-sm font-semibold group-hover:bg-primary group-hover:text-white transition-all">
-                  {localStorage.getItem('reader_phone')?.slice(-2) || 'RD'}
+                  {user?.phone?.slice(-2) || 'RD'}
                 </div>
               </NavLink>
             ) : (

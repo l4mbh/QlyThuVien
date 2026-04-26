@@ -43,7 +43,16 @@ export class BookRepository {
       {
         where,
         orderBy,
-        include: { category: true },
+        include: { 
+          category: true,
+          _count: {
+            select: {
+              reservations: {
+                where: { status: { in: ['PENDING', 'READY'] } }
+              }
+            }
+          }
+        },
       },
       { page: page || 1, limit: limit || 10 }
     );
@@ -52,7 +61,16 @@ export class BookRepository {
   async findById(id: string): Promise<BookEntity | null> {
     return prisma.book.findUnique({ 
       where: { id },
-      include: { category: true }
+      include: { 
+        category: true,
+        _count: {
+          select: {
+            reservations: {
+              where: { status: { in: ['PENDING', 'READY'] } }
+            }
+          }
+        }
+      }
     }) as unknown as BookEntity;
   }
 
@@ -68,7 +86,16 @@ export class BookRepository {
         availableQuantity: data.totalQuantity,
         category: categoryId ? { connect: { id: categoryId } } : undefined,
       },
-      include: { category: true }
+      include: { 
+        category: true,
+        _count: {
+          select: {
+            reservations: {
+              where: { status: { in: ['PENDING', 'READY'] } }
+            }
+          }
+        }
+      }
     }) as unknown as BookEntity;
   }
 
@@ -80,7 +107,16 @@ export class BookRepository {
         ...updateData,
         category: categoryId ? { connect: { id: categoryId } } : undefined,
       },
-      include: { category: true }
+      include: { 
+        category: true,
+        _count: {
+          select: {
+            reservations: {
+              where: { status: { in: ['PENDING', 'READY'] } }
+            }
+          }
+        }
+      }
     }) as unknown as BookEntity;
   }
 

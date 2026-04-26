@@ -52,11 +52,11 @@ export class ReservationRepository {
     });
   }
 
-  async countPendingBefore(bookId: string, createdAt: Date) {
+  async countStatusBefore(bookId: string, status: ReservationStatus, createdAt: Date) {
     return prisma.reservation.count({
       where: {
         bookId,
-        status: ReservationStatus.PENDING,
+        status,
         createdAt: { lt: createdAt },
       },
     });

@@ -3,8 +3,9 @@ import { BorrowRecordEntity, BorrowItemEntity } from "../../types/borrow/borrow.
 import { BorrowItemStatus } from "@prisma/client";
 
 export class BorrowRepository {
-  async findAllRecords(): Promise<any[]> {
+  async findAllRecords(filters: { userId?: string; status?: any } = {}): Promise<any[]> {
     return prisma.borrowRecord.findMany({
+      where: filters,
       include: {
         user: true,
         borrowItems: {
@@ -13,6 +14,7 @@ export class BorrowRepository {
           },
         },
       },
+      orderBy: { createdAt: "desc" },
     });
   }
 

@@ -7,10 +7,11 @@ interface BookCardProps {
   author: string;
   coverUrl?: string;
   status: 'available' | 'out_of_stock';
+  queueCount?: number;
   onClick: () => void;
 }
 
-export const BookCard: React.FC<BookCardProps> = ({ title, author, coverUrl, status, onClick }) => {
+export const BookCard: React.FC<BookCardProps> = ({ title, author, coverUrl, status, queueCount, onClick }) => {
   return (
     <div 
       onClick={onClick}
@@ -40,8 +41,13 @@ export const BookCard: React.FC<BookCardProps> = ({ title, author, coverUrl, sta
         <h3 className="text-sm font-semibold text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors">
           {title}
         </h3>
-        <p className="text-xs text-muted-foreground">
-          {author}
+        <p className="text-xs text-muted-foreground flex justify-between items-center">
+          <span>{author}</span>
+          {queueCount && queueCount > 0 ? (
+            <span className="text-[10px] font-bold text-orange-500 bg-orange-50 px-1.5 py-0.5 rounded-full border border-orange-100 animate-in zoom-in duration-300">
+              {queueCount} in queue
+            </span>
+          ) : null}
         </p>
       </div>
     </div>

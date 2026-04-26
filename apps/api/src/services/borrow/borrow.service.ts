@@ -19,8 +19,11 @@ export class BorrowService {
     this.borrowRepository = new BorrowRepository();
   }
 
-  async getAllBorrows() {
-    return this.borrowRepository.findAllRecords();
+  async getAllBorrows(filters: { userId?: string; status?: any } = {}) {
+    if (filters.userId) {
+      return this.borrowRepository.findRecordsByUserId(filters.userId);
+    }
+    return this.borrowRepository.findAllRecords(filters);
   }
 
   async getMyBorrowed(userId: string) {
@@ -66,6 +69,15 @@ export class BorrowService {
         throw new AppError(ErrorCode.BOOK_NOT_FOUND, ErrorMessage.BOOK_NOT_FOUND);
       }
 
+      // 1.5 Fetch Reservation if provided
+      const reservation = data.reservationId 
+        ? await tx.reservation.findUnique({ where: { id: data.reservationId } })
+        : null;
+      
+      const reservedBookId = (reservation && reservation.userId === userId && reservation.status === ReservationStatus.READY)
+        ? reservation.bookId
+        : null;
+
       // 2. Fetch Global Borrow Limit from Settings
       const globalBorrowLimit = await settingService.get<number>(SettingKey.BORROW_LIMIT);
 
@@ -91,7 +103,8 @@ export class BorrowService {
         books: books.map(b => ({
           id: b.id,
           title: b.title,
-          availableQuantity: b.availableQuantity
+          // If this book is reserved by the user and ready, we count our "held" copy as available
+          availableQuantity: b.id === reservedBookId ? Math.max(b.availableQuantity, 1) : b.availableQuantity
         })),
         hasOverdueBooks: !!overdueItem
       });
@@ -118,31 +131,45 @@ export class BorrowService {
         },
       });
 
-      // 5. Update Book availableQuantity (-1)
-      await Promise.all(
-        bookIds.map(async (bookId) => {
-          // If this book is part of the reservationId provided, we skip decrement 
-          // because it was already soft-allocated when the reservation became READY.
-          let isFromReservation = false;
-          if (data.reservationId) {
-            const res = await tx.reservation.findUnique({ where: { id: data.reservationId } });
-            if (res && res.bookId === bookId && res.status === ReservationStatus.READY) {
-              isFromReservation = true;
-            }
-          }
+      // 5. Update Book availableQuantity (-1) and Handle Reservations
+      // Use sequential loop to avoid race conditions if same book appears multiple times
+      for (const bookId of bookIds) {
+        // A. Identify if this specific book instance is covered by the provided reservationId
+        // or any other READY/PENDING reservation for this user.
+        let targetReservationId = (data.reservationId && reservation?.bookId === bookId) 
+          ? data.reservationId 
+          : null;
 
-          if (!isFromReservation) {
-            return tx.book.update({
-              where: { id: bookId },
-              data: { availableQuantity: { decrement: 1 } },
-            });
-          }
-        })
-      );
+        const activeReservation = await tx.reservation.findFirst({
+          where: {
+            id: targetReservationId || undefined,
+            userId,
+            bookId,
+            status: { in: [ReservationStatus.PENDING, ReservationStatus.READY] }
+          },
+          orderBy: { status: 'desc' } // Prioritize READY over PENDING
+        });
 
-      // 5.5 Mark reservation as completed if provided
-      if (data.reservationId) {
-        await reservationService.markAsCompleted(data.reservationId, tx);
+        // B. Update book quantity (Always decrement in Simple Model)
+        const updatedBook = await tx.book.updateMany({
+          where: { 
+            id: bookId,
+            availableQuantity: { gt: 0 }
+          },
+          data: { availableQuantity: { decrement: 1 } },
+        });
+
+        if (updatedBook.count === 0) {
+          throw new AppError(ErrorCode.VALIDATION_ERROR, `Book ${bookId} is no longer available on shelf.`);
+        }
+
+        // C. Mark reservation as completed if found
+        if (activeReservation) {
+          await tx.reservation.update({
+            where: { id: activeReservation.id },
+            data: { status: ReservationStatus.COMPLETED }
+          });
+        }
       }
 
       // 6. Update User currentBorrowCount (+ bookIds.length)

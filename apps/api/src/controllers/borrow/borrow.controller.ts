@@ -8,7 +8,12 @@ export class BorrowController {
 
   getAllBorrows = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const borrows = await borrowService.getAllBorrows();
+      const { userId, status } = req.query;
+      const filters: any = {};
+      if (userId) filters.userId = userId as string;
+      if (status) filters.status = status;
+
+      const borrows = await borrowService.getAllBorrows(filters);
       const response: ApiResponse = { data: borrows, code: ErrorCode.SUCCESS };
       res.json(response);
     } catch (error) {

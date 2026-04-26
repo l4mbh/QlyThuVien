@@ -10,6 +10,8 @@ export interface BookEntity {
   availableQuantity: number;
   callNumber?: string;
   category?: CategoryEntity;
+  effectiveAvailable?: number;
+  queueCount?: number;
   createdAt: string;
   updatedAt: string;
 }

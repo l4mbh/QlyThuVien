@@ -24,7 +24,7 @@ router.use("/users", userRoutes);
 router.use("/books", bookRoutes);
 router.use("/books", isbnRoutes); 
 router.use("/categories", categoryRoutes);
-router.use("/borrow", borrowRoutes);
+router.use("/borrows", borrowRoutes);
 router.use("/reports", reportRoutes);
 router.use("/audit-logs", auditRoutes);
 router.use("/notifications", notificationRoutes);

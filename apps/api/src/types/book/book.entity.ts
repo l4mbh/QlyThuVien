@@ -14,6 +14,11 @@ export interface BookEntity {
   category?: CategoryEntity;
   callNumber: string | null;
   coverUrl: string | null;
+  _count?: {
+    reservations: number;
+  };
+  effectiveAvailable?: number;
+  queueCount?: number;
 }
 
 export interface CreateBookDTO {

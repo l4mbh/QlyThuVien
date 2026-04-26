@@ -8,7 +8,7 @@ export const QueryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 5 * 60 * 1000, // 5 minutes
+            staleTime: 0, // Always refetch to ensure fresh data
             gcTime: 30 * 60 * 1000, // 30 minutes
             retry: 2,
             refetchOnWindowFocus: false,

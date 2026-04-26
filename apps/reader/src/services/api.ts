@@ -7,7 +7,6 @@ const api = createSharedApiClient({
   getToken: () => localStorage.getItem('reader_token'),
   onUnauthorized: () => {
     localStorage.removeItem('reader_token');
-    localStorage.removeItem('reader_phone');
     localStorage.removeItem('reader_user');
     // Redirect to login if on a protected page
     if (window.location.pathname !== '/login') {

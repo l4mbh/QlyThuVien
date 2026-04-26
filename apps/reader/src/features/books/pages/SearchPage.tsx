@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useBooks } from '../../../hooks/useBooks';
 import { BookCard } from '../components/BookCard';
 import { BookGrid } from '../components/BookGrid';
@@ -13,27 +14,56 @@ export const SearchPage: React.FC = () => {
   const initialCategory = searchParams.get('category') || '';
   
   const [searchValue, setSearchValue] = useState(initialSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
 
-  const { data: booksData, isLoading } = useBooks({
-    search: initialSearch || undefined,
-    categoryId: initialCategory || undefined,
-    limit: 50
-  });
+  // Debounce search value
+  useEffect(() => {
+    if (!searchValue) {
+      setDebouncedSearch('');
+      return;
+    }
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchValue);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchValue]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const params: any = {};
-    if (searchValue) params.q = searchValue;
-    if (initialCategory) params.category = initialCategory;
-    setSearchParams(params);
-  };
+  // Sync searchValue when URL params change (e.g. browser back/forward)
+  useEffect(() => {
+    const q = searchParams.get('q') || '';
+    if (q !== searchValue) {
+      setSearchValue(q);
+    }
+  }, [searchParams]);
+
+  // Sync URL with debounced search
+  useEffect(() => {
+    const currentQ = searchParams.get('q') || '';
+    const currentCat = searchParams.get('category') || '';
+    
+    // Only update if values actually changed to avoid infinite loops
+    if (debouncedSearch !== currentQ || initialCategory !== currentCat) {
+      const params: any = {};
+      if (debouncedSearch) params.q = debouncedSearch;
+      if (initialCategory) params.category = initialCategory;
+      setSearchParams(params, { replace: true });
+    }
+  }, [debouncedSearch, initialCategory, searchParams, setSearchParams]);
+
+  const { data: booksData, isLoading, isFetching, isPlaceholderData } = useBooks(
+    {
+      search: debouncedSearch || undefined,
+      categoryId: initialCategory || undefined,
+      limit: 50
+    },
+    {
+      placeholderData: searchValue ? keepPreviousData : undefined
+    }
+  );
 
   const clearSearch = () => {
     setSearchValue('');
-    const params: any = {};
-    if (initialCategory) params.category = initialCategory;
-    setSearchParams(params);
   };
 
   const books = booksData?.items || [];
@@ -47,7 +77,7 @@ export const SearchPage: React.FC = () => {
         </p>
       </div>
 
-      <form onSubmit={handleSearch} className="relative group">
+      <form onSubmit={(e) => e.preventDefault()} className="relative group">
         <div className="absolute inset-y-0 left-4 flex items-center text-slate-400 group-focus-within:text-primary transition-colors">
           <SearchIcon size={20} />
         </div>
@@ -69,7 +99,11 @@ export const SearchPage: React.FC = () => {
         )}
       </form>
 
-      {isLoading ? (
+      {/* Show skeletons if:
+          1. First time loading (isLoading && !booksData)
+          2. Just cleared search and waiting for full list (isFetching && !searchValue && isPlaceholderData)
+      */}
+      {(isLoading && !booksData) || (isFetching && !searchValue && isPlaceholderData) ? (
         <BookGrid>
           {[1, 2, 3, 4, 5, 6].map(i => (
             <div key={i} className="space-y-3">
@@ -79,30 +113,35 @@ export const SearchPage: React.FC = () => {
             </div>
           ))}
         </BookGrid>
-      ) : books.length > 0 ? (
-        <BookGrid>
-          {books.map((book: any) => (
-            <BookCard 
-              key={book.id}
-              title={book.title}
-              author={book.author}
-              coverUrl={book.coverUrl}
-              status={book.availableQuantity > 0 ? 'available' : 'out_of_stock'}
-              onClick={() => setSelectedBookId(book.id)}
-            />
-          ))}
-        </BookGrid>
       ) : (
-        <div className="text-center py-20 space-y-4">
-          <div className="text-slate-200 flex justify-center">
-             <SearchIcon size={64} />
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-lg font-black text-slate-900">No books found</h3>
-            <p className="text-sm font-medium text-slate-500 max-w-[240px] mx-auto">
-              Try searching with different keywords or categories.
-            </p>
-          </div>
+        <div className={isFetching ? "opacity-60 transition-opacity" : "transition-opacity"}>
+          {books.length > 0 ? (
+            <BookGrid>
+              {books.map((book: any) => (
+                <BookCard 
+                  key={book.id}
+                  title={book.title}
+                  author={book.author}
+                  coverUrl={book.coverUrl}
+                  status={(book.effectiveAvailable ?? book.availableQuantity) > 0 ? 'available' : 'out_of_stock'}
+                  queueCount={book.queueCount}
+                  onClick={() => setSelectedBookId(book.id)}
+                />
+              ))}
+            </BookGrid>
+          ) : (
+            <div className="text-center py-20 space-y-4">
+              <div className="text-slate-200 flex justify-center">
+                 <SearchIcon size={64} />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-black text-slate-900">No books found</h3>
+                <p className="text-sm font-medium text-slate-500 max-w-[240px] mx-auto">
+                  Try searching with different keywords or categories.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

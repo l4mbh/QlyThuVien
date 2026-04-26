@@ -28,22 +28,62 @@ export class NotificationService {
     const settings = await settingService.getNotificationSettings();
     const setting = settings.find(s => s.type === data.type);
 
-    if (setting) {
-      // Check if this type is enabled
-      if (!setting.isEnabled) {
-        return null;
-      }
+    if (!setting || !setting.isEnabled) {
+      return null;
+    }
 
-      // Check if user role is allowed to receive this type
-      const user = await prisma.user.findUnique({ where: { id: data.userId }, select: { role: true } });
-      const allowedRoles = setting.roles as string[];
-      if (user && !allowedRoles.includes(user.role)) {
-        return null;
+    const allowedRoles = (setting.roles as string[]) || [];
+    let primaryResult: Notification | null = null;
+
+    // A. Notify the primary user
+    // Personal notifications should generally always be delivered to the subject
+    const personalTypes = [
+      NotificationType.BORROW_SUCCESS,
+      NotificationType.RETURN_SUCCESS,
+      NotificationType.RESERVATION_READY,
+      NotificationType.QUEUE_UPDATE,
+      NotificationType.FINE_ASSIGNED,
+      NotificationType.OVERDUE
+    ];
+
+    const primaryUser = await prisma.user.findUnique({ 
+      where: { id: data.userId }, 
+      select: { id: true, role: true } 
+    });
+    
+    const isAllowedForPrimary = primaryUser && (
+      allowedRoles.includes(primaryUser.role) || 
+      personalTypes.includes(data.type as any)
+    );
+
+    if (isAllowedForPrimary) {
+      primaryResult = await this.notificationRepository.create(data);
+    }
+
+    // B. Broadcast to other allowed roles (Management notifications)
+    const otherRoles = allowedRoles.filter(role => !primaryUser || role !== primaryUser.role);
+    if (otherRoles.length > 0) {
+      const otherUsers = await prisma.user.findMany({
+        where: {
+          role: { in: otherRoles },
+          id: { not: data.userId },
+          status: 'ACTIVE'
+        },
+        select: { id: true }
+      });
+
+      if (otherUsers.length > 0) {
+        console.log(`[NotificationService] Broadcasting [${data.type}] to ${otherUsers.length} other users (${otherRoles.join(', ')})`);
+        await Promise.all(otherUsers.map(u => 
+          this.notificationRepository.create({
+            ...data,
+            userId: u.id
+          })
+        ));
       }
     }
 
-    console.log(`[NotificationService] Sending [${data.type}] to user ${data.userId}`);
-    return this.notificationRepository.create(data);
+    return primaryResult;
   }
 
   /**

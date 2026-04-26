@@ -23,8 +23,6 @@ export const LoginPage = () => {
       const res = await api.post("/auth/reader-login", { phone });
       const { token, user } = res.data.data;
       localStorage.setItem("reader_token", token);
-      localStorage.setItem("reader_phone", phone);
-      localStorage.setItem("reader_user", JSON.stringify(user));
       toast.success(`Welcome, ${user.name || "Reader"}!`);
       navigate(from, { replace: true });
     } catch (error: any) {

@@ -85,21 +85,30 @@ export const createBookColumns = (
       header: "Availability",
       cell: ({ row }) => {
         const book = row.original;
-        const ratio = book.availableQuantity / book.totalQuantity;
+        const physicalRatio = book.availableQuantity / book.totalQuantity;
+        const effectiveRatio = (book.effectiveAvailable ?? book.availableQuantity) / book.totalQuantity;
+        
         let statusColor = "bg-green-500";
-        if (ratio === 0) statusColor = "bg-red-500";
-        else if (ratio < 0.2) statusColor = "bg-orange-500";
+        if ((book.effectiveAvailable ?? book.availableQuantity) === 0) statusColor = "bg-red-500";
+        else if (effectiveRatio < 0.2) statusColor = "bg-orange-500";
 
         return (
-          <div className="flex flex-col gap-1.5 w-24">
-            <div className="flex justify-between text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-              <span>{book.availableQuantity} / {book.totalQuantity}</span>
-              <span>{Math.round(ratio * 100)}%</span>
+          <div className="flex flex-col gap-1.5 w-32">
+            <div className="flex flex-col gap-0.5">
+              <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-foreground">
+                <span>Available: {book.effectiveAvailable ?? book.availableQuantity}</span>
+                <span className="text-muted-foreground">Shelf: {book.availableQuantity}</span>
+              </div>
+              {book.queueCount && book.queueCount > 0 ? (
+                <div className="flex items-center gap-1 text-[9px] font-medium text-orange-600 bg-orange-50 p-0.5 px-1 rounded border border-orange-100">
+                  <span className="animate-pulse">●</span> {book.queueCount} waiting in queue
+                </div>
+              ) : null}
             </div>
-            <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+            <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden flex">
               <div
                 className={`h-full ${statusColor} transition-all duration-500`}
-                style={{ width: `${ratio * 100}%` }}
+                style={{ width: `${effectiveRatio * 100}%` }}
               />
             </div>
           </div>

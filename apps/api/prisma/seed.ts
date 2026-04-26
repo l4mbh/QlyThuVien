@@ -1,20 +1,17 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import pg from 'pg';
 import dotenv from 'dotenv';
-import { 
-  DEFAULT_SETTINGS, 
-  SettingKey, 
+import {
+  DEFAULT_SETTINGS,
+  SettingKey,
   SETTING_CATEGORIES,
   NotificationType,
   UserRole
 } from '@qltv/shared';
+import * as bcrypt from 'bcrypt';
 
 dotenv.config();
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 
 async function main() {
   console.log('Seeding data...');
@@ -30,12 +27,11 @@ async function main() {
     },
   });
 
-  console.log('Default category created:', unknownCategory);
+  console.log('Default category created:', unknownCategory.name);
 
   // Create admin user
-  const bcrypt = require('bcrypt');
   const adminPassword = await bcrypt.hash('123456', 10);
-  
+
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@admin.com' },
     update: {
@@ -129,6 +125,4 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
-    await pool.end();
   });
-

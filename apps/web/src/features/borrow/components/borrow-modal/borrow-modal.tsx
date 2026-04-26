@@ -171,7 +171,9 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
       books: nextCart.map(b => ({
         id: b.id,
         title: b.title,
-        availableQuantity: b.availableQuantity
+        availableQuantity: (initialReservation && b.id === initialReservation.bookId) 
+          ? Math.max(b.availableQuantity, 1) 
+          : b.availableQuantity
       })),
       hasOverdueBooks: userData.hasOverdueBooks
     });
