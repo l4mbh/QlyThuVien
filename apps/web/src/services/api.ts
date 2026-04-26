@@ -5,10 +5,10 @@ import { toast } from "sonner";
 // Implements "Always 200" and standard interceptors for Admin
 export const api = createSharedApiClient({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1",
-  getToken: () => localStorage.getItem("token"),
+  getToken: () => localStorage.getItem("admin_token"),
   onUnauthorized: () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("admin_user");
     if (window.location.pathname !== "/login") {
       window.location.href = "/login";
     }

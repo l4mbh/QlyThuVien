@@ -16,7 +16,7 @@ interface BookDetailModalProps {
 export const BookDetailModal: React.FC<BookDetailModalProps> = ({ bookId, onClose }) => {
   const { data: book, isLoading } = useBookDetail(bookId);
   const navigate = useNavigate();
-  const isLoggedIn = !!localStorage.getItem('token');
+  const isLoggedIn = !!localStorage.getItem('reader_token');
 
   const { data: myReservations } = useMyReservations();
   const createReservation = useCreateReservation();

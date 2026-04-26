@@ -17,7 +17,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = localStorage.getItem("admin_user");
     if (!storedUser || storedUser === "undefined") return null;
     try {
       return JSON.parse(storedUser);
@@ -27,7 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
   const [token, setToken] = useState<string | null>(() => {
-    const storedToken = localStorage.getItem("token");
+    const storedToken = localStorage.getItem("admin_token");
     if (!storedToken || storedToken === "undefined" || storedToken === "null") return null;
     return storedToken;
   });
@@ -37,8 +37,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log("AuthHook: Logging out...");
     setToken(null);
     setUser(null);
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("admin_user");
   }, []);
 
   const login = async (data: LoginRequest) => {
@@ -47,22 +47,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log("AuthHook: Login successful, setting state for", response.user.email);
     setToken(response.token);
     setUser(response.user);
-    localStorage.setItem("token", response.token);
-    localStorage.setItem("user", JSON.stringify(response.user));
+    localStorage.setItem("admin_token", response.token);
+    localStorage.setItem("admin_user", JSON.stringify(response.user));
   };
 
   const register = async (data: RegisterRequest) => {
     const response = await authService.register(data);
     setToken(response.token);
     setUser(response.user);
-    localStorage.setItem("token", response.token);
-    localStorage.setItem("user", JSON.stringify(response.user));
+    localStorage.setItem("admin_token", response.token);
+    localStorage.setItem("admin_user", JSON.stringify(response.user));
   };
 
   useEffect(() => {
     const initAuth = async () => {
-      const storedToken = localStorage.getItem("token");
-      const storedUser = localStorage.getItem("user");
+      const storedToken = localStorage.getItem("admin_token");
+      const storedUser = localStorage.getItem("admin_user");
 
       console.log("AuthHook: Initializing auth state...", { 
         hasToken: !!storedToken, 
@@ -72,12 +72,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (storedToken) {
         try {
-          // If we have a user in storage, it's already set by useState initializer
-          // but we verify with backend anyway to get fresh data
           const freshUser = await authService.getMe();
+          
+          // CRITICAL: Verify if the user has permission to access Admin app
+          if (freshUser.role === 'READER') {
+            console.error("AuthHook: Reader attempting to access Admin app. Logging out.");
+            logout();
+            return;
+          }
+
           console.log("AuthHook: Session verified, user is", freshUser.role);
           setUser(freshUser);
-          localStorage.setItem("user", JSON.stringify(freshUser));
+          localStorage.setItem("admin_user", JSON.stringify(freshUser));
         } catch (error) {
           console.error("AuthHook: Failed to restore session:", error);
           logout();

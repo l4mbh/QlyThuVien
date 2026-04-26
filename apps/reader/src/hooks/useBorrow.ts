@@ -5,7 +5,7 @@ import type { BorrowEntity } from '@qltv/shared';
 import { toast } from 'sonner';
 
 export const useMyBorrowed = () => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('reader_token');
   return useQuery({
     queryKey: [QUERY_KEYS.BORROWS.LIST, 'my'],
     queryFn: async () => {

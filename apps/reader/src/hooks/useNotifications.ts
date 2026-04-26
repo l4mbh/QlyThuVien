@@ -4,7 +4,7 @@ import { QUERY_KEYS } from '@qltv/shared';
 import type { NotificationEntity } from '@qltv/shared';
 
 export const useNotifications = () => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('reader_token');
   return useQuery({
     queryKey: [QUERY_KEYS.NOTIFICATIONS.LIST],
     queryFn: () => notificationService.getAll().then(res => res.data as NotificationEntity[]),

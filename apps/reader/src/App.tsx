@@ -44,7 +44,7 @@ const ProfilePage = () => {
   const user = storedUser ? JSON.parse(storedUser) : null;
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('reader_token');
     localStorage.removeItem('reader_phone');
     localStorage.removeItem('reader_user');
     navigate('/login');
@@ -91,7 +91,7 @@ const ProfilePage = () => {
 };
 
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('reader_token');
   const location = useLocation();
 
   if (!token) {

@@ -3,7 +3,7 @@ import { reservationService } from '../services/reservation.service';
 import { QUERY_KEYS } from '@qltv/shared';
 
 export const useMyReservations = () => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('reader_token');
   return useQuery({
     queryKey: [QUERY_KEYS.RESERVATIONS?.MY || 'RESERVATIONS_MY'],
     queryFn: () => reservationService.getMy().then(res => res.data),

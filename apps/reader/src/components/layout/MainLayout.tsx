@@ -58,7 +58,7 @@ export const MainLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            {localStorage.getItem('token') ? (
+            {localStorage.getItem('reader_token') ? (
               <NavLink to="/profile" className="flex items-center gap-2.5 group">
                 <div className="hidden sm:flex flex-col items-end">
                   <span className="text-xs font-semibold text-foreground leading-none">Reader</span>
