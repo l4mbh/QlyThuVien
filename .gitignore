@@ -1,9 +1,29 @@
-node_modules
-.brain/
+# Dependencies
+**/node_modules
+
+# Build outputs
+**/dist
+**/build
+**/.next
+**/out
+
+# Environment variables
+**/.env
+**/.env.local
+**/.env.*.local
 .env
-dist/
-build/
+
+# AI & Agent tools
+.brain/
 .agents/
 .gemini/
+
+# System files
 .DS_Store
+Thumbs.db
 *.log
+
+# IDEs
+.vscode/
+.idea/
+*.swp
