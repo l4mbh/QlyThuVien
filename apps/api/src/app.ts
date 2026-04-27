@@ -9,8 +9,22 @@ import { errorMiddleware } from "./middlewares/error/error.middleware";
 const app: Application = express();
 
 // Swagger Documentation
-const swaggerDocument = yaml.load(path.join(__dirname, "../../../docs/api/openapi.yaml"));
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+let swaggerDocument;
+try {
+  // Try absolute path from project root (Works on Render)
+  swaggerDocument = yaml.load(path.join(process.cwd(), "docs/api/openapi.yaml"));
+} catch (e) {
+  try {
+    // Fallback to relative path from __dirname (Works on Local dev)
+    swaggerDocument = yaml.load(path.join(__dirname, "../../../docs/api/openapi.yaml"));
+  } catch (e2) {
+    console.error("Could not load openapi.yaml", e2);
+  }
+}
+
+if (swaggerDocument) {
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+}
 
 // Middlewares
 app.use(cors());
