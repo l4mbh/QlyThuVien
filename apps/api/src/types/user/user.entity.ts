@@ -27,6 +27,9 @@ export interface CreateUserDTO {
 
 export interface UpdateUserDTO {
   name?: string;
+  email?: string;
+  phoneRaw?: string;
+  phoneNormalized?: string;
   role?: UserRole;
   borrowLimit?: number;
 }

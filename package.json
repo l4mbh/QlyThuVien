@@ -18,6 +18,12 @@
     "install:all": "pnpm install"
   },
   "devDependencies": {
+    "supabase": "^2.95.3",
     "typescript": "^5.0.0"
+  },
+  "pnpm": {
+    "allowedBuiltDependencies": [
+      "supabase"
+    ]
   }
 }

@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: qlythuvien-api
+    runtime: node
+    plan: free
+    buildCommand: pnpm install && pnpm --filter @qltv/shared build && pnpm --filter @qltv/api exec prisma generate && pnpm --filter @qltv/api build
+    startCommand: pnpm --filter @qltv/api start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 3000

@@ -12,6 +12,7 @@ import { LoginPage } from "@/features/auth/LoginPage/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage/RegisterPage";
 import { ProtectedRoute } from "@/components/ui/protected-route/protected-route";
 import { UserRole } from "@/types/auth/user.entity";
+import { SupabaseTest } from "@/pages/SupabaseTest";
 
 import { MaintenancePage } from "@/pages/Maintenance";
 
@@ -111,6 +112,14 @@ const router = createBrowserRouter([
         handle: { 
           crumb: "System Settings",
           description: "Configure library rules, fines, and notification routing."
+        },
+      },
+      {
+        path: "supabase-test",
+        element: <SupabaseTest />,
+        handle: { 
+          crumb: "Supabase Test",
+          description: "Technical diagnostics for Supabase integration."
         },
       },
     ],

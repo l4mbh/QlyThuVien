@@ -142,7 +142,7 @@ export class ReservationService {
         metadata: { bookId, status: ReservationStatus.PENDING }
       }, tx);
 
-      const position = await this.calculatePosition(userId!, bookId, reservation.createdAt);
+      const position = await this.calculatePosition(userId!, bookId, reservation.createdAt, ReservationStatus.PENDING);
       await notificationService.notifyQueueUpdate(userId!, {
         bookTitle: reservation.book.title,
         bookId,

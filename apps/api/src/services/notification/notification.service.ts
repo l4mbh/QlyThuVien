@@ -8,6 +8,7 @@ import {
 import { NotificationRepository } from "../../repositories/notification/notification.repository";
 import { settingService } from "../settings/setting.service";
 import prisma from "../../config/db/db";
+import { UserRole } from "@prisma/client";
 
 export class NotificationService {
   private notificationRepository: NotificationRepository;
@@ -61,7 +62,7 @@ export class NotificationService {
     }
 
     // B. Broadcast to other allowed roles (Management notifications)
-    const otherRoles = allowedRoles.filter(role => !primaryUser || role !== primaryUser.role);
+    const otherRoles = (allowedRoles as UserRole[]).filter(role => !primaryUser || role !== primaryUser.role);
     if (otherRoles.length > 0) {
       const otherUsers = await prisma.user.findMany({
         where: {
