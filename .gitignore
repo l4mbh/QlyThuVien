@@ -3,3 +3,7 @@ node_modules
 .env
 dist/
 build/
+.agents/
+.gemini/
+.DS_Store
+*.log
