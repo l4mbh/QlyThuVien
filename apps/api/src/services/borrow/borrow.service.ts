@@ -63,6 +63,15 @@ export class BorrowService {
           id: { in: bookIds },
           isArchived: false,
         },
+        include: {
+          _count: {
+            select: { 
+              reservations: { 
+                where: { status: ReservationStatus.PENDING } 
+              } 
+            }
+          }
+        }
       });
 
       if (books.length !== bookIds.length) {
