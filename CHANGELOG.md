@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-04-27] - Reservation State Machine & Reader UX Hardening
+### Added
+- **Reservation State Machine**: Implemented a strict `PENDING` ↔ `READY` state machine.
+    - **Rebalance Logic**: Automatically reverts `READY` reservations back to `PENDING` (clearing `expiresAt`) if stock is depleted by walk-ins or other loans.
+    - **Promotion Logic**: Automatically promotes the oldest `PENDING` reservation to `READY` (granting a fresh 24h `expiresAt`) when a book is returned.
+- **Notification Polish**:
+    - **Pulsing Red Dot**: Added "New Notification" signals to `BottomNav` (Mobile) and `MainSidebar` (Desktop).
+    - **Auto-Mark-Read**: Integrated logic to automatically mark all notifications as read when entering the Notifications page.
+- **Reader UI Hardening**:
+    - **"No book available" Label**: In `ReservationList`, if a reservation is `READY` but stock is temporarily 0, it explicitly shows "No book available for now".
+    - **Skeleton Loaders**: Standardized skeleton loaders for Home, Search, and Notifications.
+    - **Empty States**: Added descriptive empty states for Notifications.
+
+### Changed
+- **API Realignment**: Updated notification API from `PATCH /read-all` to `POST /mark-all-read` to match shared API standards.
+- **Inventory Logic**: Refactored `borrowItems` to consider `PENDING` reservations in "Effective Availability" to prevent over-borrowing.
+
+### Fixed
+- **Infinite Loop**: Resolved a critical React `useEffect` infinite loop in the Notifications page that caused `ERR_INSUFFICIENT_RESOURCES`.
+- **Backend Build Error**: Fixed missing `_count` property in `BorrowService` by including reservation counts in Prisma queries.
+- **Reference Errors**: Restored missing component imports (`LoginPage`, `MyBooksPage`, `Skeleton`) in `App.tsx` and `useAuth` in `MainLayout.tsx`.
+- **Staff Dashboard Glitch**: Prevented "Urgent Pickup" alerts for books with 0 available quantity.
+
 ## [2026-04-26] - Phase 06 System Recovery & Singleton Standardization
 ### Added
 - **Master Architecture Standard**: Created `.brain/ARCHITECTURE.md` to document the core monorepo structure and patterns.
