@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Ban, MapPin, Calendar, ArrowRight } from 'lucide-react';
+import { Clock, Ban, MapPin, Calendar, ArrowRight, X } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { format } from 'date-fns';
 import { useCancelReservation } from '../../../hooks/useReservations';
@@ -29,15 +29,24 @@ export const ReservationCard: React.FC<ReservationCardProps> = ({ item }) => {
       <div className="flex items-center justify-between">
         <div className={cn(
           "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2",
-          status === 'READY' 
-            ? "bg-green-500 text-white animate-pulse" 
+          status === 'READY'
+            ? (item.book.availableQuantity > 0
+              ? "bg-green-500 text-white animate-pulse"
+              : "bg-amber-100 text-amber-600 border border-amber-200")
             : "bg-orange-100 text-orange-600"
         )}>
           {status === 'READY' ? (
-            <>
-              <Clock size={12} className="animate-spin-slow" />
-              Ready to Collect
-            </>
+            item.book.availableQuantity > 0 ? (
+              <>
+                <Clock size={12} className="animate-spin-slow" />
+                Ready to Collect
+              </>
+            ) : (
+              <>
+                <Ban size={12} />
+                No book available for now
+              </>
+            )
           ) : (
             <>
               <Clock size={12} />
@@ -45,14 +54,16 @@ export const ReservationCard: React.FC<ReservationCardProps> = ({ item }) => {
             </>
           )}
         </div>
-        
+
         {status !== 'READY' && (
-          <button 
+          <button
             onClick={handleCancel}
+            title='Cancel reservation'
+            type='button'
             disabled={cancelMutation.isPending}
             className="w-8 h-8 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-colors"
           >
-            <Ban size={16} />
+            <X size={16} />
           </button>
         )}
       </div>
@@ -68,7 +79,7 @@ export const ReservationCard: React.FC<ReservationCardProps> = ({ item }) => {
             </div>
           )}
         </div>
-        
+
         <div className="flex-1 space-y-1.5 min-w-0">
           <h3 className="text-lg font-black text-slate-900 leading-tight truncate">
             {item.book.title}
@@ -76,27 +87,37 @@ export const ReservationCard: React.FC<ReservationCardProps> = ({ item }) => {
           <p className="text-sm font-bold text-slate-500 truncate">
             by <span className="text-primary">{item.book.author}</span>
           </p>
-          
+
           <div className="pt-2 flex flex-wrap gap-3">
-             <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-tighter">
-                <MapPin size={12} className="text-primary" />
-                Main Library
-             </div>
+            <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-tighter">
+              <MapPin size={12} className="text-primary" />
+              Main Library
+            </div>
           </div>
         </div>
       </div>
 
       {/* Expiration or Progress */}
-      {status === 'READY' && item.expiresAt && (
-        <div className="bg-green-50 rounded-2xl p-4 border border-green-100/50">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-black text-green-700 uppercase tracking-widest">Pick up before</span>
-            <span className="text-xs font-black text-green-700">{format(new Date(item.expiresAt), 'MMM dd, HH:mm')}</span>
+      {status === 'READY' && (
+        item.book.availableQuantity > 0 ? (
+          item.expiresAt && (
+            <div className="bg-green-50 rounded-2xl p-4 border border-green-100/50">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-black text-green-700 uppercase tracking-widest">Pick up before</span>
+                <span className="text-xs font-black text-green-700">{format(new Date(item.expiresAt), 'MMM dd, HH:mm')}</span>
+              </div>
+              <div className="w-full h-1.5 bg-green-200 rounded-full overflow-hidden mt-2">
+                <div className="h-full bg-green-600 rounded-full transition-all" style={{ width: '100%' }} />
+              </div>
+            </div>
+          )
+        ) : (
+          <div className="bg-amber-50/50 rounded-2xl p-4 border border-amber-100/50">
+            <p className="text-[11px] font-bold text-amber-700 leading-relaxed">
+              We're sorry! Someone just borrowed the last copy. You are still #1 in queue and will be notified as soon as a copy is returned.
+            </p>
           </div>
-          <div className="w-full h-1.5 bg-green-200 rounded-full overflow-hidden mt-2">
-            <div className="h-full bg-green-600 rounded-full transition-all" style={{ width: '65%' }} />
-          </div>
-        </div>
+        )
       )}
 
       {status === 'PENDING' && (

@@ -200,16 +200,22 @@ export class ReservationService {
     const book = await tx.book.findUnique({ where: { id: bookId } });
     if (!book || book.availableQuantity <= 0) return;
 
-    // 2. Find oldest PENDING
-    const nextRes = await tx.reservation.findFirst({
-      where: { bookId, status: ReservationStatus.PENDING },
-      orderBy: { createdAt: "asc" }
+    // 2. Find any READY reservations for this book
+    const readyCount = await tx.reservation.count({
+      where: { bookId, status: ReservationStatus.READY }
     });
 
-    if (!nextRes) return;
+    // 3. If we still have room for more READY users (ReadyCount < AvailableQuantity)
+    if (readyCount < book.availableQuantity) {
+      const nextRes = await tx.reservation.findFirst({
+        where: { bookId, status: ReservationStatus.PENDING },
+        orderBy: { createdAt: "asc" }
+      });
 
-    // 3. Promote it
-    await this.promoteToReady(nextRes.id, tx, performerId);
+      if (nextRes) {
+        await this.promoteToReady(nextRes.id, tx, performerId);
+      }
+    }
   }
 
   private async promoteToReady(id: string, tx: Prisma.TransactionClient, performerId: string) {
@@ -229,11 +235,14 @@ export class ReservationService {
     const book = await tx.book.findUnique({ where: { id: updated.bookId } });
     if (!book || book.availableQuantity <= 0) {
       console.warn(`[promoteToReady] Book ${updated.bookId} is no longer available. Reverting reservation ${id} to PENDING.`);
-      await tx.reservation.update({
+      return await tx.reservation.update({
         where: { id },
-        data: { status: ReservationStatus.PENDING }
+        data: { 
+          status: ReservationStatus.PENDING,
+          expiresAt: null 
+        },
+        include: { book: true }
       });
-      return updated;
     }
 
     // 2. Soft allocation: removed in Simple Model
@@ -295,6 +304,49 @@ export class ReservationService {
       return await execute(tx);
     } else {
       return await prisma.$transaction(async (t) => await execute(t));
+    }
+  }
+  /**
+   * Ensure READY reservations do not exceed available stock.
+   * If stock is reduced (e.g. by a walk-in borrow), some READY reservations 
+   * might need to go back to PENDING.
+   */
+  async rebalanceREADYReservations(bookId: string, tx: Prisma.TransactionClient, performerId: string = "SYSTEM") {
+    // 1. Refresh book data from DB to get the most accurate quantity within transaction
+    const book = await tx.book.findUnique({ 
+      where: { id: bookId },
+      select: { availableQuantity: true } 
+    });
+    if (!book) return;
+
+    // 2. Find all current READY reservations
+    const readyReservations = await tx.reservation.findMany({
+      where: { bookId, status: ReservationStatus.READY },
+      orderBy: { createdAt: "desc" } // Revert the NEWEST ones first
+    });
+
+    // 3. If READY count exceeds available books, revert the excess to PENDING
+    if (readyReservations.length > book.availableQuantity) {
+      const numToRevert = readyReservations.length - book.availableQuantity;
+      const toRevert = readyReservations.slice(0, numToRevert);
+
+      for (const res of toRevert) {
+        await tx.reservation.update({
+          where: { id: res.id },
+          data: { 
+            status: ReservationStatus.PENDING,
+            expiresAt: null // CLEAR EXPIRE IMMEDIATELY
+          }
+        });
+
+        await auditService.logEvent({
+          action: AuditAction.RESERVATION_CANCELLED,
+          entityType: AuditEntityType.RESERVATION,
+          entityId: res.id,
+          userId: performerId,
+          metadata: { bookId, reason: "STOCK_DEPLETED", wasStatus: ReservationStatus.READY }
+        }, tx);
+      }
     }
   }
 }

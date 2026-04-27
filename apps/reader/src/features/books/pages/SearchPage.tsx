@@ -99,11 +99,8 @@ export const SearchPage: React.FC = () => {
         )}
       </form>
 
-      {/* Show skeletons if:
-          1. First time loading (isLoading && !booksData)
-          2. Just cleared search and waiting for full list (isFetching && !searchValue && isPlaceholderData)
-      */}
-      {(isLoading && !booksData) || (isFetching && !searchValue && isPlaceholderData) ? (
+      {/* Show skeletons if first time loading */}
+      {(isLoading && !booksData) ? (
         <BookGrid>
           {[1, 2, 3, 4, 5, 6].map(i => (
             <div key={i} className="space-y-3">
@@ -114,7 +111,16 @@ export const SearchPage: React.FC = () => {
           ))}
         </BookGrid>
       ) : (
-        <div className={isFetching ? "opacity-60 transition-opacity" : "transition-opacity"}>
+        <div className="relative min-h-[400px]">
+          {isFetching && (
+            <div className="absolute inset-0 z-10 glass-subtle flex items-center justify-center rounded-3xl backdrop-blur-[1px] transition-all">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+                <span className="text-[10px] font-black text-primary uppercase tracking-widest">Searching...</span>
+              </div>
+            </div>
+          )}
+          
           {books.length > 0 ? (
             <BookGrid>
               {books.map((book: any) => (

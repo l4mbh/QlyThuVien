@@ -173,14 +173,23 @@ export const ReservationDetailDrawer: React.FC<ReservationDetailDrawerProps> = (
 
         <SheetFooter className="p-6 bg-slate-50 border-t border-slate-100 flex-col sm:flex-col gap-3">
           {reservation.status === 'READY' && (
-            <Button 
-              className="w-full bg-primary hover:bg-primary/90 text-white font-black py-6 rounded-2xl shadow-xl shadow-primary/20 flex items-center justify-center gap-2"
-              onClick={() => onProcessBorrow(reservation)}
-            >
-              <CheckCircle2 size={18} />
-              Issue to Reader
-              <ArrowRight size={18} className="ml-1" />
-            </Button>
+            <div className="w-full space-y-2">
+              {reservation.book.availableQuantity <= 0 && (
+                <p className="text-[10px] font-bold text-red-600 bg-red-50 p-2 rounded-lg border border-red-100 flex items-center gap-2">
+                  <Ban size={12} />
+                  Book currently out of stock. Please wait for a return.
+                </p>
+              )}
+              <Button 
+                className="w-full bg-primary hover:bg-primary/90 text-white font-black py-6 rounded-2xl shadow-xl shadow-primary/20 flex items-center justify-center gap-2"
+                onClick={() => onProcessBorrow(reservation)}
+                disabled={reservation.book.availableQuantity <= 0}
+              >
+                <CheckCircle2 size={18} />
+                Issue to Reader
+                <ArrowRight size={18} className="ml-1" />
+              </Button>
+            </div>
           )}
           
           {(reservation.status === 'PENDING' || reservation.status === 'READY') && (

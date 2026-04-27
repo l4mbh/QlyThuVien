@@ -7,24 +7,33 @@ import { CatalogPage } from './features/books/pages/CatalogPage';
 import { MyBorrowedList } from './features/dashboard/components/MyBorrowedList';
 import { NotificationList } from './features/notifications/components/NotificationList';
 import { useMyBorrowed } from './hooks/useBorrow';
-import { useNotifications, useMarkNotificationRead } from './hooks/useNotifications';
+import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from './hooks/useNotifications';
+import { useEffect } from 'react';
 import { Skeleton } from './components/ui/Skeleton';
 import { LoginPage } from './features/auth/pages/LoginPage';
 import { MyBooksPage } from './features/dashboard/pages/MyBooksPage';
 
-
-
-import { useQueryClient } from '@tanstack/react-query';
-
 const NotificationsPage = () => {
-  const { data: notifications, isLoading } = useNotifications();
-  const markAsRead = useMarkNotificationRead();
+  const { data: notifications, isLoading, unreadCount } = useNotifications();
+  const markAllRead = useMarkAllNotificationsRead();
+
+  useEffect(() => {
+    // Only mark all as read once when entering the page
+    markAllRead.mutate();
+  }, []); // Run once on mount
 
   return (
     <div className="pt-4 space-y-5">
-      <div className="space-y-1 px-0.5">
-        <h2 className="text-xl font-bold text-foreground tracking-tight">Notifications</h2>
-        <p className="text-sm text-muted-foreground">Stay updated with library alerts</p>
+      <div className="space-y-1 px-0.5 flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-foreground tracking-tight">Notifications</h2>
+          <p className="text-sm text-muted-foreground">Stay updated with library alerts</p>
+        </div>
+        {unreadCount > 0 && (
+          <div className="px-2.5 py-1 bg-red-500/10 text-red-500 text-[10px] font-bold rounded-full animate-pulse border border-red-500/20">
+            {unreadCount} NEW
+          </div>
+        )}
       </div>
       {isLoading ? (
         <div className="space-y-3">

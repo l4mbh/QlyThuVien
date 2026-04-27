@@ -9,7 +9,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({ className }) => {
   return (
     <div
       className={cn(
-        "animate-pulse bg-slate-100 rounded-md",
+        "relative overflow-hidden bg-slate-200/60 rounded-md before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:animate-shimmer",
         className
       )}
     />

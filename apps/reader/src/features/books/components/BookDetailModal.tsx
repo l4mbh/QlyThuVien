@@ -67,11 +67,25 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({ bookId, onClos
             <div className="mx-auto w-10 h-1 flex-shrink-0 rounded-full bg-border mb-6" />
             
             {isLoading ? (
-              <div className="space-y-6 animate-pulse">
-                <div className="aspect-[16/10] w-full bg-muted rounded-2xl" />
-                <div className="space-y-3">
-                  <div className="h-7 bg-muted rounded-lg w-3/4" />
-                  <div className="h-4 bg-muted rounded-lg w-1/2" />
+              <div className="space-y-6">
+                <Skeleton className="aspect-[16/10] w-full rounded-2xl" />
+                <div className="space-y-3 px-1">
+                   <div className="flex justify-between items-start">
+                     <Skeleton className="h-8 bg-muted rounded-xl w-2/3" />
+                     <Skeleton className="h-6 bg-muted rounded-lg w-20" />
+                   </div>
+                   <Skeleton className="h-5 bg-muted rounded-lg w-1/3" />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                   <Skeleton className="h-16 rounded-2xl" />
+                   <Skeleton className="h-16 rounded-2xl" />
+                   <Skeleton className="h-16 rounded-2xl" />
+                </div>
+                <div className="space-y-2 p-5 border border-slate-100 rounded-2xl">
+                   <Skeleton className="h-4 w-20 rounded" />
+                   <Skeleton className="h-4 w-full rounded" />
+                   <Skeleton className="h-4 w-full rounded" />
+                   <Skeleton className="h-4 w-3/4 rounded" />
                 </div>
               </div>
             ) : book ? (

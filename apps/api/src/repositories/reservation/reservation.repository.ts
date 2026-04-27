@@ -78,7 +78,10 @@ export class ReservationRepository {
     return prisma.reservation.findMany({
       where: {
         status: ReservationStatus.READY,
-        expiresAt: { not: null }
+        expiresAt: { not: null },
+        book: {
+          availableQuantity: { gt: 0 }
+        }
       },
       include: {
         user: true,

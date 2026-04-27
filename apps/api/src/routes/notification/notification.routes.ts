@@ -9,6 +9,6 @@ router.use(authMiddleware);
 
 router.get("/", notificationController.getNotifications);
 router.patch("/:id/read", notificationController.markAsRead);
-router.patch("/read-all", notificationController.markAllAsRead);
+router.post("/mark-all-read", notificationController.markAllAsRead);
 
 export default router;

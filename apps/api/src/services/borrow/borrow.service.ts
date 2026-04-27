@@ -100,12 +100,17 @@ export class BorrowService {
           currentBorrowCount: user.currentBorrowCount,
           borrowLimit: globalBorrowLimit // Use global limit from settings
         },
-        books: books.map(b => ({
-          id: b.id,
-          title: b.title,
-          // If this book is reserved by the user and ready, we count our "held" copy as available
-          availableQuantity: b.id === reservedBookId ? Math.max(b.availableQuantity, 1) : b.availableQuantity
-        })),
+        books: books.map(b => {
+          const queueCount = b._count?.reservations || 0;
+          const effectiveAvailable = Math.max(0, b.availableQuantity - queueCount);
+          
+          return {
+            id: b.id,
+            title: b.title,
+            // If this user has a READY reservation for this book, they bypass the queue check
+            availableQuantity: b.id === reservedBookId ? Math.max(effectiveAvailable, 1) : effectiveAvailable
+          };
+        }),
         hasOverdueBooks: !!overdueItem
       });
 
@@ -170,6 +175,9 @@ export class BorrowService {
             data: { status: ReservationStatus.COMPLETED }
           });
         }
+
+        // D. Rebalance READY reservations if stock is now gone
+        await reservationService.rebalanceREADYReservations(bookId, tx, performerId);
       }
 
       // 6. Update User currentBorrowCount (+ bookIds.length)

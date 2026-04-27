@@ -7,13 +7,20 @@ import { useAuth } from './useAuth';
 export const useNotifications = () => {
   const { user, isAuthenticated } = useAuth();
   
-  return useQuery({
+  const query = useQuery({
     queryKey: [QUERY_KEYS.NOTIFICATIONS.LIST, user?.id],
     queryFn: () => notificationService.getAll().then(res => res.data as NotificationEntity[]),
     enabled: isAuthenticated && !!user,
     staleTime: 10000, // 10s
     retry: 2
   });
+
+  const unreadCount = query.data?.filter(n => !n.isRead).length || 0;
+
+  return {
+    ...query,
+    unreadCount
+  };
 };
 
 export const useMarkNotificationRead = () => {
@@ -21,6 +28,16 @@ export const useMarkNotificationRead = () => {
   
   return useMutation({
     mutationFn: (id: string) => notificationService.markAsRead(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.NOTIFICATIONS.LIST] });
+    },
+  });
+};
+export const useMarkAllNotificationsRead = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: () => notificationService.markAllAsRead(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.NOTIFICATIONS.LIST] });
     },

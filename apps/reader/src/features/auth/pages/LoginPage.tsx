@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { Phone, ArrowRight, BookOpen, Loader2 } from "lucide-react";
 import api from "../../../services/api";
+import { Loader } from "../../../components/ui/Loader";
 
 export const LoginPage = () => {
   const [phone, setPhone] = useState("");
@@ -34,6 +35,7 @@ export const LoginPage = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+      {isLoading && <Loader fullPage message="Authenticating..." />}
       <div className="w-full max-w-sm space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 bg-primary/8 rounded-2xl flex items-center justify-center text-primary">

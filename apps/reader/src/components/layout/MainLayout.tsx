@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Library, Home, Bell, Bookmark } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useIsFetching } from '@tanstack/react-query';
+import { useNotifications } from '../../hooks/useNotifications';
 import { useAuth } from '../../hooks/useAuth';
 
 const desktopNavItems = [
@@ -12,13 +13,14 @@ const desktopNavItems = [
   { icon: Search, label: 'Search', path: '/search' },
   { icon: Library, label: 'Catalog', path: '/catalog' },
   { icon: Bookmark, label: 'My Books', path: '/my-books' },
-  { icon: Bell, label: 'Alerts', path: '/notifications' },
+  { icon: Bell, label: 'Alerts', path: '/notifications', hasBadge: true },
 ];
 
 export const MainLayout: React.FC = () => {
   const location = useLocation();
   const { user, isAuthenticated } = useAuth();
   const isFetching = useIsFetching();
+  const { unreadCount } = useNotifications();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -45,14 +47,19 @@ export const MainLayout: React.FC = () => {
                   to={item.path}
                   className={({ isActive }) =>
                     cn(
-                      "px-3.5 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2",
+                      "px-3.5 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 relative",
                       isActive 
                         ? "bg-primary text-white shadow-sm shadow-primary/20" 
                         : "text-muted-foreground hover:text-foreground hover:bg-white/60"
                     )
                   }
                 >
-                  <item.icon size={16} />
+                  <div className="relative">
+                    <item.icon size={16} />
+                    {item.hasBadge && unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white animate-pulse" />
+                    )}
+                  </div>
                   {item.label}
                 </NavLink>
               ))}

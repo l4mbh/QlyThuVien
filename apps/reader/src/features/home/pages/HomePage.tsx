@@ -63,11 +63,8 @@ export const HomePage: React.FC = () => {
           )}
         </div>
         
-        {/* Show skeletons if:
-            1. First time loading (isLoading && !booksData)
-            2. Just cleared search and waiting for full list (isFetching && !search && isPlaceholderData)
-        */}
-        {(isLoading && !booksData) || (isFetching && !search && isPlaceholderData) ? (
+        {/* Show skeletons if first time loading */}
+        {(isLoading && !booksData) ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[1, 2, 3, 4, 5, 6].map(i => (
               <div key={i} className="space-y-3">
@@ -80,7 +77,16 @@ export const HomePage: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className={isFetching ? "opacity-60 transition-opacity" : "transition-opacity"}>
+          <div className="relative min-h-[200px]">
+            {isFetching && (
+              <div className="absolute inset-0 z-10 glass-subtle flex items-center justify-center rounded-3xl backdrop-blur-[1px] transition-all">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+                  <span className="text-[10px] font-black text-primary uppercase tracking-widest">Refreshing...</span>
+                </div>
+              </div>
+            )}
+            
             {books.length === 0 ? (
               <div className="py-12 text-center space-y-2">
                 <p className="text-muted-foreground">No books found matching your criteria.</p>
