@@ -20,13 +20,9 @@ export class ReservationService {
 
   async getAllReservations() {
     const list = await this.reservationRepository.findAll();
-    // For admin, we might want to attach current positions for PENDING ones
     return Promise.all(list.map(async (res) => {
-      if (res.status === ReservationStatus.PENDING || res.status === ReservationStatus.READY) {
-        const pos = await this.calculatePosition(res.userId, res.bookId, res.createdAt, res.status);
-        return { ...res, position: pos };
-      }
-      return res;
+      const pos = await this.calculatePosition(res.userId, res.bookId, res.createdAt, res.status);
+      return { ...res, position: pos };
     }));
   }
 
@@ -37,8 +33,8 @@ export class ReservationService {
   async getMyReservations(userId: string) {
     const list = await this.reservationRepository.findByUserId(userId);
     // Only return active reservations for the reader's "My Shelf"
-    const activeReservations = list.filter(res => 
-      res.status === ReservationStatus.PENDING || 
+    const activeReservations = list.filter(res =>
+      res.status === ReservationStatus.PENDING ||
       res.status === ReservationStatus.READY
     );
 
@@ -97,9 +93,9 @@ export class ReservationService {
 
       // 3. Create Reservation (Default PENDING)
       const pendingCount = await tx.reservation.count({
-        where: { 
-          bookId, 
-          status: ReservationStatus.PENDING 
+        where: {
+          bookId,
+          status: ReservationStatus.PENDING
         }
       });
 
@@ -162,13 +158,13 @@ export class ReservationService {
 
   async cancelReservation(id: string, performerId: string) {
     return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      const res = await tx.reservation.findUnique({ 
+      const res = await tx.reservation.findUnique({
         where: { id },
         include: { book: true }
       });
 
       if (!res) throw new AppError(ErrorCode.RESERVATION_NOT_FOUND, ErrorMessage.RESERVATION_NOT_FOUND);
-      
+
       if (res.status === ReservationStatus.COMPLETED || res.status === ReservationStatus.CANCELLED) {
         throw new AppError(ErrorCode.INVALID_RESERVATION_STATUS, ErrorMessage.INVALID_RESERVATION_STATUS);
       }
@@ -231,7 +227,7 @@ export class ReservationService {
 
     const updated = await tx.reservation.update({
       where: { id },
-      data: { 
+      data: {
         status: ReservationStatus.READY,
         expiresAt
       },
@@ -240,7 +236,7 @@ export class ReservationService {
 
     // 1. Fetch current book state to ensure it's still available and we have "room"
     const book = await tx.book.findUnique({ where: { id: updated.bookId } });
-    
+
     const readyCount = await tx.reservation.count({
       where: { bookId: updated.bookId, status: ReservationStatus.READY }
     });
@@ -249,9 +245,9 @@ export class ReservationService {
       console.warn(`[promoteToReady] Book ${updated.bookId} availability constraint violated (Shelf: ${book?.availableQuantity}, Ready: ${readyCount}). Reverting reservation ${id} to PENDING.`);
       return await tx.reservation.update({
         where: { id },
-        data: { 
+        data: {
           status: ReservationStatus.PENDING,
-          expiresAt: null 
+          expiresAt: null
         },
         include: { book: true }
       });
@@ -325,9 +321,9 @@ export class ReservationService {
    */
   async rebalanceREADYReservations(bookId: string, tx: Prisma.TransactionClient, performerId: string = "SYSTEM") {
     // 1. Refresh book data from DB to get the most accurate quantity within transaction
-    const book = await tx.book.findUnique({ 
+    const book = await tx.book.findUnique({
       where: { id: bookId },
-      select: { availableQuantity: true } 
+      select: { availableQuantity: true }
     });
     if (!book) return;
 
@@ -345,7 +341,7 @@ export class ReservationService {
       for (const res of toRevert) {
         await tx.reservation.update({
           where: { id: res.id },
-          data: { 
+          data: {
             status: ReservationStatus.PENDING,
             expiresAt: null // CLEAR EXPIRE IMMEDIATELY
           }

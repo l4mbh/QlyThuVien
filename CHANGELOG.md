@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-04-29] - Reservation Over-promotion Fix & Self-healing System
+### Added
+- **Self-healing Mechanism**: Integrated `rebalanceREADYReservations` into the backend ecosystem.
+    - **Periodic Cleanup**: The `reservation-cleanup.job.ts` now runs a global rebalance check every 15 minutes.
+    - **On-Mutation Rebalance**: Automatic rebalance triggered during `updateBook` and `adjustInventory` to ensure data consistency after stock changes.
+- **System Memory**: Initialized `.brain` structure (`brain.json`, `session.json`) to persist project knowledge and progress.
+
+### Fixed
+- **Reservation Over-promotion**: Resolved a logic bug where more users could be marked as `READY` than books available on the shelf.
+- **Backend Type Safety**: Fixed a Prisma type mismatch in `BookService.updateBook` by properly destructuring DTOs.
+- **FIFO Integrity**: Ensured that the oldest reservations are preserved during rebalance operations while the newest ones are reverted to `PENDING`.
+
 ## [2026-04-27] - Reservation State Machine & Reader UX Hardening
 ### Added
 - **Reservation State Machine**: Implemented a strict `PENDING` ↔ `READY` state machine.
