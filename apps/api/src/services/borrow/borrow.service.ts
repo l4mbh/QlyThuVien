@@ -83,7 +83,10 @@ export class BorrowService {
         ? await tx.reservation.findUnique({ where: { id: data.reservationId } })
         : null;
       
-      const reservedBookId = (reservation && reservation.userId === userId && reservation.status === ReservationStatus.READY)
+      // Check if reservation has physically timed out even if status is still READY
+      const isTimedOut = reservation?.expiresAt && new Date(reservation.expiresAt) < new Date();
+
+      const reservedBookId = (reservation && reservation.userId === userId && reservation.status === ReservationStatus.READY && !isTimedOut)
         ? reservation.bookId
         : null;
 

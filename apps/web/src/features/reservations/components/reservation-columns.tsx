@@ -2,7 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, Clock, User, Book as BookIcon } from "lucide-react";
-import type { Reservation } from "../../reservation.service";
+import type { Reservation } from "../reservation.service";
 import { format } from "date-fns";
 
 interface ColumnProps {
@@ -42,10 +42,16 @@ export const getReservationColumns = ({
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const status = row.original.status;
+      const { status, expiresAt } = row.original;
+      
+      // Check if actually expired in time even if status is still READY
+      const isActuallyExpired = status === 'READY' && expiresAt && new Date(expiresAt) < new Date();
+
       const variants: Record<string, string> = {
         PENDING: "bg-orange-100 text-orange-700 border-orange-200",
-        READY: "bg-green-100 text-green-700 border-green-200 animate-pulse",
+        READY: isActuallyExpired 
+          ? "bg-red-50 text-red-600 border-red-100 italic" 
+          : "bg-green-100 text-green-700 border-green-200 animate-pulse",
         COMPLETED: "bg-blue-100 text-blue-700 border-blue-200",
         CANCELLED: "bg-slate-100 text-slate-500 border-slate-200",
         EXPIRED: "bg-red-100 text-red-700 border-red-200",
@@ -53,7 +59,7 @@ export const getReservationColumns = ({
 
       return (
         <Badge variant="outline" className={variants[status] || ""}>
-          {status}
+          {isActuallyExpired ? "EXPIRED (Pending Sync)" : status}
         </Badge>
       );
     },
