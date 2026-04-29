@@ -120,16 +120,23 @@ export class ReservationService {
       });
 
       // 5. Try to promote immediately if book is available
-      // Soft allocation: if availableQuantity > 0, we can make it READY
+      // Soft allocation: ONLY promote if (Ready Count < Available Quantity)
       const currentBook = await tx.book.findUnique({ where: { id: bookId } });
       if (currentBook && currentBook.availableQuantity > 0) {
-        // Double check if there are others before this one (shouldn't be, but safe)
-        const othersBefore = await tx.reservation.count({
-          where: { bookId, status: ReservationStatus.PENDING, createdAt: { lt: reservation.createdAt } }
+        // Count how many people are already in READY status
+        const readyCount = await tx.reservation.count({
+          where: { bookId, status: ReservationStatus.READY }
         });
 
-        if (othersBefore === 0) {
-          return await this.promoteToReady(reservation.id, tx, performerId);
+        if (readyCount < currentBook.availableQuantity) {
+          // Double check if there are others before this one (FIFO)
+          const othersBefore = await tx.reservation.count({
+            where: { bookId, status: ReservationStatus.PENDING, createdAt: { lt: reservation.createdAt } }
+          });
+
+          if (othersBefore === 0) {
+            return await this.promoteToReady(reservation.id, tx, performerId);
+          }
         }
       }
 
@@ -231,10 +238,15 @@ export class ReservationService {
       include: { book: true }
     });
 
-    // 1. Fetch current book state to ensure it's still available
+    // 1. Fetch current book state to ensure it's still available and we have "room"
     const book = await tx.book.findUnique({ where: { id: updated.bookId } });
-    if (!book || book.availableQuantity <= 0) {
-      console.warn(`[promoteToReady] Book ${updated.bookId} is no longer available. Reverting reservation ${id} to PENDING.`);
+    
+    const readyCount = await tx.reservation.count({
+      where: { bookId: updated.bookId, status: ReservationStatus.READY }
+    });
+
+    if (!book || book.availableQuantity <= 0 || readyCount > book.availableQuantity) {
+      console.warn(`[promoteToReady] Book ${updated.bookId} availability constraint violated (Shelf: ${book?.availableQuantity}, Ready: ${readyCount}). Reverting reservation ${id} to PENDING.`);
       return await tx.reservation.update({
         where: { id },
         data: { 

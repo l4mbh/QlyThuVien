@@ -7,6 +7,7 @@ import { generateCallNumber } from "../../utils/generateCallNumber";
 import { PaginatedData } from "@qltv/shared";
 import { AppError } from "../../utils/app-error";
 import { auditService } from "../audit/audit.service";
+import { reservationService } from "../reservation/reservation.service";
 
 export class BookService {
   private bookRepository: BookRepository;
@@ -92,8 +93,35 @@ export class BookService {
   }
 
   async updateBook(id: string, data: UpdateBookDTO, userId: string): Promise<BookEntity> {
-    await this.getBookById(id);
-    const book = await this.bookRepository.update(id, data);
+    const existing = await this.getBookById(id);
+    const { categoryId, ...updateData } = data;
+
+    const book = await prisma.$transaction(async (tx) => {
+      const updated = await tx.book.update({
+        where: { id },
+        data: {
+          ...updateData,
+          category: categoryId ? { connect: { id: categoryId } } : undefined,
+        },
+        include: { 
+          category: true,
+          _count: {
+            select: {
+              reservations: {
+                where: { status: { in: ['PENDING', 'READY'] } }
+              }
+            }
+          }
+        }
+      });
+
+      // Rebalance if quantity was changed
+      if (data.totalQuantity !== undefined || data.availableQuantity !== undefined) {
+        await reservationService.rebalanceREADYReservations(id, tx, userId);
+      }
+
+      return updated as unknown as BookEntity;
+    });
 
     // Log Event
     await auditService.logEvent({
@@ -167,6 +195,9 @@ export class BookService {
           note: data.note || null
         }
       });
+
+      // Rebalance READY reservations if stock was reduced
+      await reservationService.rebalanceREADYReservations(bookId, tx, userId);
 
       // Log Audit Event
       await auditService.logEvent({

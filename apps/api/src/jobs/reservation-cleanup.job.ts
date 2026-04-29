@@ -9,10 +9,10 @@ import cron from "node-cron";
  */
 export const cleanupExpiredReservations = async () => {
   console.log("[Job] Running reservation cleanup job...");
-  
+
   try {
     const now = new Date();
-    
+
     // Find all READY reservations that have expired
     const expiredReservations = await prisma.reservation.findMany({
       where: {
@@ -38,6 +38,24 @@ export const cleanupExpiredReservations = async () => {
         console.error(`[Job] Failed to expire reservation ${res.id}: ${err.message}`);
       }
     }
+
+    // --- NEW: Global Rebalance Inconsistencies ---
+    console.log("[Job] Starting global reservation rebalance check...");
+    const booksWithReady = await prisma.book.findMany({
+      where: {
+        reservations: {
+          some: { status: ReservationStatus.READY }
+        }
+      },
+      select: { id: true, availableQuantity: true }
+    });
+
+    for (const book of booksWithReady) {
+      await prisma.$transaction(async (tx) => {
+        await reservationService.rebalanceREADYReservations(book.id, tx, "SYSTEM_JOB");
+      });
+    }
+    console.log(`[Job] Rebalance reservation check completed for ${booksWithReady.length} books.`);
 
     console.log("[Job] Reservation cleanup job completed.");
   } catch (error: any) {
