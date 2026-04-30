@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 
 export const NotificationBell: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -30,13 +31,23 @@ export const NotificationBell: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleMarkAsRead = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleMarkAsRead = async (id: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     try {
       await notificationService.markAsRead(id);
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
     } catch (error) {
       console.error("Failed to mark as read", error);
+    }
+  };
+
+  const handleNotificationClick = async (id: string, isRead: boolean) => {
+    // 1. Expand/Collapse logic
+    setExpandedId(prev => prev === id ? null : id);
+    
+    // 2. Mark as read if not already read
+    if (!isRead) {
+      await handleMarkAsRead(id);
     }
   };
 
@@ -70,6 +81,9 @@ export const NotificationBell: React.FC = () => {
       case NotificationType.FINE_ASSIGNED:
         return `New fine assigned for "${meta.bookTitle}": ${meta.amount?.toLocaleString()} VND.`;
       
+      case NotificationType.RESERVATION_READY:
+        return `Your reserved book "${meta.bookTitle}" is ready! Please collect it by ${format(new Date(meta.expiresAt), "MMM dd, yyyy")}.`;
+      
       default:
         return message || "New system notification.";
     }
@@ -85,6 +99,10 @@ export const NotificationBell: React.FC = () => {
         return { icon: Info, color: "text-blue-500", bg: "bg-blue-50" };
       case NotificationType.FINE_ASSIGNED:
         return { icon: AlertTriangle, color: "text-amber-500", bg: "bg-amber-50" };
+      case NotificationType.RESERVATION_READY:
+        return { icon: CheckCircle, color: "text-blue-600", bg: "bg-blue-50" };
+      case NotificationType.QUEUE_UPDATE:
+        return { icon: Clock, color: "text-slate-500", bg: "bg-slate-50" };
       default:
         return { icon: Bell, color: "text-slate-500", bg: "bg-slate-50" };
     }
@@ -128,45 +146,50 @@ export const NotificationBell: React.FC = () => {
                 const config = getTypeConfig(notification.type);
                 const Icon = config.icon;
                 
+                const isExpanded = expandedId === notification.id;
+                
                 return (
                   <div 
                     key={notification.id}
+                    onClick={() => handleNotificationClick(notification.id, notification.isRead)}
                     className={cn(
-                      "flex gap-3 p-4 border-b border-slate-50 transition-colors cursor-default hover:bg-slate-50",
-                      !notification.isRead && "bg-blue-50/30"
+                      "flex gap-3 p-4 border-b border-slate-50 transition-all cursor-pointer hover:bg-slate-50",
+                      !notification.isRead && "bg-blue-50/20",
+                      isExpanded && "bg-white shadow-md border-l-4 border-l-blue-500 my-1 py-5"
                     )}
                   >
                     <div className={cn(
-                      "w-9 h-9 rounded-full flex items-center justify-center shrink-0",
+                      "w-9 h-9 rounded-full flex items-center justify-center shrink-0 mt-1 transition-opacity",
                       config.bg,
-                      config.color
+                      config.color,
+                      notification.isRead && !isExpanded ? "opacity-30" : "opacity-100"
                     )}>
                       <Icon className="h-5 w-5" />
                     </div>
                     
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex items-center justify-between gap-2">
+                    <div className="flex-1 min-w-0 space-y-1.5">
+                      <div className="flex items-start justify-between gap-2">
                         <p className={cn(
-                          "text-xs font-bold text-slate-800 truncate",
-                          !notification.isRead && "text-blue-900"
+                          "text-xs font-bold transition-colors",
+                          isExpanded ? "text-slate-950" : (notification.isRead ? "text-slate-400 font-medium" : "text-blue-900"),
+                          !isExpanded && "truncate"
                         )}>
                           {notification.title}
                         </p>
                         {!notification.isRead && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-5 w-5 rounded-full hover:bg-blue-100 text-blue-600"
-                            onClick={(e) => handleMarkAsRead(notification.id, e)}
-                          >
-                            <Check className="h-3 w-3" />
-                          </Button>
+                          <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />
                         )}
                       </div>
-                      <p className="text-[11px] text-slate-500 leading-relaxed">
+                      <p className={cn(
+                        "text-[11px] leading-relaxed transition-colors",
+                        isExpanded ? "text-slate-900 font-medium" : (notification.isRead ? "text-slate-400 line-clamp-2" : "text-slate-600")
+                      )}>
                         {renderMessage(notification)}
                       </p>
-                      <div className="flex items-center gap-1 text-[10px] text-slate-400">
+                      <div className={cn(
+                        "flex items-center gap-1 text-[10px] transition-opacity",
+                        notification.isRead && !isExpanded ? "text-slate-300" : "text-slate-500"
+                      )}>
                         <Clock className="h-3 w-3" />
                         {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                       </div>

@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Bell, Info, CheckCircle2, AlertTriangle, Calendar, BookOpen, Clock } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { NotificationType } from '@qltv/shared';
 import { format, isToday, isYesterday } from 'date-fns';
+import { useMarkNotificationRead } from '../../../hooks/useNotifications';
 
 interface Notification {
   id: string;
@@ -36,6 +37,9 @@ const typeColors: Record<string, string> = {
 };
 
 export const NotificationList: React.FC<NotificationListProps> = ({ notifications }) => {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const markRead = useMarkNotificationRead();
+
   if (!notifications || notifications.length === 0) {
     return (
       <div className="py-20 text-center space-y-4">
@@ -49,6 +53,16 @@ export const NotificationList: React.FC<NotificationListProps> = ({ notification
       </div>
     );
   }
+
+  const handleNotificationClick = (id: string, isRead: boolean) => {
+    // Toggle expand
+    setExpandedId(prev => prev === id ? null : id);
+    
+    // Mark as read if not already
+    if (!isRead) {
+      markRead.mutate(id);
+    }
+  };
 
   // Group notifications by date
   const groups = notifications.reduce((acc, notif) => {
@@ -76,20 +90,25 @@ export const NotificationList: React.FC<NotificationListProps> = ({ notification
               const Icon = typeIcons[notif.type] || Info;
               const colorClass = typeColors[notif.type] || "text-slate-500 bg-slate-50";
               const timestamp = format(new Date(notif.createdAt), 'HH:mm');
+              const isExpanded = expandedId === notif.id;
 
               return (
                 <div 
                   key={notif.id} 
+                  onClick={() => handleNotificationClick(notif.id, notif.isRead)}
                   className={cn(
-                    "p-4 rounded-[24px] flex gap-4 transition-all active:scale-[0.98] border",
-                    notif.isRead 
-                      ? "bg-white border-slate-100 opacity-80" 
-                      : "bg-white border-primary/15 shadow-sm shadow-primary/5"
+                    "p-4 rounded-[24px] flex gap-4 transition-all border",
+                    isExpanded 
+                      ? "bg-white border-blue-200 shadow-lg shadow-blue-500/5 ring-1 ring-blue-500/10 scale-[1.01] z-10" 
+                      : (notif.isRead 
+                          ? "bg-white border-slate-100 opacity-60" 
+                          : "bg-white border-primary/15 shadow-sm shadow-primary/5")
                   )}
                 >
                   <div className={cn(
-                    "w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0",
-                    colorClass
+                    "w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 transition-opacity",
+                    colorClass,
+                    notif.isRead && !isExpanded && "opacity-50"
                   )}>
                     <Icon size={20} />
                   </div>
@@ -97,16 +116,25 @@ export const NotificationList: React.FC<NotificationListProps> = ({ notification
                   <div className="flex-1 space-y-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <h4 className={cn(
-                        "text-sm font-bold truncate",
-                        notif.isRead ? "text-slate-500" : "text-slate-900"
+                        "text-sm font-bold transition-colors",
+                        isExpanded ? "text-slate-950" : (notif.isRead ? "text-slate-400" : "text-slate-900"),
+                        !isExpanded && "truncate"
                       )}>
                         {notif.title}
                       </h4>
-                      <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap">
+                      <span className={cn(
+                        "text-[10px] font-bold whitespace-nowrap transition-colors",
+                        isExpanded ? "text-slate-500" : "text-slate-400"
+                      )}>
                         {timestamp}
                       </span>
                     </div>
-                    <p className="text-sm text-slate-500 leading-snug line-clamp-2">
+                    <p className={cn(
+                      "text-sm leading-snug transition-colors",
+                      isExpanded ? "text-slate-900 font-medium" : "text-slate-500",
+                      !isExpanded && "line-clamp-2",
+                      notif.isRead && !isExpanded && "text-slate-400"
+                    )}>
                       {notif.message}
                     </p>
                   </div>

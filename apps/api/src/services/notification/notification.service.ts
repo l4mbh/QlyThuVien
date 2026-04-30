@@ -10,6 +10,15 @@ import { settingService } from "../settings/setting.service";
 import prisma from "../../config/db/db";
 import { UserRole } from "@prisma/client";
 
+const PERSONAL_NOTIFICATION_TYPES = [
+  NotificationType.BORROW_SUCCESS,
+  NotificationType.RETURN_SUCCESS,
+  NotificationType.RESERVATION_READY,
+  NotificationType.QUEUE_UPDATE,
+  NotificationType.FINE_ASSIGNED,
+  NotificationType.OVERDUE
+];
+
 export class NotificationService {
   private notificationRepository: NotificationRepository;
 
@@ -29,32 +38,28 @@ export class NotificationService {
     const settings = await settingService.getNotificationSettings();
     const setting = settings.find(s => s.type === data.type);
 
-    if (!setting || !setting.isEnabled) {
+    const isPersonal = PERSONAL_NOTIFICATION_TYPES.includes(data.type as any);
+
+    if (setting && !setting.isEnabled) {
       return null;
     }
 
-    const allowedRoles = (setting.roles as string[]) || [];
-    let primaryResult: Notification | null = null;
+    if (!setting && !isPersonal) {
+      // For non-personal types (system/management), require an explicit setting
+      return null;
+    }
 
-    // A. Notify the primary user
-    // Personal notifications should generally always be delivered to the subject
-    const personalTypes = [
-      NotificationType.BORROW_SUCCESS,
-      NotificationType.RETURN_SUCCESS,
-      NotificationType.RESERVATION_READY,
-      NotificationType.QUEUE_UPDATE,
-      NotificationType.FINE_ASSIGNED,
-      NotificationType.OVERDUE
-    ];
-
+    const allowedRoles = (setting?.roles as string[]) || [];
     const primaryUser = await prisma.user.findUnique({ 
       where: { id: data.userId }, 
       select: { id: true, role: true } 
     });
     
+    let primaryResult: Notification | null = null;
+
     const isAllowedForPrimary = primaryUser && (
       allowedRoles.includes(primaryUser.role) || 
-      personalTypes.includes(data.type as any)
+      PERSONAL_NOTIFICATION_TYPES.includes(data.type as any)
     );
 
     if (isAllowedForPrimary) {

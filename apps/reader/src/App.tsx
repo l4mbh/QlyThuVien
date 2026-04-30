@@ -17,11 +17,6 @@ const NotificationsPage = () => {
   const { data: notifications, isLoading, unreadCount } = useNotifications();
   const markAllRead = useMarkAllNotificationsRead();
 
-  useEffect(() => {
-    // Only mark all as read once when entering the page
-    markAllRead.mutate();
-  }, []); // Run once on mount
-
   return (
     <div className="pt-4 space-y-5">
       <div className="space-y-1 px-0.5 flex items-center justify-between">
