@@ -37,5 +37,5 @@ export const createReservationApi = (api: AxiosInstance) => ({
   list: (params?: any) => api.get('/reservations', { params }).then((res: any) => res.data),
   getMy: () => api.get('/reservations/my').then((res: any) => res.data),
   create: (data: { bookId: string; phone?: string; userId?: string }) => api.post('/reservations', data).then((res: any) => res.data),
-  cancel: (id: string) => api.post(`/reservations/${id}/cancel`).then((res: any) => res.data),
+  cancel: (id: string, data?: { reason: string; note?: string }) => api.post(`/reservations/${id}/cancel`, data).then((res: any) => res.data),
 });

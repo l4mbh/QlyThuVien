@@ -14,6 +14,7 @@ const PERSONAL_NOTIFICATION_TYPES = [
   NotificationType.BORROW_SUCCESS,
   NotificationType.RETURN_SUCCESS,
   NotificationType.RESERVATION_READY,
+  NotificationType.RESERVATION_CANCELLED,
   NotificationType.QUEUE_UPDATE,
   NotificationType.FINE_ASSIGNED,
   NotificationType.OVERDUE
@@ -196,6 +197,25 @@ export class NotificationService {
       type: NotificationType.QUEUE_UPDATE,
       title: NotificationMessage.QUEUE_UPDATE_TITLE,
       message: NotificationMessage.QUEUE_UPDATE_BODY(payload.bookTitle, payload.position),
+      metadata: payload,
+    });
+  }
+
+  /**
+   * Notify about reservation cancelled by admin/staff
+   */
+  async notifyReservationCancelled(userId: string, payload: {
+    bookTitle: string;
+    bookId: string;
+    reservationId: string;
+    reason: string;
+    note?: string;
+  }): Promise<Notification | null> {
+    return this.sendNotification({
+      userId,
+      type: NotificationType.RESERVATION_CANCELLED,
+      title: NotificationMessage.RESERVATION_CANCELLED_TITLE,
+      message: NotificationMessage.RESERVATION_CANCELLED_BODY(payload.bookTitle, payload.reason, payload.note),
       metadata: payload,
     });
   }

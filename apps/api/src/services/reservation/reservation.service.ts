@@ -156,7 +156,7 @@ export class ReservationService {
     });
   }
 
-  async cancelReservation(id: string, performerId: string) {
+  async cancelReservation(id: string, performerId: string, reason?: string, note?: string) {
     return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const res = await tx.reservation.findUnique({
         where: { id },
@@ -171,10 +171,14 @@ export class ReservationService {
 
       const oldStatus = res.status;
 
-      // 1. Update status
+      // 1. Update status + cancel reason/note
       const updated = await tx.reservation.update({
         where: { id },
-        data: { status: ReservationStatus.CANCELLED }
+        data: {
+          status: ReservationStatus.CANCELLED,
+          cancelReason: reason || null,
+          cancelNote: note || null,
+        }
       });
 
       // 2. If it was READY, no physical inventory change needed in Simple Model
@@ -185,10 +189,21 @@ export class ReservationService {
         entityType: AuditEntityType.RESERVATION,
         entityId: id,
         userId: performerId,
-        metadata: { bookId: res.bookId, wasStatus: oldStatus }
+        metadata: { bookId: res.bookId, wasStatus: oldStatus, cancelReason: reason, cancelNote: note }
       }, tx);
 
-      // 4. Trigger promoteNext for this book
+      // 4. Notify reader about cancellation (only if cancelled by someone else)
+      if (performerId !== res.userId && reason) {
+        await notificationService.notifyReservationCancelled(res.userId, {
+          bookTitle: res.book.title,
+          bookId: res.bookId,
+          reservationId: id,
+          reason,
+          note: note || undefined,
+        });
+      }
+
+      // 5. Trigger promoteNext for this book
       await this.promoteNext(res.bookId, tx, performerId);
 
       return updated;

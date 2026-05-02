@@ -44,6 +44,7 @@ export const useMyBorrowed = () => {
     },
     enabled: isAuthenticated && !!user,
     staleTime: 5000, // 5s stale time to avoid redundant calls
+    refetchInterval: 60000, // 60s - auto refresh borrowed books
     retry: 2 // Allow a few retries for network glitches
   });
 };

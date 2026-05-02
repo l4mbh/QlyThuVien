@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell, Info, CheckCircle2, AlertTriangle, Calendar, BookOpen, Clock } from 'lucide-react';
+import { Bell, Info, CheckCircle2, AlertTriangle, Calendar, BookOpen, Clock, Ban } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { NotificationType } from '@qltv/shared';
 import { format, isToday, isYesterday } from 'date-fns';
@@ -24,6 +24,7 @@ const typeIcons: Record<string, any> = {
   [NotificationType.OVERDUE]: AlertTriangle,
   [NotificationType.RESERVATION_READY]: Clock,
   [NotificationType.QUEUE_UPDATE]: Bell,
+  [NotificationType.RESERVATION_CANCELLED]: Ban,
   [NotificationType.SYSTEM]: Info,
 };
 
@@ -33,6 +34,7 @@ const typeColors: Record<string, string> = {
   [NotificationType.OVERDUE]: "text-red-500 bg-red-50",
   [NotificationType.RESERVATION_READY]: "text-emerald-500 bg-emerald-50",
   [NotificationType.QUEUE_UPDATE]: "text-amber-500 bg-amber-50",
+  [NotificationType.RESERVATION_CANCELLED]: "text-red-500 bg-red-50",
   [NotificationType.SYSTEM]: "text-slate-500 bg-slate-50",
 };
 

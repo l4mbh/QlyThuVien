@@ -12,6 +12,7 @@ export const useNotifications = () => {
     queryFn: () => notificationService.getAll().then(res => res.data as NotificationEntity[]),
     enabled: isAuthenticated && !!user,
     staleTime: 10000, // 10s
+    refetchInterval: 20000, // 20s - auto refresh notifications
     retry: 2
   });
 

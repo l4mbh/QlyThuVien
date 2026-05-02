@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -17,13 +17,24 @@ import {
   CheckCircle2, 
   ArrowRight,
   Phone,
-  Mail
+  Mail,
+  AlertTriangle
 } from "lucide-react";
 import { format } from "date-fns";
 import type { Reservation } from "../../reservation.service";
 import { reservationService } from "../../reservation.service";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
+
+const CANCEL_REASONS = [
+  { value: "BOOK_DAMAGED_OR_LOST", label: "Book damaged or lost" },
+  { value: "BOOK_RECALLED", label: "Book recalled by library" },
+  { value: "DUPLICATE_RESERVATION", label: "Duplicate reservation" },
+  { value: "READER_NO_SHOW", label: "Reader did not collect in time" },
+  { value: "READER_REQUEST", label: "Reader request" },
+  { value: "INVENTORY_ADJUSTMENT", label: "Inventory adjustment" },
+  { value: "OTHER", label: "Other (please specify)" },
+] as const;
 
 interface ReservationDetailDrawerProps {
   isOpen: boolean;
@@ -40,17 +51,45 @@ export const ReservationDetailDrawer: React.FC<ReservationDetailDrawerProps> = (
   onUpdate,
   onProcessBorrow,
 }) => {
+  const [showCancelForm, setShowCancelForm] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelNote, setCancelNote] = useState("");
+  const [isCancelling, setIsCancelling] = useState(false);
+
   if (!reservation) return null;
 
+  const resetCancelForm = () => {
+    setShowCancelForm(false);
+    setCancelReason("");
+    setCancelNote("");
+  };
+
   const handleCancel = async () => {
-    if (!window.confirm("Are you sure you want to cancel this reservation?")) return;
+    if (!cancelReason) {
+      toast.error("Please select a reason for cancellation.");
+      return;
+    }
+    if (cancelReason === "OTHER" && !cancelNote.trim()) {
+      toast.error("Please provide a note for 'Other' reason.");
+      return;
+    }
+
+    const reasonLabel = CANCEL_REASONS.find(r => r.value === cancelReason)?.label || cancelReason;
+
     try {
-      await reservationService.cancel(reservation.id);
+      setIsCancelling(true);
+      await reservationService.cancel(reservation.id, {
+        reason: reasonLabel,
+        note: cancelNote.trim() || undefined,
+      });
       toast.success("Reservation cancelled");
+      resetCancelForm();
       onUpdate();
       onClose();
     } catch (error: any) {
       toast.error(error.message || "Failed to cancel");
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -63,7 +102,7 @@ export const ReservationDetailDrawer: React.FC<ReservationDetailDrawerProps> = (
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
+    <Sheet open={isOpen} onOpenChange={(open) => { if (!open) { resetCancelForm(); onClose(); } }}>
       <SheetContent className="sm:max-w-md flex flex-col h-full p-0 gap-0">
         <SheetHeader className="p-6 pb-2">
           <div className="flex justify-between items-center">
@@ -169,10 +208,57 @@ export const ReservationDetailDrawer: React.FC<ReservationDetailDrawerProps> = (
               </div>
             )}
           </div>
+
+          {/* Cancel Reason Form (inline) */}
+          {showCancelForm && (
+            <>
+              <Separator className="bg-red-100" />
+              <div className="space-y-4 p-4 bg-red-50/50 rounded-2xl border border-red-100">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-red-500 flex items-center gap-2">
+                  <AlertTriangle size={12} />
+                  Cancel Reason
+                </h4>
+                <select
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl border border-red-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300"
+                >
+                  <option value="">-- Select a reason --</option>
+                  {CANCEL_REASONS.map((r) => (
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
+                </select>
+                <textarea
+                  value={cancelNote}
+                  onChange={(e) => setCancelNote(e.target.value)}
+                  placeholder={cancelReason === "OTHER" ? "Note is required for 'Other' reason..." : "Additional note (optional)..."}
+                  rows={3}
+                  className="w-full px-3 py-2.5 rounded-xl border border-red-200 bg-white text-sm font-medium text-slate-700 resize-none focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1 font-bold rounded-xl"
+                    onClick={resetCancelForm}
+                    disabled={isCancelling}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl"
+                    onClick={handleCancel}
+                    disabled={isCancelling || !cancelReason}
+                  >
+                    {isCancelling ? "Cancelling..." : "Confirm Cancel"}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         <SheetFooter className="p-6 bg-slate-50 border-t border-slate-100 flex-col sm:flex-col gap-3">
-          {reservation.status === 'READY' && (
+          {reservation.status === 'READY' && !showCancelForm && (
             <div className="w-full space-y-2">
               {reservation.book.availableQuantity <= 0 && (
                 <p className="text-[10px] font-bold text-red-600 bg-red-50 p-2 rounded-lg border border-red-100 flex items-center gap-2">
@@ -192,20 +278,22 @@ export const ReservationDetailDrawer: React.FC<ReservationDetailDrawerProps> = (
             </div>
           )}
           
-          {(reservation.status === 'PENDING' || reservation.status === 'READY') && (
+          {(reservation.status === 'PENDING' || reservation.status === 'READY') && !showCancelForm && (
             <Button 
               variant="outline" 
               className="w-full border-red-100 text-red-600 hover:bg-red-50 font-bold py-6 rounded-2xl flex items-center justify-center gap-2"
-              onClick={handleCancel}
+              onClick={() => setShowCancelForm(true)}
             >
               <Ban size={18} />
               Cancel Reservation
             </Button>
           )}
           
-          <Button variant="ghost" className="w-full font-bold" onClick={onClose}>
-            Close
-          </Button>
+          {!showCancelForm && (
+            <Button variant="ghost" className="w-full font-bold" onClick={onClose}>
+              Close
+            </Button>
+          )}
         </SheetFooter>
       </SheetContent>
     </Sheet>

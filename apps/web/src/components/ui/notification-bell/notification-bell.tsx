@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Bell, Check, Clock, Info, AlertTriangle, CheckCircle } from "lucide-react";
+import { Bell, Check, Clock, Info, AlertTriangle, CheckCircle, Ban } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -84,6 +84,9 @@ export const NotificationBell: React.FC = () => {
       case NotificationType.RESERVATION_READY:
         return `Your reserved book "${meta.bookTitle}" is ready! Please collect it by ${format(new Date(meta.expiresAt), "MMM dd, yyyy")}.`;
       
+      case NotificationType.RESERVATION_CANCELLED:
+        return `Reservation for "${meta.bookTitle}" has been cancelled. Reason: ${meta.reason || 'N/A'}.${meta.note ? ` Note: ${meta.note}` : ''}`;
+      
       default:
         return message || "New system notification.";
     }
@@ -103,6 +106,8 @@ export const NotificationBell: React.FC = () => {
         return { icon: CheckCircle, color: "text-blue-600", bg: "bg-blue-50" };
       case NotificationType.QUEUE_UPDATE:
         return { icon: Clock, color: "text-slate-500", bg: "bg-slate-50" };
+      case NotificationType.RESERVATION_CANCELLED:
+        return { icon: Ban, color: "text-red-500", bg: "bg-red-50" };
       default:
         return { icon: Bell, color: "text-slate-500", bg: "bg-slate-50" };
     }

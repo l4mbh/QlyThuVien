@@ -50,7 +50,8 @@ export class ReservationController {
   cancelReservation = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const performerId = (req as any).user.userId as string;
-      const result = await reservationService.cancelReservation(req.params.id as string, performerId);
+      const { reason, note } = req.body || {};
+      const result = await reservationService.cancelReservation(req.params.id as string, performerId, reason, note);
       const response: ApiResponse = { data: result, code: ErrorCode.SUCCESS };
       res.json(response);
     } catch (error) {

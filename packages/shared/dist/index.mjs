@@ -114,6 +114,7 @@ var NotificationType = /* @__PURE__ */ ((NotificationType2) => {
   NotificationType2["SYSTEM"] = "SYSTEM";
   NotificationType2["FINE_ASSIGNED"] = "FINE_ASSIGNED";
   NotificationType2["RESERVATION_READY"] = "RESERVATION_READY";
+  NotificationType2["RESERVATION_CANCELLED"] = "RESERVATION_CANCELLED";
   NotificationType2["QUEUE_UPDATE"] = "QUEUE_UPDATE";
   return NotificationType2;
 })(NotificationType || {});
@@ -201,13 +202,15 @@ var NotificationMessage = {
   OVERDUE_TITLE: "Book Overdue Alert!",
   RESERVATION_READY_TITLE: "Your reserved book is ready!",
   QUEUE_UPDATE_TITLE: "Queue Status Update",
+  RESERVATION_CANCELLED_TITLE: "Reservation Cancelled",
   SYSTEM_TITLE: "System Notification",
   // Templates
   BORROW_SUCCESS_BODY: (bookTitle, dueDate) => `You have successfully borrowed "${bookTitle}". Please return it by ${dueDate}.`,
   RETURN_SUCCESS_BODY: (bookTitle) => `You have successfully returned "${bookTitle}". Thank you!`,
   OVERDUE_BODY: (bookTitle, dueDate) => `The book "${bookTitle}" was due on ${dueDate}. Please return it to avoid fines.`,
   RESERVATION_READY_BODY: (bookTitle, date) => `The book "${bookTitle}" you reserved is ready. Please collect it by ${date}.`,
-  QUEUE_UPDATE_BODY: (bookTitle, pos) => `Your position in the queue for "${bookTitle}" is now #${pos}.`
+  QUEUE_UPDATE_BODY: (bookTitle, pos) => `Your position in the queue for "${bookTitle}" is now #${pos}.`,
+  RESERVATION_CANCELLED_BODY: (bookTitle, reason, note) => `Your reservation for "${bookTitle}" has been cancelled. Reason: ${reason}.${note ? ` Note: ${note}` : ""}`
 };
 
 // src/schemas/settings/setting.schema.ts
@@ -381,7 +384,7 @@ var createReservationApi = (api) => ({
   list: (params) => api.get("/reservations", { params }).then((res) => res.data),
   getMy: () => api.get("/reservations/my").then((res) => res.data),
   create: (data) => api.post("/reservations", data).then((res) => res.data),
-  cancel: (id) => api.post(`/reservations/${id}/cancel`).then((res) => res.data)
+  cancel: (id, data) => api.post(`/reservations/${id}/cancel`, data).then((res) => res.data)
 });
 
 // src/utils/phone.ts

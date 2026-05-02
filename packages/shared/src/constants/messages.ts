@@ -62,6 +62,7 @@ export const NotificationMessage = {
   OVERDUE_TITLE: "Book Overdue Alert!",
   RESERVATION_READY_TITLE: "Your reserved book is ready!",
   QUEUE_UPDATE_TITLE: "Queue Status Update",
+  RESERVATION_CANCELLED_TITLE: "Reservation Cancelled",
   SYSTEM_TITLE: "System Notification",
 
   // Templates
@@ -70,4 +71,5 @@ export const NotificationMessage = {
   OVERDUE_BODY: (bookTitle: string, dueDate: string) => `The book "${bookTitle}" was due on ${dueDate}. Please return it to avoid fines.`,
   RESERVATION_READY_BODY: (bookTitle: string, date: string) => `The book "${bookTitle}" you reserved is ready. Please collect it by ${date}.`,
   QUEUE_UPDATE_BODY: (bookTitle: string, pos: number) => `Your position in the queue for "${bookTitle}" is now #${pos}.`,
+  RESERVATION_CANCELLED_BODY: (bookTitle: string, reason: string, note?: string) => `Your reservation for "${bookTitle}" has been cancelled. Reason: ${reason}.${note ? ` Note: ${note}` : ''}`,
 } as const;

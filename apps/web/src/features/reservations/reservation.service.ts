@@ -29,8 +29,8 @@ export const reservationService = {
     return response.data;
   },
 
-  cancel: async (id: string) => {
-    const response = await api.post<ApiResponse<Reservation>>(`/reservations/${id}/cancel`);
+  cancel: async (id: string, data?: { reason: string; note?: string }) => {
+    const response = await api.post<ApiResponse<Reservation>>(`/reservations/${id}/cancel`, data);
     return response.data;
   }
 };

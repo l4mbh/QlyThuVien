@@ -152,14 +152,16 @@ model NotificationSetting {
 }
 
 model Reservation {
-  id        String            @id @default(uuid())
-  userId    String
-  bookId    String
-  status    ReservationStatus @default(PENDING)
-  position  Int
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-  expiresAt DateTime?
+  id           String            @id @default(uuid())
+  userId       String
+  bookId       String
+  status       ReservationStatus @default(PENDING)
+  position     Int
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  expiresAt    DateTime?
+  cancelReason String?
+  cancelNote   String?
 
   user User @relation(fields: [userId], references: [id])
   book Book @relation(fields: [bookId], references: [id])

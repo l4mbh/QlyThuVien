@@ -122,6 +122,7 @@ declare enum NotificationType {
     SYSTEM = "SYSTEM",
     FINE_ASSIGNED = "FINE_ASSIGNED",
     RESERVATION_READY = "RESERVATION_READY",
+    RESERVATION_CANCELLED = "RESERVATION_CANCELLED",
     QUEUE_UPDATE = "QUEUE_UPDATE"
 }
 
@@ -199,12 +200,14 @@ declare const NotificationMessage: {
     readonly OVERDUE_TITLE: "Book Overdue Alert!";
     readonly RESERVATION_READY_TITLE: "Your reserved book is ready!";
     readonly QUEUE_UPDATE_TITLE: "Queue Status Update";
+    readonly RESERVATION_CANCELLED_TITLE: "Reservation Cancelled";
     readonly SYSTEM_TITLE: "System Notification";
     readonly BORROW_SUCCESS_BODY: (bookTitle: string, dueDate: string) => string;
     readonly RETURN_SUCCESS_BODY: (bookTitle: string) => string;
     readonly OVERDUE_BODY: (bookTitle: string, dueDate: string) => string;
     readonly RESERVATION_READY_BODY: (bookTitle: string, date: string) => string;
     readonly QUEUE_UPDATE_BODY: (bookTitle: string, pos: number) => string;
+    readonly RESERVATION_CANCELLED_BODY: (bookTitle: string, reason: string, note?: string) => string;
 };
 
 /**
@@ -487,7 +490,10 @@ declare const createReservationApi: (api: AxiosInstance) => {
         phone?: string;
         userId?: string;
     }) => Promise<any>;
-    cancel: (id: string) => Promise<any>;
+    cancel: (id: string, data?: {
+        reason: string;
+        note?: string;
+    }) => Promise<any>;
 };
 
 /**

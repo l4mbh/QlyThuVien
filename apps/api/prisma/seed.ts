@@ -104,6 +104,7 @@ async function main() {
     { type: NotificationType.BORROW_SUCCESS, roles: [UserRole.READER], isEnabled: true },
     { type: NotificationType.RETURN_SUCCESS, roles: [UserRole.READER], isEnabled: true },
     { type: NotificationType.FINE_ASSIGNED, roles: [UserRole.READER], isEnabled: true },
+    { type: NotificationType.RESERVATION_CANCELLED, roles: [UserRole.READER], isEnabled: true },
     { type: NotificationType.SYSTEM, roles: [UserRole.ADMIN, UserRole.STAFF], isEnabled: true },
   ];
 
