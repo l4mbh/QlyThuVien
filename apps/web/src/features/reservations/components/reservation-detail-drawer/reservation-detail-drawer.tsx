@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Sheet,
   SheetContent,
@@ -55,6 +55,15 @@ export const ReservationDetailDrawer: React.FC<ReservationDetailDrawerProps> = (
   const [cancelReason, setCancelReason] = useState("");
   const [cancelNote, setCancelNote] = useState("");
   const [isCancelling, setIsCancelling] = useState(false);
+  const cancelFormRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (showCancelForm && cancelFormRef.current) {
+      setTimeout(() => {
+        cancelFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, [showCancelForm]);
 
   if (!reservation) return null;
 
@@ -213,7 +222,7 @@ export const ReservationDetailDrawer: React.FC<ReservationDetailDrawerProps> = (
           {showCancelForm && (
             <>
               <Separator className="bg-red-100" />
-              <div className="space-y-4 p-4 bg-red-50/50 rounded-2xl border border-red-100">
+              <div ref={cancelFormRef} className="space-y-4 p-4 bg-red-50/50 rounded-2xl border border-red-100">
                 <h4 className="text-[10px] font-black uppercase tracking-widest text-red-500 flex items-center gap-2">
                   <AlertTriangle size={12} />
                   Cancel Reason
